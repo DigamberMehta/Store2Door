@@ -8,6 +8,7 @@ import HomePage from "./pages/homepage/HomePage";
 import StoreDetailPage from "./pages/StoreDetailPage";
 import FilterPage from "./pages/FilterPage";
 import CheckoutPage from "./pages/checkout/CheckoutPage";
+import SettingsPage from "./pages/settings/SettingsPage";
 
 // Wrapper component to provide navigation handlers
 function AppContent() {
@@ -73,6 +74,7 @@ function AppContent() {
           element={<FilterPage onStoreClick={handleStoreClick} />}
         />
         <Route path="/checkout" element={<CheckoutPage />} />
+        <Route path="/setting" element={<SettingsPage />} />
         {/* 404 Route - redirect to home */}
         <Route
           path="*"

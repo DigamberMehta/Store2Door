@@ -83,20 +83,6 @@ const RecommendedProducts = () => {
             key={product.id}
             className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-2 relative flex flex-col"
           >
-            {/* Wishlist Button */}
-            <button
-              onClick={() => toggleWishlist(product.id)}
-              className="absolute top-3 right-3 z-10 p-1 bg-black/60 backdrop-blur-sm rounded-full hover:bg-black/80 transition-colors border border-white/10"
-            >
-              <Heart
-                className={`w-3 h-3 ${
-                  wishlist.includes(product.id)
-                    ? "fill-red-500 text-red-500"
-                    : "text-white/60"
-                }`}
-              />
-            </button>
-
             {/* Product Image */}
             <div className="w-full aspect-square bg-white/5 rounded-lg overflow-hidden mb-2">
               <img
