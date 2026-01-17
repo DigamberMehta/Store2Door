@@ -17,7 +17,11 @@ export const storesData = [
     iconColor: "#10b981",
     distance: "0.5 km",
     tags: ["Groceries", "Daily Essentials"],
+    items: ["Milk", "Bread", "Eggs", "Butter", "Rice", "Atta", "Oil", "Sugar", "Soap", "Shampoo", "Fruits", "Vegetables"],
     offer: "Up to 40% OFF",
+    image: "https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=400&q=80",
+    location: "Near Main Market",
+    reviewCount: "17K+"
   },
   {
     id: 2,
@@ -29,7 +33,11 @@ export const storesData = [
     iconColor: "#ef4444",
     distance: "1.2 km",
     tags: ["Medicines", "Health Products"],
+    items: ["Paracetamol", "Insulin", "Masks", "Sanitizer", "Band-aid", "Vitamins", "Baby Care", "Protein Powder"],
     offer: "Flat 20% OFF",
+    image: "https://images.unsplash.com/photo-1586015555751-63bb77f4322a?w=400&q=80",
+    location: "Sector 12",
+    reviewCount: "5K+"
   },
   {
     id: 3,
@@ -41,7 +49,11 @@ export const storesData = [
     iconColor: "#f59e0b",
     distance: "2.0 km",
     tags: ["Fast Food", "North Indian"],
+    items: ["Pizza", "Burger", "Pasta", "Paneer Tikka", "Dal Makhani", "Roti", "Biryani", "Coca Cola", "Dessert"],
     offer: "50% OFF up to ₹100",
+    image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400&q=80",
+    location: "Food Court Ave",
+    reviewCount: "12K+"
   },
   {
     id: 4,
@@ -53,7 +65,11 @@ export const storesData = [
     iconColor: "#3b82f6",
     distance: "3.5 km",
     tags: ["Electronics", "Gadgets"],
+    items: ["iPhone", "Samsung", "Headphones", "Charger", "Laptop", "Mouse", "Keyboard", "Power Bank", "Smart Watch"],
     offer: "Up to 30% OFF",
+    image: "https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=400&q=80",
+    location: "Electronic City",
+    reviewCount: "8K+"
   },
   {
     id: 5,
@@ -65,6 +81,10 @@ export const storesData = [
     iconColor: "#8b5cf6",
     distance: "2.8 km",
     tags: ["Clothing", "Accessories"],
+    items: ["T-shirt", "Jeans", "Jacket", "Shirt", "Dress", "Shoes", "Socks", "Belt", "Wallet", "Sunglasses"],
     offer: "Buy 2 Get 1 Free",
+    image: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&q=80",
+    location: "South Plaza",
+    reviewCount: "3K+"
   },
 ];

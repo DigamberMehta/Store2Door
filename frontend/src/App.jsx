@@ -5,17 +5,21 @@ import {
   useNavigate,
 } from "react-router-dom";
 import HomePage from "./pages/homepage/HomePage";
-import StoreDetailPage from "./pages/StoreDetailPage";
-import FilterPage from "./pages/FilterPage";
+import StoreDetailPage from "./pages/store/StoreDetailPage";
+import StoreSearchPage from "./pages/store/StoreSearchPage";
+import FilterPage from "./pages/search/FilterPage";
 import CheckoutPage from "./pages/checkout/CheckoutPage";
 import SettingsPage from "./pages/settings/SettingsPage";
+import SearchPage from "./pages/search/SearchPage";
+import ProductDetailPage from "./pages/product/ProductDetailPage";
 
 // Wrapper component to provide navigation handlers
 function AppContent() {
   const navigate = useNavigate();
 
   const handleStoreClick = (store) => {
-    navigate(`/store/${store.id}`, { state: { store } });
+    const storeNameSlug = store.name.toLowerCase().replace(/\s+/g, "-");
+    navigate(`/store/${storeNameSlug}`, { state: { store } });
   };
 
   const handleCategoryClick = (category) => {
@@ -48,7 +52,8 @@ function AppContent() {
             />
           }
         />
-        <Route path="/store/:id" element={<StoreDetailPage />} />
+        <Route path="/store/:storeName" element={<StoreDetailPage />} />
+        <Route path="/store/:storeName/search" element={<StoreSearchPage />} />
         <Route
           path="/category/:categoryName"
           element={<FilterPage onStoreClick={handleStoreClick} />}
@@ -75,6 +80,8 @@ function AppContent() {
         />
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/setting" element={<SettingsPage />} />
+        <Route path="/search" element={<SearchPage />} />
+        <Route path="/product/:productName/info" element={<ProductDetailPage />} />
         {/* 404 Route - redirect to home */}
         <Route
           path="*"
