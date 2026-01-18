@@ -31,7 +31,7 @@ const WithdrawalsPage = () => {
             <ArrowLeft className="w-6 h-6" />
           </button>
           <div>
-            <h1 className="text-xl font-bold">Withdrawals</h1>
+            <p className="text-xl font-bold">Withdrawals</p>
             <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Transaction History</p>
           </div>
         </div>

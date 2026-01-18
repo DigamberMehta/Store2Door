@@ -32,8 +32,8 @@ const ActivitiesPage = () => {
             <ArrowLeft className="w-6 h-6" />
           </button>
           <div>
-            <h1 className="text-xl font-bold">All Activities</h1>
-            <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Transaction History</p>
+            <p className="text-xl font-bold">All Activities</p>
+           
           </div>
         </div>
       </div>

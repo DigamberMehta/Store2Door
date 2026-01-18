@@ -6,6 +6,8 @@ import WalletPage from "./pages/earnings/WalletPage";
 import WithdrawalsPage from "./pages/earnings/WithdrawalsPage";
 import ActivitiesPage from "./pages/earnings/ActivitiesPage";
 import ProfilePage from "./pages/profile/ProfilePage";
+import DocumentsPage from "./pages/profile/DocumentsPage";
+import PreferredAreasPage from "./pages/profile/PreferredAreasPage";
 import LoginPage from "./pages/auth/LoginPage";
 import SignUpPage from "./pages/auth/SignUpPage";
 import "./App.css";
@@ -23,6 +25,8 @@ function App() {
         <Route path="/withdrawals" element={<WithdrawalsPage />} />
         <Route path="/activities" element={<ActivitiesPage />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/profile/documents" element={<DocumentsPage />} />
+        <Route path="/profile/areas" element={<PreferredAreasPage />} />
       </Routes>
     </Router>
   );
