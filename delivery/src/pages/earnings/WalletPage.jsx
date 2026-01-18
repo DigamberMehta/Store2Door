@@ -95,12 +95,7 @@ const WalletPage = () => {
               <History className="w-4 h-4 text-zinc-500" />
               Recent Activities
             </h3>
-            <button 
-              onClick={() => navigate("/activities")}
-              className="text-xs text-zinc-500 font-medium hover:text-white transition-colors"
-            >
-              View all
-            </button>
+            <button className="text-xs text-zinc-500 font-medium">View all</button>
           </div>
           
           <div className="space-y-3">

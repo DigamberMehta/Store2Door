@@ -456,7 +456,10 @@ const ProfilePage = () => {
 
         {/* Sign Out */}
         <div className="pb-8">
-          <button className="w-full bg-red-500/10 border border-red-500/10 rounded-2xl p-4 flex items-center justify-between active:bg-red-500/20 transition-all">
+          <button 
+            onClick={() => navigate("/login")}
+            className="w-full bg-red-500/10 border border-red-500/10 rounded-2xl p-4 flex items-center justify-between active:bg-red-500/20 transition-all"
+          >
             <div className="flex items-center gap-4">
               <div className="bg-red-500/20 p-2 rounded-xl text-red-400">
                 <LogOut className="w-5 h-5" />

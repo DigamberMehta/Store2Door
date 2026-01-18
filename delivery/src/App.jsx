@@ -6,6 +6,8 @@ import WalletPage from "./pages/earnings/WalletPage";
 import WithdrawalsPage from "./pages/earnings/WithdrawalsPage";
 import ActivitiesPage from "./pages/earnings/ActivitiesPage";
 import ProfilePage from "./pages/profile/ProfilePage";
+import LoginPage from "./pages/auth/LoginPage";
+import SignUpPage from "./pages/auth/SignUpPage";
 import "./App.css";
 
 function App() {
@@ -13,6 +15,8 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<DashboardPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignUpPage />} />
         <Route path="/deliveries" element={<DeliveriesPage />} />
         <Route path="/order-detail" element={<OrderDetailPage />} />
         <Route path="/wallet" element={<WalletPage />} />
