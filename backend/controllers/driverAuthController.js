@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import User from "../models/User.js";
+import DeliveryRiderProfile from "../models/DeliveryRiderProfile.js";
 import { asyncHandler } from "../middleware/validation.js";
 
 /**
@@ -47,6 +48,7 @@ export const registerDriver = asyncHandler(async (req, res) => {
     password,
     role: "delivery_rider",
   });
+
 
   // Generate token
   const token = generateToken(user._id);

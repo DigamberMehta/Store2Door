@@ -57,8 +57,8 @@ const SignUpPage = () => {
         // Store auth data
         storeAuthData(response.data);
         
-        // Navigate to onboarding/documents page
-        navigate("/documents");
+        // Navigate to dashboard
+        navigate("/");
       }
     } catch (err) {
       setError(err.message || "Registration failed. Please try again.");

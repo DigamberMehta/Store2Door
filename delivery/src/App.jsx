@@ -10,23 +10,24 @@ import DocumentsPage from "./pages/profile/DocumentsPage";
 import PreferredAreasPage from "./pages/profile/PreferredAreasPage";
 import LoginPage from "./pages/auth/LoginPage";
 import SignUpPage from "./pages/auth/SignUpPage";
+import ProtectedRoute from "./components/ProtectedRoute";
 import "./App.css";
 
 function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<DashboardPage />} />
+        <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignUpPage />} />
-        <Route path="/deliveries" element={<DeliveriesPage />} />
-        <Route path="/order-detail" element={<OrderDetailPage />} />
-        <Route path="/wallet" element={<WalletPage />} />
-        <Route path="/withdrawals" element={<WithdrawalsPage />} />
-        <Route path="/activities" element={<ActivitiesPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/profile/documents" element={<DocumentsPage />} />
-        <Route path="/profile/areas" element={<PreferredAreasPage />} />
+        <Route path="/deliveries" element={<ProtectedRoute><DeliveriesPage /></ProtectedRoute>} />
+        <Route path="/order-detail" element={<ProtectedRoute><OrderDetailPage /></ProtectedRoute>} />
+        <Route path="/wallet" element={<ProtectedRoute><WalletPage /></ProtectedRoute>} />
+        <Route path="/withdrawals" element={<ProtectedRoute><WithdrawalsPage /></ProtectedRoute>} />
+        <Route path="/activities" element={<ProtectedRoute><ActivitiesPage /></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+        <Route path="/profile/documents" element={<ProtectedRoute><DocumentsPage /></ProtectedRoute>} />
+        <Route path="/profile/areas" element={<ProtectedRoute><PreferredAreasPage /></ProtectedRoute>} />
       </Routes>
     </Router>
   );

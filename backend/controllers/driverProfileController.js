@@ -10,7 +10,7 @@ import { deleteLocalFile } from '../middleware/upload.js';
  */
 export const getDriverProfile = asyncHandler(async (req, res) => {
   // Get driver profile with populated user data
-  let profile = await DeliveryRiderProfile.findByUserId(req.user.id);
+  let profile = await DeliveryRiderProfile.findOne({ userId: req.user.id }).populate('userId', 'name email phone avatar');
 
   // If no profile exists, create one with all fields initialized
   if (!profile) {
@@ -20,19 +20,71 @@ export const getDriverProfile = asyncHandler(async (req, res) => {
       gender: null,
       address: {
         street: "",
-        suburb: "",
         city: "",
-        province: "",
-        postalCode: "",
-        country: "South Africa"
+        state: "",
+        zipCode: "",
+        country: "US",
       },
-      vehicle: {},
-      documents: {},
-      bankDetails: {},
-      emergencyContact: null,
+      vehicle: {
+        type: null,
+        make: "",
+        model: "",
+        year: null,
+        color: "",
+        licensePlate: "",
+        registrationNumber: "",
+        insuranceNumber: "",
+        insuranceExpiry: null,
+        registrationExpiry: null,
+      },
+      documents: {
+        drivingLicense: {
+          number: "",
+          expiryDate: null,
+          isVerified: false,
+          imageUrl: "",
+        },
+        nationalId: {
+          number: "",
+          isVerified: false,
+          imageUrl: "",
+        },
+        backgroundCheck: {
+          status: "pending",
+          completedAt: null,
+          expiryDate: null,
+        },
+      },
+      bankDetails: {
+        accountHolderName: "",
+        accountNumber: "",
+        bankName: "",
+        routingNumber: "",
+        accountType: "checking",
+        isVerified: false,
+      },
+      emergencyContact: {
+        name: "",
+        phone: "",
+        relationship: "",
+        address: "",
+      },
+      isAvailable: false,
       workSchedule: [],
       currentLocation: null,
       serviceAreas: [],
+      stats: {
+        totalDeliveries: 0,
+        completedDeliveries: 0,
+        cancelledDeliveries: 0,
+        totalEarnings: 0,
+        totalTips: 0,
+        averageRating: null,
+        totalRatings: 0,
+        completionRate: 100,
+        averageDeliveryTime: null,
+        onTimeDeliveryRate: 100,
+      },
       preferences: {
         maxDeliveriesPerDay: 20,
         preferredVehicleType: null,
@@ -46,7 +98,7 @@ export const getDriverProfile = asyncHandler(async (req, res) => {
       }
     });
     // Re-fetch with populated user data
-    profile = await DeliveryRiderProfile.findByUserId(req.user.id);
+    profile = await DeliveryRiderProfile.findOne({ userId: req.user.id }).populate('userId', 'name email phone avatar');
   }
 
   // Prepare stats
@@ -130,8 +182,6 @@ export const updateVehicleInfo = asyncHandler(async (req, res) => {
     profile = await DeliveryRiderProfile.create({ 
       userId: req.user.id,
       vehicle: {},
-      bankDetails: {},
-      availability: {},
     });
   }
 
@@ -185,7 +235,6 @@ export const uploadDocument = asyncHandler(async (req, res) => {
       userId: req.user.id,
       vehicle: {},
       bankDetails: {},
-      availability: {},
       documents: {},
     });
   }
@@ -263,7 +312,6 @@ export const getDocumentsStatus = asyncHandler(async (req, res) => {
       userId: req.user.id,
       vehicle: {},
       bankDetails: {},
-      availability: {},
       documents: {},
     });
   }
@@ -367,7 +415,7 @@ export const rejectDocument = asyncHandler(async (req, res) => {
  * @access  Private (Delivery Rider)
  */
 export const updateAvailability = asyncHandler(async (req, res) => {
-  const { isAvailable, workingHours } = req.body;
+  const { isAvailable, workSchedule } = req.body;
 
   let profile = await DeliveryRiderProfile.findOne({ userId: req.user.id });
 
@@ -376,25 +424,18 @@ export const updateAvailability = asyncHandler(async (req, res) => {
       userId: req.user.id,
       vehicle: {},
       bankDetails: {},
-      availability: {},
     });
   }
 
-  // Ensure availability object exists
-  if (!profile.availability) {
-    profile.availability = {};
-  }
+  if (isAvailable !== undefined) profile.isAvailable = isAvailable;
+  if (workSchedule !== undefined) profile.workSchedule = workSchedule;
 
-  if (isAvailable !== undefined) profile.availability.isAvailable = isAvailable;
-  if (workingHours !== undefined) profile.availability.workingHours = workingHours;
-
-  profile.markModified('availability');
   await profile.save();
 
   res.json({
     success: true,
     message: 'Availability updated successfully',
-    data: { availability: profile.availability },
+    data: { isAvailable: profile.isAvailable, workSchedule: profile.workSchedule },
   });
 });
 
@@ -420,7 +461,6 @@ export const updateLocation = asyncHandler(async (req, res) => {
       userId: req.user.id,
       vehicle: {},
       bankDetails: {},
-      availability: {},
     });
   }
 
@@ -494,7 +534,6 @@ export const updateWorkAreas = asyncHandler(async (req, res) => {
       userId: req.user.id,
       vehicle: {},
       bankDetails: {},
-      availability: {},
     });
   }
 
@@ -521,7 +560,6 @@ export const getBankAccount = asyncHandler(async (req, res) => {
       userId: req.user.id,
       vehicle: {},
       bankDetails: {},
-      availability: {},
     });
   }
 
@@ -546,7 +584,6 @@ export const updateBankAccount = asyncHandler(async (req, res) => {
       userId: req.user.id,
       vehicle: {},
       bankDetails: {},
-      availability: {},
     });
   }
 
@@ -594,20 +631,17 @@ export const toggleOnlineStatus = asyncHandler(async (req, res) => {
       userId: req.user.id,
       vehicle: {},
       bankDetails: {},
-      availability: {},
     });
   }
 
-  profile.availability = profile.availability || {};
-  profile.availability.isAvailable = isAvailable;
+  profile.isAvailable = isAvailable;
   await profile.save();
 
   res.json({
     success: true,
     message: `Status updated to ${isAvailable ? 'online' : 'offline'}`,
     data: { 
-      isAvailable: profile.availability.isAvailable,
-      availability: profile.availability,
+      isAvailable: profile.isAvailable,
     },
   });
 });

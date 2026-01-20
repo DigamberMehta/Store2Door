@@ -4,6 +4,8 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 import userRoutes from "./routes/userRoutes.js";
 import customerProfileRoutes from "./routes/customerProfileRoutes.js";
+import driverAuthRoutes from "./routes/driverAuthRoutes.js";
+import driverProfileRoutes from "./routes/driverProfileRoutes.js";
 import { errorHandler, notFound } from "./middleware/validation.js";
 
 // Load environment variables
@@ -15,7 +17,12 @@ const PORT = process.env.PORT || 3000;
 // CORS configuration
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    origin: [
+      "http://localhost:5173", // Frontend customer app
+      "http://localhost:5174", // Delivery rider app
+      "http://localhost:5175", // Admin/Store app (future)
+      process.env.FRONTEND_URL
+    ].filter(Boolean),
     credentials: true,
   })
 );
@@ -57,6 +64,8 @@ app.get("/api/", (req, res) => {
 // Routes
 app.use("/api/users", userRoutes);
 app.use("/api/customer-profile", customerProfileRoutes);
+app.use("/api/drivers", driverAuthRoutes);
+app.use("/api/driver-profile", driverProfileRoutes);
 
 // Error handling middleware
 app.use(notFound);
