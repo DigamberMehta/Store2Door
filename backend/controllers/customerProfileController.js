@@ -1,12 +1,13 @@
-import CustomerProfile from '../models/CustomerProfile.js';
-import { asyncHandler } from '../middleware/validation.js';
+import CustomerProfile from "../models/CustomerProfile.js";
+import { asyncHandler } from "../middleware/validation.js";
 
 /**
- * @desc    Get customer profile
+ * @desc    Get customer profile with user data and stats
  * @route   GET /api/customer-profile
  * @access  Private (Customer)
  */
 export const getCustomerProfile = asyncHandler(async (req, res) => {
+  // Get customer profile with populated user data
   let profile = await CustomerProfile.findByUserId(req.user.id);
 
   // If no profile exists, create one
@@ -14,11 +15,25 @@ export const getCustomerProfile = asyncHandler(async (req, res) => {
     profile = await CustomerProfile.create({
       userId: req.user.id,
     });
+    // Re-fetch with populated user data
+    profile = await CustomerProfile.findByUserId(req.user.id);
   }
+
+  // Prepare stats
+  const stats = {
+    totalOrders: profile.totalOrders,
+    totalSpent: profile.totalSpent,
+    averageRating: profile.averageRating,
+    memberSince: profile.createdAt,
+  };
 
   res.json({
     success: true,
-    data: { profile },
+    data: {
+      user: req.user, // From auth middleware
+      profile: profile,
+      stats: stats,
+    },
   });
 });
 
@@ -45,7 +60,8 @@ export const updateCustomerProfile = asyncHandler(async (req, res) => {
     // Update existing profile
     if (dateOfBirth !== undefined) profile.dateOfBirth = dateOfBirth;
     if (gender !== undefined) profile.gender = gender;
-    if (emergencyContact !== undefined) profile.emergencyContact = emergencyContact;
+    if (emergencyContact !== undefined)
+      profile.emergencyContact = emergencyContact;
     if (preferences !== undefined) {
       profile.preferences = { ...profile.preferences, ...preferences };
     }
@@ -55,7 +71,7 @@ export const updateCustomerProfile = asyncHandler(async (req, res) => {
 
   res.json({
     success: true,
-    message: 'Profile updated successfully',
+    message: "Profile updated successfully",
     data: { profile },
   });
 });
@@ -71,13 +87,13 @@ export const getCustomerAddresses = asyncHandler(async (req, res) => {
   if (!profile) {
     return res.status(404).json({
       success: false,
-      message: 'Customer profile not found',
+      message: "Customer profile not found",
     });
   }
 
   res.json({
     success: true,
-    data: { 
+    data: {
       addresses: profile.addresses,
       defaultAddress: profile.defaultAddress,
     },
@@ -90,7 +106,18 @@ export const getCustomerAddresses = asyncHandler(async (req, res) => {
  * @access  Private (Customer)
  */
 export const addCustomerAddress = asyncHandler(async (req, res) => {
-  const { label, street, city, state, zipCode, country, latitude, longitude, instructions, isDefault } = req.body;
+  const {
+    label,
+    street,
+    city,
+    state,
+    zipCode,
+    country,
+    latitude,
+    longitude,
+    instructions,
+    isDefault,
+  } = req.body;
 
   let profile = await CustomerProfile.findOne({ userId: req.user.id });
 
@@ -101,7 +128,7 @@ export const addCustomerAddress = asyncHandler(async (req, res) => {
 
   // If setting as default, unset other defaults
   if (isDefault) {
-    profile.addresses.forEach(addr => {
+    profile.addresses.forEach((addr) => {
       addr.isDefault = false;
     });
   }
@@ -112,7 +139,7 @@ export const addCustomerAddress = asyncHandler(async (req, res) => {
     city,
     state,
     zipCode,
-    country: country || 'US',
+    country: country || "US",
     latitude,
     longitude,
     instructions,
@@ -124,8 +151,8 @@ export const addCustomerAddress = asyncHandler(async (req, res) => {
 
   res.status(201).json({
     success: true,
-    message: 'Address added successfully',
-    data: { 
+    message: "Address added successfully",
+    data: {
       address: profile.addresses[profile.addresses.length - 1],
       addresses: profile.addresses,
     },
@@ -139,14 +166,25 @@ export const addCustomerAddress = asyncHandler(async (req, res) => {
  */
 export const updateCustomerAddress = asyncHandler(async (req, res) => {
   const { addressId } = req.params;
-  const { label, street, city, state, zipCode, country, latitude, longitude, instructions, isDefault } = req.body;
+  const {
+    label,
+    street,
+    city,
+    state,
+    zipCode,
+    country,
+    latitude,
+    longitude,
+    instructions,
+    isDefault,
+  } = req.body;
 
   const profile = await CustomerProfile.findOne({ userId: req.user.id });
 
   if (!profile) {
     return res.status(404).json({
       success: false,
-      message: 'Customer profile not found',
+      message: "Customer profile not found",
     });
   }
 
@@ -155,13 +193,13 @@ export const updateCustomerAddress = asyncHandler(async (req, res) => {
   if (!address) {
     return res.status(404).json({
       success: false,
-      message: 'Address not found',
+      message: "Address not found",
     });
   }
 
   // If setting as default, unset other defaults
   if (isDefault) {
-    profile.addresses.forEach(addr => {
+    profile.addresses.forEach((addr) => {
       addr.isDefault = false;
     });
   }
@@ -182,8 +220,8 @@ export const updateCustomerAddress = asyncHandler(async (req, res) => {
 
   res.json({
     success: true,
-    message: 'Address updated successfully',
-    data: { 
+    message: "Address updated successfully",
+    data: {
       address,
       addresses: profile.addresses,
     },
@@ -203,7 +241,7 @@ export const deleteCustomerAddress = asyncHandler(async (req, res) => {
   if (!profile) {
     return res.status(404).json({
       success: false,
-      message: 'Customer profile not found',
+      message: "Customer profile not found",
     });
   }
 
@@ -212,12 +250,12 @@ export const deleteCustomerAddress = asyncHandler(async (req, res) => {
   if (!address) {
     return res.status(404).json({
       success: false,
-      message: 'Address not found',
+      message: "Address not found",
     });
   }
 
   const wasDefault = address.isDefault;
-  
+
   // Remove the address
   profile.addresses.pull(addressId);
 
@@ -230,7 +268,7 @@ export const deleteCustomerAddress = asyncHandler(async (req, res) => {
 
   res.json({
     success: true,
-    message: 'Address deleted successfully',
+    message: "Address deleted successfully",
     data: { addresses: profile.addresses },
   });
 });
@@ -248,7 +286,7 @@ export const setDefaultAddress = asyncHandler(async (req, res) => {
   if (!profile) {
     return res.status(404).json({
       success: false,
-      message: 'Customer profile not found',
+      message: "Customer profile not found",
     });
   }
 
@@ -257,12 +295,12 @@ export const setDefaultAddress = asyncHandler(async (req, res) => {
   if (!address) {
     return res.status(404).json({
       success: false,
-      message: 'Address not found',
+      message: "Address not found",
     });
   }
 
   // Unset all default addresses
-  profile.addresses.forEach(addr => {
+  profile.addresses.forEach((addr) => {
     addr.isDefault = false;
   });
 
@@ -273,8 +311,8 @@ export const setDefaultAddress = asyncHandler(async (req, res) => {
 
   res.json({
     success: true,
-    message: 'Default address updated successfully',
-    data: { 
+    message: "Default address updated successfully",
+    data: {
       addresses: profile.addresses,
       defaultAddress: profile.defaultAddress,
     },
@@ -287,12 +325,12 @@ export const setDefaultAddress = asyncHandler(async (req, res) => {
  * @access  Private (Customer)
  */
 export const updateCustomerPreferences = asyncHandler(async (req, res) => {
-  const { 
+  const {
     preferredCategories,
     dietaryRestrictions,
     spiceLevel,
     deliveryInstructions,
-    communicationPreferences 
+    communicationPreferences,
   } = req.body;
 
   let profile = await CustomerProfile.findOne({ userId: req.user.id });
@@ -303,11 +341,14 @@ export const updateCustomerPreferences = asyncHandler(async (req, res) => {
 
   // Update preferences
   const updatedPreferences = { ...profile.preferences };
-  
-  if (preferredCategories !== undefined) updatedPreferences.preferredCategories = preferredCategories;
-  if (dietaryRestrictions !== undefined) updatedPreferences.dietaryRestrictions = dietaryRestrictions;
+
+  if (preferredCategories !== undefined)
+    updatedPreferences.preferredCategories = preferredCategories;
+  if (dietaryRestrictions !== undefined)
+    updatedPreferences.dietaryRestrictions = dietaryRestrictions;
   if (spiceLevel !== undefined) updatedPreferences.spiceLevel = spiceLevel;
-  if (deliveryInstructions !== undefined) updatedPreferences.deliveryInstructions = deliveryInstructions;
+  if (deliveryInstructions !== undefined)
+    updatedPreferences.deliveryInstructions = deliveryInstructions;
   if (communicationPreferences !== undefined) {
     updatedPreferences.communicationPreferences = {
       ...updatedPreferences.communicationPreferences,
@@ -320,7 +361,7 @@ export const updateCustomerPreferences = asyncHandler(async (req, res) => {
 
   res.json({
     success: true,
-    message: 'Preferences updated successfully',
+    message: "Preferences updated successfully",
     data: { preferences: profile.preferences },
   });
 });
@@ -366,7 +407,7 @@ export const updateLastKnownLocation = asyncHandler(async (req, res) => {
   if (!latitude || !longitude) {
     return res.status(400).json({
       success: false,
-      message: 'Latitude and longitude are required',
+      message: "Latitude and longitude are required",
     });
   }
 
@@ -386,7 +427,7 @@ export const updateLastKnownLocation = asyncHandler(async (req, res) => {
 
   res.json({
     success: true,
-    message: 'Location updated successfully',
+    message: "Location updated successfully",
     data: { lastKnownLocation: profile.lastKnownLocation },
   });
 });

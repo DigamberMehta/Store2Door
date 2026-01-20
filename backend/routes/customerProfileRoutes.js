@@ -1,4 +1,4 @@
-import express from 'express';
+import express from "express";
 import {
   getCustomerProfile,
   updateCustomerProfile,
@@ -10,8 +10,8 @@ import {
   updateCustomerPreferences,
   getCustomerStats,
   updateLastKnownLocation,
-} from '../controllers/customerProfileController.js';
-import { authenticate } from '../middleware/auth.js';
+} from "../controllers/customerProfileController.js";
+import { authenticate } from "../middleware/auth.js";
 
 const router = express.Router();
 
@@ -19,23 +19,23 @@ const router = express.Router();
 router.use(authenticate);
 
 // Customer profile routes
-router.get('/', getCustomerProfile);
-router.put('/', updateCustomerProfile);
+router.get("/", getCustomerProfile);
+router.put("/", updateCustomerProfile);
 
 // Address management routes
-router.get('/addresses', getCustomerAddresses);
-router.post('/addresses', addCustomerAddress);
-router.put('/addresses/:addressId', updateCustomerAddress);
-router.delete('/addresses/:addressId', deleteCustomerAddress);
-router.put('/addresses/:addressId/default', setDefaultAddress);
+router.get("/addresses", getCustomerAddresses);
+router.post("/addresses", addCustomerAddress);
+router.put("/addresses/:addressId", updateCustomerAddress);
+router.delete("/addresses/:addressId", deleteCustomerAddress);
+router.put("/addresses/:addressId/default", setDefaultAddress);
 
 // Preferences route
-router.put('/preferences', updateCustomerPreferences);
+router.put("/preferences", updateCustomerPreferences);
 
 // Statistics route
-router.get('/stats', getCustomerStats);
+router.get("/stats", getCustomerStats);
 
 // Location update route
-router.put('/location', updateLastKnownLocation);
+router.put("/location", updateLastKnownLocation);
 
 export default router;
