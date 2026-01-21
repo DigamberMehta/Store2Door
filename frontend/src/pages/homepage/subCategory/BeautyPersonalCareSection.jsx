@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import SubCategorySection from "./SubCategorySection";
-import { categoryAPI } from "../../../utils/api";
+import { categoryAPI } from "../../../services/api";
 import { SubCategoryShimmer } from "../../../components/shimmer";
 
 const BeautyPersonalCareSection = ({ onCategoryClick }) => {
