@@ -16,9 +16,7 @@ const BeautyPersonalCareSection = ({ onCategoryClick }) => {
         const items = (Array.isArray(data) ? data : []).map((cat) => ({
           id: cat._id,
           name: cat.name,
-          image:
-            cat.image ||
-            "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=400&auto=format&fit=crop",
+          image: cat.image,
           category: "Beauty & Personal Care",
           color: cat.color || "#ec4899",
           slug: cat.slug,

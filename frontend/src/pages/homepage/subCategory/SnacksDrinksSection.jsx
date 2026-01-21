@@ -16,9 +16,7 @@ const SnacksDrinksSection = ({ onCategoryClick }) => {
         const items = (Array.isArray(data) ? data : []).map((cat) => ({
           id: cat._id,
           name: cat.name,
-          image:
-            cat.image ||
-            "https://images.unsplash.com/photo-1600952841320-db92ec4047ca?w=400&auto=format&fit=crop",
+          image: cat.image,
           category: "Snacks & Drinks",
           color: cat.color || "#f59e0b",
           slug: cat.slug,

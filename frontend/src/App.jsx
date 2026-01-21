@@ -28,12 +28,12 @@ function AppContent() {
   };
 
   const handleCategoryClick = (category) => {
-    navigate(
-      `/category/${category.category.toLowerCase().replace(/\s+/g, "-")}`,
-      {
-        state: { category },
-      }
-    );
+    // Use the slug for the URL if available, otherwise create from category name
+    const slug =
+      category.slug || category.category.toLowerCase().replace(/\s+/g, "-");
+    navigate(`/category/${slug}`, {
+      state: { category },
+    });
   };
 
   return (

@@ -17,9 +17,7 @@ const GroceryKitchenSection = ({ onCategoryClick }) => {
         const items = (Array.isArray(data) ? data : []).map((cat) => ({
           id: cat._id,
           name: cat.name,
-          image:
-            cat.image ||
-            "https://images.unsplash.com/photo-1543168256-418811576931?w=400&auto=format&fit=crop",
+          image: cat.image,
           category: "Grocery & Kitchen",
           color: cat.color || "#3b82f6",
           slug: cat.slug,

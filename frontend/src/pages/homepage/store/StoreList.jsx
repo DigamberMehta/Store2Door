@@ -6,7 +6,11 @@ const StoreList = ({ stores, onStoreClick, onCategoryClick }) => {
     <main className="bg-black w-full">
       <div className="grid grid-cols-1 gap-1.5 mb-20 md:grid-cols-2 px-0">
         {stores.map((store) => (
-          <StoreCard key={store.id} store={store} onStoreClick={onStoreClick} />
+          <StoreCard
+            key={store._id || store.id}
+            store={store}
+            onStoreClick={onStoreClick}
+          />
         ))}
       </div>
 

@@ -16,9 +16,7 @@ const HomeLifestyleSection = ({ onCategoryClick }) => {
         const items = (Array.isArray(data) ? data : []).map((cat) => ({
           id: cat._id,
           name: cat.name,
-          image:
-            cat.image ||
-            "https://images.unsplash.com/photo-1563453392212-326f5e854473?w=400&auto=format&fit=crop",
+          image: cat.image,
           category: "Home & Furniture",
           color: cat.color || "#8b5cf6",
           slug: cat.slug,
