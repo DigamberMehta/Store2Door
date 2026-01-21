@@ -45,6 +45,7 @@ const ProfilePage = () => {
     accountNumber: "",
     bankName: "",
     branchCode: "",
+    routingNumber: "",
     accountType: "cheque"
   });
 
@@ -60,12 +61,9 @@ const ProfilePage = () => {
       const response = await driverProfileAPI.getProfile();
       setProfileData(response.data);
       
-      // Set work schedule if available
-      if (response.data.profile?.workSchedule) {
-        const activeShifts = response.data.profile.workSchedule
-          .filter(s => s.isWorking)
-          .map(s => `${s.startTime} - ${s.endTime}`);
-        setSelectedShifts(activeShifts);
+      // Set work schedule - simple array of shift time strings
+      if (response.data.profile?.workSchedule && Array.isArray(response.data.profile.workSchedule)) {
+        setSelectedShifts(response.data.profile.workSchedule);
       }
     } catch (error) {
       console.error("Error fetching profile:", error);
@@ -125,6 +123,23 @@ const ProfilePage = () => {
     }
   };
 
+  const handleUpdateShifts = async () => {
+    try {
+      setUpdating(true);
+      await driverProfileAPI.updateAvailability({ 
+        workSchedule: selectedShifts
+      });
+      toast.success("Work shifts updated successfully!");
+      setShowShiftModal(false);
+      await fetchProfileData();
+    } catch (error) {
+      console.error("Error updating shifts:", error);
+      toast.error(error.response?.data?.message || "Failed to update shifts");
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   const handleUpdateBank = async () => {
     if (!bankForm.accountHolderName || !bankForm.accountNumber || !bankForm.bankName || !bankForm.branchCode) {
       toast.error("Please fill in all bank details");
@@ -166,7 +181,16 @@ const ProfilePage = () => {
       ifsc: bankData.branchCode || "Not provided"
     } : null,
     preferences: {
-      areas: profileData.profile?.preferredWorkAreas || []
+      areas: profileData.profile?.serviceAreas || [],
+      maxDeliveriesPerDay: profileData.profile?.preferences?.maxDeliveriesPerDay || 20,
+      preferredVehicleType: profileData.profile?.preferences?.preferredVehicleType || null,
+      acceptCashPayments: profileData.profile?.preferences?.acceptCashPayments ?? true,
+      autoAcceptOrders: profileData.profile?.preferences?.autoAcceptOrders ?? false,
+      notifications: {
+        sms: profileData.profile?.preferences?.notificationPreferences?.sms ?? true,
+        email: profileData.profile?.preferences?.notificationPreferences?.email ?? true,
+        push: profileData.profile?.preferences?.notificationPreferences?.push ?? true
+      }
     }
   } : null;
 
@@ -433,6 +457,18 @@ const ProfilePage = () => {
                 </div>
 
                 <div>
+                  <label className="text-xs text-zinc-400 font-medium mb-2 block">Routing Number</label>
+                  <input
+                    type="text"
+                    value={bankForm.routingNumber}
+                    onChange={(e) => setBankForm({...bankForm, routingNumber: e.target.value})}
+                    placeholder="9-digit routing number (optional)"
+                    maxLength="9"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition-colors placeholder:text-zinc-600"
+                  />
+                </div>
+
+                <div>
                   <label className="text-xs text-zinc-400 font-medium mb-2 block">Account Type</label>
                   <select
                     value={bankForm.accountType}
@@ -512,10 +548,18 @@ const ProfilePage = () => {
               </div>
               <button 
                 type="button"
-                onClick={() => setShowShiftModal(false)}
-                className="w-full bg-blue-500 py-4 rounded-2xl font-bold mt-6 active:scale-95 transition-all"
+                onClick={handleUpdateShifts}
+                disabled={updating}
+                className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-zinc-700 disabled:text-zinc-500 py-4 rounded-2xl font-bold mt-6 active:scale-95 transition-all flex items-center justify-center gap-2"
               >
-                Save Changes
+                {updating ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  'Save Changes'
+                )}
               </button>
             </div>
           </div>
@@ -657,6 +701,7 @@ const ProfilePage = () => {
                   accountNumber: bankData?.accountNumber || "",
                   bankName: bankData?.bankName || "",
                   branchCode: bankData?.branchCode || "",
+                  routingNumber: bankData?.routingNumber || "",
                   accountType: bankData?.accountType || "cheque"
                 });
                 setShowBankModal(true);
