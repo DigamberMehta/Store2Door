@@ -1,12 +1,13 @@
 const BillDetails = ({ cartItems }) => {
   // Calculate totals
   const itemsTotal = cartItems.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
+    (sum, item) =>
+      sum + (item.discountedPrice || item.unitPrice || 0) * item.quantity,
+    0,
   );
 
   const deliveryCharge = 30;
-  const isFreeDelivery = itemsTotal > 500; // Free delivery above ₹500
+  const isFreeDelivery = itemsTotal > 500; // Free delivery above R500
 
   const handlingCharge = 11;
   const grandTotal =
@@ -35,7 +36,7 @@ const BillDetails = ({ cartItems }) => {
           </svg>
           <span className="text-white/80 text-xs">Items total</span>
         </div>
-        <span className="text-white font-semibold text-sm">₹{itemsTotal}</span>
+        <span className="text-white font-semibold text-sm">R{itemsTotal}</span>
       </div>
 
       {/* Delivery Charge */}
@@ -60,7 +61,7 @@ const BillDetails = ({ cartItems }) => {
           <span className="text-[rgb(49,134,22)] font-bold text-xs">FREE</span>
         ) : (
           <span className="text-white font-semibold text-sm">
-            ₹{deliveryCharge}
+            R{deliveryCharge}
           </span>
         )}
       </div>
@@ -84,7 +85,7 @@ const BillDetails = ({ cartItems }) => {
           <span className="text-white/80 text-xs">Handling charge</span>
         </div>
         <span className="text-white font-semibold text-sm">
-          ₹{handlingCharge}
+          R{handlingCharge}
         </span>
       </div>
 
@@ -94,7 +95,7 @@ const BillDetails = ({ cartItems }) => {
       {/* Grand Total */}
       <div className="flex justify-between items-center">
         <span className="text-white font-bold text-base">Grand total</span>
-        <span className="text-white font-bold text-lg">₹{grandTotal}</span>
+        <span className="text-white font-bold text-lg">R{grandTotal}</span>
       </div>
     </div>
   );
