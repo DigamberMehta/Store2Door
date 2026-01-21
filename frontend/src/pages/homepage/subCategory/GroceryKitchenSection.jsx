@@ -10,18 +10,21 @@ const GroceryKitchenSection = ({ onCategoryClick }) => {
     const fetchSubcategories = async () => {
       try {
         setLoading(true);
-        const response = await categoryAPI.getSubcategories("grocery-kitchen");
-        
+        // API service returns unwrapped data array directly
+        const data = await categoryAPI.getSubcategories("grocery-kitchen");
+
         // Transform API data to match component format
-        const items = response.data.map((cat) => ({
+        const items = (Array.isArray(data) ? data : []).map((cat) => ({
           id: cat._id,
           name: cat.name,
-          image: cat.image || "https://images.unsplash.com/photo-1543168256-418811576931?w=400&auto=format&fit=crop",
+          image:
+            cat.image ||
+            "https://images.unsplash.com/photo-1543168256-418811576931?w=400&auto=format&fit=crop",
           category: "Grocery & Kitchen",
           color: cat.color || "#3b82f6",
           slug: cat.slug,
         }));
-        
+
         setGroceryItems(items);
       } catch (error) {
         console.error("Error fetching grocery subcategories:", error);
@@ -38,7 +41,9 @@ const GroceryKitchenSection = ({ onCategoryClick }) => {
   if (loading) {
     return (
       <div className="py-6 px-4">
-        <h2 className="text-white text-xl font-semibold mb-4">Grocery & Kitchen</h2>
+        <h2 className="text-white text-xl font-semibold mb-4">
+          Grocery & Kitchen
+        </h2>
         <div className="text-gray-400">Loading...</div>
       </div>
     );

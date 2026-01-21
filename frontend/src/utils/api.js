@@ -8,4 +8,7 @@ export {
   clearAuthData,
   isAuthenticated,
   customerProfileAPI,
+  categoryAPI,
+  productAPI,
+  storeAPI,
 } from "../services/api";

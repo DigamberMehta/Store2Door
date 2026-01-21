@@ -1,4 +1,4 @@
-import { apiClient } from './client.js';
+import { apiClient } from "./client.js";
 
 /**
  * Store API Service
@@ -10,8 +10,8 @@ export const storeAPI = {
    * @param {Object} params - Query parameters
    */
   getAll: async (params = {}) => {
-    const response = await apiClient.get('/stores', { params });
-    return response.data;
+    const response = await apiClient.get("/stores", { params });
+    return response.data.data; // Extract data from { success: true, data: [...] }
   },
 
   /**
@@ -20,7 +20,7 @@ export const storeAPI = {
    */
   getById: async (identifier) => {
     const response = await apiClient.get(`/stores/${identifier}`);
-    return response.data;
+    return response.data.data; // Extract data from backend response
   },
 
   /**
@@ -32,7 +32,7 @@ export const storeAPI = {
     const response = await apiClient.get(`/stores/category/${category}`, {
       params,
     });
-    return response.data;
+    return response.data.data; // Extract data from backend response
   },
 
   /**
@@ -40,10 +40,10 @@ export const storeAPI = {
    * @param {number} limit - Number of stores to fetch
    */
   getFeatured: async (limit = 10) => {
-    const response = await apiClient.get('/stores/featured', {
+    const response = await apiClient.get("/stores/featured", {
       params: { limit },
     });
-    return response.data;
+    return response.data.data; // Extract data from backend response
   },
 
   /**
@@ -52,10 +52,10 @@ export const storeAPI = {
    * @param {Object} params - Additional query parameters (page, limit)
    */
   search: async (query, params = {}) => {
-    const response = await apiClient.get('/stores/search', {
+    const response = await apiClient.get("/stores/search", {
       params: { ...params, q: query },
     });
-    return response.data;
+    return response.data.data; // Extract data from backend response
   },
 
   /**
@@ -65,10 +65,10 @@ export const storeAPI = {
    * @param {number} maxDistance - Maximum distance in meters (default: 5000)
    */
   getNearby: async (latitude, longitude, maxDistance = 5000) => {
-    const response = await apiClient.get('/stores/nearby', {
+    const response = await apiClient.get("/stores/nearby", {
       params: { latitude, longitude, maxDistance },
     });
-    return response.data;
+    return response.data.data; // Extract data from backend response
   },
 
   /**
@@ -80,13 +80,13 @@ export const storeAPI = {
       category,
       isOpen,
       featured,
-      sortBy = 'rating',
-      order = 'desc',
+      sortBy = "rating",
+      order = "desc",
       page = 1,
       limit = 20,
     } = filters;
 
-    const response = await apiClient.get('/stores', {
+    const response = await apiClient.get("/stores", {
       params: {
         category,
         isOpen,
@@ -97,6 +97,6 @@ export const storeAPI = {
         limit,
       },
     });
-    return response.data;
+    return response.data.data; // Extract data from backend response
   },
 };

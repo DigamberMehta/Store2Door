@@ -22,14 +22,18 @@ const HomePage = ({ onStoreClick, onCategoryClick }) => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [storesResponse, categoriesResponse] = await Promise.all([
+        // API services return unwrapped data directly
+        const [storesData, categoriesData] = await Promise.all([
           storeAPI.getAll({ limit: 50 }),
           categoryAPI.getAll(),
         ]);
-        setStores(storesResponse.data || []);
-        setCategories(categoriesResponse.data || []);
+
+        setStores(Array.isArray(storesData) ? storesData : []);
+        setCategories(Array.isArray(categoriesData) ? categoriesData : []);
       } catch (error) {
         console.error("Error fetching data:", error);
+        setStores([]);
+        setCategories([]);
       } finally {
         setLoading(false);
       }

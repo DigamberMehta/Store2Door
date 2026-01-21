@@ -1,4 +1,4 @@
-import { apiClient } from './client.js';
+import { apiClient } from "./client.js";
 
 /**
  * Product API Service
@@ -10,8 +10,8 @@ export const productAPI = {
    * @param {Object} params - Query parameters
    */
   getAll: async (params = {}) => {
-    const response = await apiClient.get('/products', { params });
-    return response.data;
+    const response = await apiClient.get("/products", { params });
+    return response.data.data; // Extract data from { success: true, data: [...] }
   },
 
   /**
@@ -20,7 +20,7 @@ export const productAPI = {
    */
   getById: async (identifier) => {
     const response = await apiClient.get(`/products/${identifier}`);
-    return response.data;
+    return response.data.data; // Extract data from backend response
   },
 
   /**
@@ -32,7 +32,7 @@ export const productAPI = {
     const response = await apiClient.get(`/products/category/${categorySlug}`, {
       params,
     });
-    return response.data;
+    return response.data.data; // Extract data from backend response
   },
 
   /**
@@ -41,10 +41,10 @@ export const productAPI = {
    * @param {Object} params - Query parameters
    */
   getByStore: async (storeId, params = {}) => {
-    const response = await apiClient.get('/products', {
+    const response = await apiClient.get("/products", {
       params: { ...params, storeId },
     });
-    return response.data;
+    return response.data.data; // Extract data from backend response
   },
 
   /**
@@ -52,10 +52,10 @@ export const productAPI = {
    * @param {number} limit - Number of products to fetch
    */
   getFeatured: async (limit = 10) => {
-    const response = await apiClient.get('/products/featured', {
+    const response = await apiClient.get("/products/featured", {
       params: { limit },
     });
-    return response.data;
+    return response.data.data; // Extract data from backend response
   },
 
   /**
@@ -63,8 +63,8 @@ export const productAPI = {
    * @param {Object} params - Query parameters (page, limit)
    */
   getOnSale: async (params = {}) => {
-    const response = await apiClient.get('/products/on-sale', { params });
-    return response.data;
+    const response = await apiClient.get("/products/on-sale", { params });
+    return response.data.data; // Extract data from backend response
   },
 
   /**
@@ -73,10 +73,10 @@ export const productAPI = {
    * @param {Object} params - Additional query parameters (page, limit)
    */
   search: async (query, params = {}) => {
-    const response = await apiClient.get('/products/search', {
+    const response = await apiClient.get("/products/search", {
       params: { ...params, q: query },
     });
-    return response.data;
+    return response.data.data; // Extract data from backend response
   },
 
   /**
@@ -92,13 +92,13 @@ export const productAPI = {
       onSale,
       minPrice,
       maxPrice,
-      sortBy = 'createdAt',
-      order = 'desc',
+      sortBy = "createdAt",
+      order = "desc",
       page = 1,
       limit = 20,
     } = filters;
 
-    const response = await apiClient.get('/products', {
+    const response = await apiClient.get("/products", {
       params: {
         category,
         subcategory,
@@ -113,6 +113,6 @@ export const productAPI = {
         limit,
       },
     });
-    return response.data;
+    return response.data.data; // Extract data from backend response
   },
 };

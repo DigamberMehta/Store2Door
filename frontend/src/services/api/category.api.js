@@ -1,4 +1,4 @@
-import { apiClient } from './client.js';
+import { apiClient } from "./client.js";
 
 /**
  * Category API Service
@@ -9,8 +9,8 @@ export const categoryAPI = {
    * Get all parent categories
    */
   getAll: async () => {
-    const response = await apiClient.get('/categories');
-    return response.data;
+    const response = await apiClient.get("/categories");
+    return response.data.data; // Extract data from { success: true, data: [...] }
   },
 
   /**
@@ -19,7 +19,7 @@ export const categoryAPI = {
    */
   getBySlug: async (slug) => {
     const response = await apiClient.get(`/categories/${slug}`);
-    return response.data;
+    return response.data.data; // Extract data from backend response
   },
 
   /**
@@ -27,16 +27,18 @@ export const categoryAPI = {
    * @param {string} parentSlug - Parent category slug
    */
   getSubcategories: async (parentSlug) => {
-    const response = await apiClient.get(`/categories/${parentSlug}/subcategories`);
-    return response.data;
+    const response = await apiClient.get(
+      `/categories/${parentSlug}/subcategories`
+    );
+    return response.data.data; // Extract data from backend response
   },
 
   /**
    * Get featured categories
    */
   getFeatured: async () => {
-    const response = await apiClient.get('/categories/featured');
-    return response.data;
+    const response = await apiClient.get("/categories/featured");
+    return response.data.data; // Extract data from backend response
   },
 
   /**
@@ -44,17 +46,17 @@ export const categoryAPI = {
    * @param {string} query - Search query
    */
   search: async (query) => {
-    const response = await apiClient.get('/categories/search', {
+    const response = await apiClient.get("/categories/search", {
       params: { q: query },
     });
-    return response.data;
+    return response.data.data; // Extract data from backend response
   },
 
   /**
    * Get parent categories only (level 1)
    */
   getParents: async () => {
-    const response = await apiClient.get('/categories');
+    const response = await apiClient.get("/categories");
     return response.data;
   },
 };
