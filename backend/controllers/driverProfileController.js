@@ -239,8 +239,9 @@ export const uploadDocument = asyncHandler(async (req, res) => {
   }
 
   // Check if document is already verified (prevent re-upload of verified documents)
+  // Exception: profilePhoto can be updated unlimited times without verification blocking
   const currentDoc = profile.documents?.[documentType];
-  if (currentDoc?.isVerified) {
+  if (currentDoc?.isVerified && documentType !== 'profilePhoto') {
     deleteLocalFile(req.file.path);
     return res.status(403).json({
       success: false,
@@ -267,11 +268,13 @@ export const uploadDocument = asyncHandler(async (req, res) => {
     }
 
     // Prepare document data
+    // profilePhoto is auto-verified and needs no admin approval
+    const isProfilePhoto = documentType === 'profilePhoto';
     const documentData = {
       imageUrl: uploadResult.url,
       cloudinaryPublicId: uploadResult.publicId,
-      isVerified: false, // Reset verification when new document uploaded
-      status: 'pending', // Set status to pending after upload
+      isVerified: isProfilePhoto, // Auto-verify profile photo
+      status: isProfilePhoto ? 'verified' : 'pending', // Profile photo is instantly verified
       uploadedAt: new Date(),
       rejectionReason: null, // Clear any previous rejection reason
       ...req.body, // Include any additional fields like number, expiryDate, etc.
@@ -321,8 +324,9 @@ export const getDocumentsStatus = asyncHandler(async (req, res) => {
   // If no profile exists, return default documents status
   if (!profile) {
     const defaultDocs = {};
+    // profilePhoto is handled separately via profile upload
     const docTypes = [
-      'profilePhoto', 'vehiclePhoto', 'idDocument', 'workPermit', 'driversLicence',
+      'vehiclePhoto', 'idDocument', 'workPermit', 'driversLicence',
       'proofOfBankingDetails', 'proofOfAddress', 'vehicleLicense', 
       'thirdPartyInsurance', 'vehicleAssessment', 'carrierAgreement'
     ];
@@ -347,8 +351,9 @@ export const getDocumentsStatus = asyncHandler(async (req, res) => {
   }
 
   // Prepare documents status for all document types
+  // profilePhoto is handled separately via profile upload
   const docTypes = [
-    'profilePhoto', 'vehiclePhoto', 'idDocument', 'workPermit', 'driversLicence',
+    'vehiclePhoto', 'idDocument', 'workPermit', 'driversLicence',
     'proofOfBankingDetails', 'proofOfAddress', 'vehicleLicense', 
     'thirdPartyInsurance', 'vehicleAssessment', 'carrierAgreement'
   ];
@@ -369,8 +374,9 @@ export const getDocumentsStatus = asyncHandler(async (req, res) => {
   });
 
   // Check if all required documents are verified
+  // profilePhoto is optional and handled separately
   const requiredDocs = [
-    'profilePhoto', 'vehiclePhoto', 'idDocument', 'driversLicence',
+    'vehiclePhoto', 'idDocument', 'driversLicence',
     'proofOfBankingDetails', 'proofOfAddress', 'vehicleLicense',
     'thirdPartyInsurance', 'vehicleAssessment', 'carrierAgreement'
   ];

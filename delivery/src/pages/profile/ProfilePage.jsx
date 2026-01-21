@@ -26,9 +26,11 @@ const ProfilePage = () => {
   const [showDobModal, setShowDobModal] = useState(false);
   const [showAddressModal, setShowAddressModal] = useState(false);
   const [showBankModal, setShowBankModal] = useState(false);
+  const [showPhotoUploadModal, setShowPhotoUploadModal] = useState(false);
   const [selectedShifts, setSelectedShifts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [profileData, setProfileData] = useState(null);
   const [bankData, setBankData] = useState(null);
   
@@ -140,6 +142,36 @@ const ProfilePage = () => {
     }
   };
 
+  const handlePhotoUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image size should be less than 5MB');
+      return;
+    }
+
+    try {
+      setUploadingPhoto(true);
+      await driverProfileAPI.uploadDocument('profilePhoto', file);
+      toast.success('Profile photo updated successfully!');
+      setShowPhotoUploadModal(false);
+      await fetchProfileData();
+    } catch (error) {
+      console.error('Error uploading profile photo:', error);
+      toast.error(error.response?.data?.message || 'Failed to upload profile photo');
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
   const handleUpdateBank = async () => {
     if (!bankForm.accountHolderName || !bankForm.accountNumber || !bankForm.bankName || !bankForm.branchCode) {
       toast.error("Please fill in all bank details");
@@ -171,7 +203,7 @@ const ProfilePage = () => {
     address: profileData.profile?.address?.street
       ? `${profileData.profile.address.street || ''}, ${profileData.profile.address.city || ''}, ${profileData.profile.address.province || ''} ${profileData.profile.address.postalCode || ''}`.trim().replace(/^,\s*|,\s*$/g, '').replace(/,\s*,/g, ',')
       : null,
-    avatar: profileData.user?.avatar || null,
+    avatar: profileData.profile?.documents?.profilePhoto?.imageUrl || profileData.user?.avatar || null,
     vehicle: profileData.profile?.vehicleDetails?.make
       ? `${profileData.profile.vehicleDetails.make || ''} ${profileData.profile.vehicleDetails.model || ''} • ${profileData.profile.vehicleDetails.registrationNumber || ''}`.trim()
       : null,
@@ -566,6 +598,63 @@ const ProfilePage = () => {
         </div>
       )}
 
+      {/* Photo Upload Modal */}
+      {showPhotoUploadModal && (
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4">
+          <div 
+            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            onClick={() => setShowPhotoUploadModal(false)}
+          />
+          <div className="relative w-full max-w-md bg-zinc-900 border border-white/10 rounded-3xl overflow-hidden animate-in slide-in-from-bottom duration-300">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-lg font-bold">Upload Profile Photo</h3>
+                <button 
+                  onClick={() => setShowPhotoUploadModal(false)}
+                  className="p-2 hover:bg-white/5 rounded-full transition-colors"
+                >
+                  <X className="w-5 h-5 text-zinc-500" />
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="bg-white/5 border border-white/10 rounded-2xl p-6 text-center">
+                  <User className="w-16 h-16 mx-auto mb-3 text-zinc-600" />
+                  <p className="text-sm text-zinc-400 mb-4">Select a clear photo of yourself</p>
+                  
+                  <label className="cursor-pointer">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePhotoUpload}
+                      disabled={uploadingPhoto}
+                      className="hidden"
+                    />
+                    <div className="bg-blue-500 hover:bg-blue-600 disabled:bg-zinc-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors inline-flex items-center gap-2">
+                      {uploadingPhoto ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          <span>Uploading...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Camera className="w-4 h-4" />
+                          <span>Choose Photo</span>
+                        </>
+                      )}
+                    </div>
+                  </label>
+                </div>
+                
+                <p className="text-[10px] text-zinc-500 text-center">
+                  Max file size: 5MB • Supported formats: JPG, PNG, WEBP
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header Profile Section */}
       <div className="bg-gradient-to-b from-blue-300/10 to-transparent pt-10 pb-6 px-4 text-center">
         <div className="relative inline-block mb-3">
@@ -576,7 +665,10 @@ const ProfilePage = () => {
               <User className="w-10 h-10 text-zinc-600" />
             )}
           </div>
-          <button className="absolute bottom-0 right-0 bg-blue-500 p-1.5 rounded-full border-2 border-black active:scale-90 transition-transform">
+          <button 
+            onClick={() => setShowPhotoUploadModal(true)}
+            className="absolute bottom-0 right-0 bg-blue-500 p-1.5 rounded-full border-2 border-black active:scale-90 transition-transform"
+          >
             <Camera className="w-3.5 h-3.5 text-white" />
           </button>
         </div>

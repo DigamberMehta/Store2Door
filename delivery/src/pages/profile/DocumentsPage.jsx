@@ -59,13 +59,6 @@ const DocumentsPage = () => {
 
   const documentList = [
     {
-      id: "profilePhoto",
-      title: "Profile Photo",
-      description: "(photo)",
-      icon: User,
-      required: true
-    },
-    {
       id: "vehiclePhoto",
       title: "Vehicle Photo",
       description: "(photo)",
