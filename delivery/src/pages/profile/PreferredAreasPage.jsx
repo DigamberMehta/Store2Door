@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { driverProfileAPI } from "../../services/api";
+import toast, { Toaster } from 'react-hot-toast';
 import { 
   ArrowLeft, 
   MapPin, 
@@ -14,12 +16,16 @@ import {
 const PreferredAreasPage = () => {
   const navigate = useNavigate();
   const [newArea, setNewArea] = useState("");
-  const [selectedAreas, setSelectedAreas] = useState(["South Delhi", "Gurgaon"]);
+  const [selectedAreas, setSelectedAreas] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   
   const suggestedAreas = [
     "North Delhi",
     "East Delhi",
     "West Delhi",
+    "South Delhi",
+    "Gurgaon",
     "Noida",
     "Dwarka",
     "Rohini",
@@ -27,6 +33,39 @@ const PreferredAreasPage = () => {
     "Saket",
     "DLF Phase 3"
   ];
+
+  // Fetch existing preferred areas
+  useEffect(() => {
+    fetchPreferredAreas();
+  }, []);
+
+  const fetchPreferredAreas = async () => {
+    try {
+      setLoading(true);
+      const response = await driverProfileAPI.getProfile();
+      const areas = response.data.profile?.serviceAreas || [];
+      setSelectedAreas(areas);
+    } catch (error) {
+      console.error("Error fetching preferred areas:", error);
+      toast.error("Failed to load preferred areas");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const savePreferredAreas = async () => {
+    try {
+      setSaving(true);
+      await driverProfileAPI.updateWorkAreas(selectedAreas);
+      toast.success("Preferred areas updated successfully!");
+      setTimeout(() => navigate(-1), 500);
+    } catch (error) {
+      console.error("Error saving preferred areas:", error);
+      toast.error(error.response?.data?.message || "Failed to save preferred areas");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const toggleArea = (area) => {
     if (selectedAreas.includes(area)) {
@@ -45,6 +84,8 @@ const PreferredAreasPage = () => {
 
   return (
     <div className="bg-black min-h-screen text-white flex flex-col">
+      <Toaster position="top-center" />
+      
       {/* Header */}
       <div className="pt-8 px-4 pb-4 bg-zinc-900/50 backdrop-blur-xl border-b border-white/5 flex items-center gap-4 sticky top-0 z-10">
         <button 
@@ -59,6 +100,12 @@ const PreferredAreasPage = () => {
         </div>
       </div>
 
+      {loading ? (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+        </div>
+      ) : (
+        <>
       <div className="p-4 space-y-6 flex-1">
         {/* Search/Add Section */}
         <div className="space-y-3">
@@ -143,17 +190,31 @@ const PreferredAreasPage = () => {
           </div>
         </div>
       </div>
+        </>
+      )}
 
       {/* Save Button */}
+      {!loading && (
       <div className="p-4 pb-10 bg-gradient-to-t from-black to-transparent">
         <button 
-          onClick={() => navigate(-1)}
-          className="w-full bg-blue-300 text-black py-3.5 rounded-2xl font-bold active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-300/10"
+          onClick={savePreferredAreas}
+          disabled={saving}
+          className="w-full bg-blue-300 hover:bg-blue-400 disabled:bg-zinc-700 disabled:text-zinc-500 text-black py-3.5 rounded-2xl font-bold active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-300/10"
         >
-          <CheckCircle2 className="w-4 h-4" />
-          <span className="text-sm font-extrabold">CONFIRM SELECTIONS</span>
+          {saving ? (
+            <>
+              <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+              <span className="text-sm font-extrabold">SAVING...</span>
+            </>
+          ) : (
+            <>
+              <CheckCircle2 className="w-4 h-4" />
+              <span className="text-sm font-extrabold">CONFIRM SELECTIONS</span>
+            </>
+          )}
         </button>
       </div>
+      )}
     </div>
   );
 };
