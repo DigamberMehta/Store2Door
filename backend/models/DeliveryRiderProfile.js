@@ -15,7 +15,6 @@ const vehicleSchema = new mongoose.Schema(
         "electric_bike",
         "walking",
       ],
-      required: [true, "Vehicle type is required"],
     },
     make: {
       type: String,
@@ -68,6 +67,203 @@ const vehicleSchema = new mongoose.Schema(
 // Documents sub-schema
 const documentsSchema = new mongoose.Schema(
   {
+    profilePhoto: {
+      imageUrl: String,
+      cloudinaryPublicId: String,
+      isVerified: {
+        type: Boolean,
+        default: false,
+      },
+      status: {
+        type: String,
+        enum: ["not_uploaded", "pending", "verified", "rejected"],
+        default: "not_uploaded",
+      },
+      rejectionReason: String,
+      uploadedAt: Date,
+    },
+    vehiclePhoto: {
+      imageUrl: String,
+      cloudinaryPublicId: String,
+      isVerified: {
+        type: Boolean,
+        default: false,
+      },
+      status: {
+        type: String,
+        enum: ["not_uploaded", "pending", "verified", "rejected"],
+        default: "not_uploaded",
+      },
+      rejectionReason: String,
+      uploadedAt: Date,
+    },
+    idDocument: {
+      number: {
+        type: String,
+        trim: true,
+        maxlength: 50,
+      },
+      imageUrl: String,
+      cloudinaryPublicId: String,
+      isVerified: {
+        type: Boolean,
+        default: false,
+      },
+      status: {
+        type: String,
+        enum: ["not_uploaded", "pending", "verified", "rejected"],
+        default: "not_uploaded",
+      },
+      rejectionReason: String,
+      uploadedAt: Date,
+    },
+    workPermit: {
+      number: {
+        type: String,
+        trim: true,
+        maxlength: 50,
+      },
+      expiryDate: Date,
+      imageUrl: String,
+      cloudinaryPublicId: String,
+      isVerified: {
+        type: Boolean,
+        default: false,
+      },
+      status: {
+        type: String,
+        enum: ["not_uploaded", "pending", "verified", "rejected"],
+        default: "not_uploaded",
+      },
+      rejectionReason: String,
+      uploadedAt: Date,
+    },
+    driversLicence: {
+      number: {
+        type: String,
+        trim: true,
+        maxlength: 50,
+      },
+      expiryDate: Date,
+      imageUrl: String,
+      cloudinaryPublicId: String,
+      isVerified: {
+        type: Boolean,
+        default: false,
+      },
+      status: {
+        type: String,
+        enum: ["not_uploaded", "pending", "verified", "rejected"],
+        default: "not_uploaded",
+      },
+      rejectionReason: String,
+      uploadedAt: Date,
+    },
+    proofOfBankingDetails: {
+      imageUrl: String,
+      cloudinaryPublicId: String,
+      isVerified: {
+        type: Boolean,
+        default: false,
+      },
+      status: {
+        type: String,
+        enum: ["not_uploaded", "pending", "verified", "rejected"],
+        default: "not_uploaded",
+      },
+      rejectionReason: String,
+      uploadedAt: Date,
+    },
+    proofOfAddress: {
+      imageUrl: String,
+      cloudinaryPublicId: String,
+      isVerified: {
+        type: Boolean,
+        default: false,
+      },
+      status: {
+        type: String,
+        enum: ["not_uploaded", "pending", "verified", "rejected"],
+        default: "not_uploaded",
+      },
+      rejectionReason: String,
+      uploadedAt: Date,
+    },
+    vehicleLicense: {
+      number: {
+        type: String,
+        trim: true,
+        maxlength: 50,
+      },
+      expiryDate: Date,
+      imageUrl: String,
+      cloudinaryPublicId: String,
+      isVerified: {
+        type: Boolean,
+        default: false,
+      },
+      status: {
+        type: String,
+        enum: ["not_uploaded", "pending", "verified", "rejected"],
+        default: "not_uploaded",
+      },
+      rejectionReason: String,
+      uploadedAt: Date,
+    },
+    thirdPartyInsurance: {
+      policyNumber: {
+        type: String,
+        trim: true,
+        maxlength: 50,
+      },
+      expiryDate: Date,
+      imageUrl: String,
+      cloudinaryPublicId: String,
+      isVerified: {
+        type: Boolean,
+        default: false,
+      },
+      status: {
+        type: String,
+        enum: ["not_uploaded", "pending", "verified", "rejected"],
+        default: "not_uploaded",
+      },
+      rejectionReason: String,
+      uploadedAt: Date,
+    },
+    vehicleAssessment: {
+      imageUrl: String,
+      cloudinaryPublicId: String,
+      isVerified: {
+        type: Boolean,
+        default: false,
+      },
+      status: {
+        type: String,
+        enum: ["not_uploaded", "pending", "verified", "rejected"],
+        default: "not_uploaded",
+      },
+      rejectionReason: String,
+      uploadedAt: Date,
+      assessmentDate: Date,
+    },
+    carrierAgreement: {
+      imageUrl: String,
+      cloudinaryPublicId: String,
+      isVerified: {
+        type: Boolean,
+        default: false,
+      },
+      status: {
+        type: String,
+        enum: ["not_uploaded", "pending", "verified", "rejected"],
+        default: "not_uploaded",
+      },
+      rejectionReason: String,
+      uploadedAt: Date,
+      signedDate: Date,
+    },
+    // Legacy fields for backward compatibility
     drivingLicense: {
       number: {
         type: String,
@@ -152,18 +348,15 @@ const emergencyContactSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: [true, "Emergency contact name is required"],
       trim: true,
       maxlength: 100,
     },
     phone: {
       type: String,
-      required: [true, "Emergency contact phone is required"],
       trim: true,
     },
     relationship: {
       type: String,
-      required: [true, "Relationship is required"],
       trim: true,
       maxlength: 50,
     },
@@ -303,7 +496,6 @@ const deliveryRiderProfileSchema = new mongoose.Schema(
     // Personal Information
     dateOfBirth: {
       type: Date,
-      required: [true, "Date of birth is required"],
     },
     gender: {
       type: String,
@@ -312,31 +504,26 @@ const deliveryRiderProfileSchema = new mongoose.Schema(
     address: {
       street: {
         type: String,
-        required: [true, "Street address is required"],
         trim: true,
         maxlength: 200,
       },
       city: {
         type: String,
-        required: [true, "City is required"],
         trim: true,
         maxlength: 100,
       },
       state: {
         type: String,
-        required: [true, "State is required"],
         trim: true,
         maxlength: 100,
       },
       zipCode: {
         type: String,
-        required: [true, "Zip code is required"],
         trim: true,
         maxlength: 20,
       },
       country: {
         type: String,
-        required: [true, "Country is required"],
         trim: true,
         default: "US",
       },
@@ -354,8 +541,11 @@ const deliveryRiderProfileSchema = new mongoose.Schema(
     // Emergency Contact
     emergencyContact: emergencyContactSchema,
 
-    // Work Schedule
-    workSchedule: [workScheduleSchema],
+    // Work Schedule - flexible to support both day-based and shift-based formats
+    workSchedule: {
+      type: mongoose.Schema.Types.Mixed,
+      default: []
+    },
 
     // Current Status
     status: {
@@ -398,22 +588,11 @@ const deliveryRiderProfileSchema = new mongoose.Schema(
       },
     },
 
-    // Service Areas
-    serviceAreas: [
-      {
-        city: {
-          type: String,
-          required: true,
-          trim: true,
-        },
-        zipCodes: [String],
-        radius: {
-          type: Number, // in kilometers
-          min: 1,
-          max: 50,
-        },
-      },
-    ],
+    // Service Areas - flexible format to store area names as strings
+    serviceAreas: {
+      type: mongoose.Schema.Types.Mixed,
+      default: []
+    },
 
     // Performance and Statistics
     stats: deliveryStatsSchema,
