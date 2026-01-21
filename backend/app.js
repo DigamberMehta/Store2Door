@@ -24,7 +24,7 @@ app.use(
       "http://localhost:5173", // Frontend customer app
       "http://localhost:5174", // Delivery rider app
       "http://localhost:5175", // Admin/Store app (future)
-      process.env.FRONTEND_URL
+      process.env.FRONTEND_URL,
     ].filter(Boolean),
     credentials: true,
   })
