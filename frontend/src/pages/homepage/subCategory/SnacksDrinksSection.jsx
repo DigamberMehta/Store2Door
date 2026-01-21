@@ -1,56 +1,46 @@
+import { useState, useEffect } from "react";
 import SubCategorySection from "./SubCategorySection";
+import { categoryAPI } from "../../../utils/api";
 
 const SnacksDrinksSection = ({ onCategoryClick }) => {
-  const snacksItems = [
-    {
-      id: 1,
-      name: "Chips & Namkeen",
-      image:
-        "https://images.unsplash.com/photo-1600952841320-db92ec4047ca?w=400&auto=format&fit=crop",
-    },
-    {
-      id: 2,
-      name: "Sweets & Cookies",
-      image:
-        "https://images.unsplash.com/photo-1499636136210-6f4ee915583e?w=400&auto=format&fit=crop",
-    },
-    {
-      id: 3,
-      name: "Drinks & Juices",
-      image:
-        "https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=400&auto=format&fit=crop",
-    },
-    {
-      id: 4,
-      name: "Tea, Coffee & Milk Drinks",
-      image:
-        "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400&auto=format&fit=crop",
-    },
-    {
-      id: 5,
-      name: "Instant Food",
-      image:
-        "https://images.unsplash.com/photo-1620706857370-e1b9770e8bb1?w=400&auto=format&fit=crop",
-    },
-    {
-      id: 6,
-      name: "Sauces & Spreads",
-      image:
-        "https://images.unsplash.com/photo-1472476443507-c7a5948772fc?w=400&auto=format&fit=crop",
-    },
-    {
-      id: 7,
-      name: "Paan Corner",
-      image:
-        "https://images.unsplash.com/photo-1608452964553-9b4d97b2752f?w=400&auto=format&fit=crop",
-    },
-    {
-      id: 8,
-      name: "Ice Creams & More",
-      image:
-        "https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=400&auto=format&fit=crop",
-    },
-  ];
+  const [snacksItems, setSnacksItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchSubcategories = async () => {
+      try {
+        setLoading(true);
+        const response = await categoryAPI.getSubcategories("snacks-drinks");
+        
+        const items = response.data.map((cat) => ({
+          id: cat._id,
+          name: cat.name,
+          image: cat.image || "https://images.unsplash.com/photo-1600952841320-db92ec4047ca?w=400&auto=format&fit=crop",
+          category: "Snacks & Drinks",
+          color: cat.color || "#f59e0b",
+          slug: cat.slug,
+        }));
+        
+        setSnacksItems(items);
+      } catch (error) {
+        console.error("Error fetching snacks subcategories:", error);
+        setSnacksItems([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSubcategories();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="py-6 px-4">
+        <h2 className="text-white text-xl font-semibold mb-4">Snacks & Drinks</h2>
+        <div className="text-gray-400">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <SubCategorySection

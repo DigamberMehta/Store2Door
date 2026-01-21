@@ -8,3 +8,6 @@ export {
   isAuthenticated,
 } from "./auth.api";
 export { customerProfileAPI } from "./profile.api";
+export { categoryAPI } from "./category.api";
+export { productAPI } from "./product.api";
+export { storeAPI } from "./store.api";

@@ -1,56 +1,46 @@
+import { useState, useEffect } from "react";
 import SubCategorySection from "./SubCategorySection";
+import { categoryAPI } from "../../../utils/api";
 
 const HomeLifestyleSection = ({ onCategoryClick }) => {
-  const homeItems = [
-    {
-      id: 1,
-      name: "Cleaning Essentials",
-      image:
-        "https://images.unsplash.com/photo-1563453392212-326f5e854473?w=400&auto=format&fit=crop",
-    },
-    {
-      id: 2,
-      name: "Home & Office",
-      image:
-        "https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?w=400&auto=format&fit=crop",
-    },
-    {
-      id: 3,
-      name: "Pet Care",
-      image:
-        "https://images.unsplash.com/photo-1450778869180-41d0601e046e?w=400&auto=format&fit=crop",
-    },
-    {
-      id: 4,
-      name: "Stationery",
-      image:
-        "https://images.unsplash.com/photo-1455390582262-044cdead277a?w=400&auto=format&fit=crop",
-    },
-    {
-      id: 5,
-      name: "Kitchen Accessories",
-      image:
-        "https://images.unsplash.com/photo-1556911220-bff31c812dba?w=400&auto=format&fit=crop",
-    },
-    {
-      id: 6,
-      name: "Electricals",
-      image:
-        "https://images.unsplash.com/photo-1558089687-7b1e15e904d0?w=400&auto=format&fit=crop",
-    },
-    {
-      id: 7,
-      name: "Home Decor",
-      image:
-        "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=400&auto=format&fit=crop",
-    },
-    {
-      id: 8,
-      name: "Garden & Outdoor",
-      image:
-        "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400&auto=format&fit=crop",
-    },
-  ];
+  const [homeItems, setHomeItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchSubcategories = async () => {
+      try {
+        setLoading(true);
+        const response = await categoryAPI.getSubcategories("home-furniture");
+        
+        const items = response.data.map((cat) => ({
+          id: cat._id,
+          name: cat.name,
+          image: cat.image || "https://images.unsplash.com/photo-1563453392212-326f5e854473?w=400&auto=format&fit=crop",
+          category: "Home & Furniture",
+          color: cat.color || "#8b5cf6",
+          slug: cat.slug,
+        }));
+        
+        setHomeItems(items);
+      } catch (error) {
+        console.error("Error fetching home subcategories:", error);
+        setHomeItems([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSubcategories();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="py-6 px-4">
+        <h2 className="text-white text-xl font-semibold mb-4">Home & Lifestyle</h2>
+        <div className="text-gray-400">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <SubCategorySection
