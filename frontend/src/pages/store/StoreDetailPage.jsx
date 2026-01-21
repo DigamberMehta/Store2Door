@@ -1,29 +1,78 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { HiOutlineArrowLeft, HiOutlineSearch } from "react-icons/hi";
 import { Star } from "lucide-react";
-import { storesData } from "../homepage/store/storesData";
+import { storeAPI, productAPI, categoryAPI } from "../../utils/api";
 
 const StoreDetailPage = () => {
   const { storeName } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState(0);
+  const [store, setStore] = useState(location.state?.store || null);
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([{ id: 0, name: "All" }]);
+  const [loading, setLoading] = useState(true);
 
-  // Get store from location state or find by store name slug or ID
-  const store =
-    location.state?.store ||
-    storesData.find((s) => {
-      const slug = s.name.toLowerCase().replace(/\s+/g, "-");
-      const param = storeName?.toLowerCase();
-      return (
-        slug === param || slug.startsWith(param) || s.id.toString() === param
-      );
-    });
+  useEffect(() => {
+    const fetchStoreData = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch store if not in location state
+        let storeData = store;
+        if (!storeData) {
+          const response = await storeAPI.getById(storeName);
+          storeData = response.data;
+          setStore(storeData);
+        }
+
+        // Fetch products for this store
+        if (storeData) {
+          const productsResponse = await productAPI.getByStore(storeData._id || storeData.id, {
+            limit: 50,
+          });
+          setProducts(productsResponse.data || []);
+
+          // Extract unique categories from products
+          const uniqueCategories = [...new Set(productsResponse.data?.map(p => p.subcategory) || [])];
+          const categoryList = [
+            { id: 0, name: "All" },
+            ...uniqueCategories.map((cat, index) => ({ id: index + 1, name: cat })),
+          ];
+          setCategories(categoryList);
+        }
+      } catch (error) {
+        console.error("Error fetching store data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStoreData();
+  }, [storeName, store]);
 
   const handleBack = () => {
     navigate(-1);
   };
+
+  // Filter products based on category selection
+  const filteredProducts = products.filter((product) => {
+    const matchesCategory =
+      selectedCategory === 0 ||
+      product.subcategory === categories[selectedCategory]?.name;
+    return matchesCategory;
+  });
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-lg">Loading store...</div>
+        </div>
+      </div>
+    );
+  }
 
   if (!store) {
     return (
@@ -41,132 +90,21 @@ const StoreDetailPage = () => {
     );
   }
 
-  // Mock categories and products for the store
-  const categories = [
-    { id: 1, name: "All" },
-    { id: 2, name: "Milk" },
-    { id: 3, name: "Bread" },
-    { id: 4, name: "Snacks" },
-    { id: 5, name: "Beverages" },
-  ];
-
-  const allProducts = [
-    {
-      id: 1,
-      name: "Amul Gold Full Cream Milk",
-      price: 28,
-      originalPrice: null,
-      weight: "500 ml",
-      rating: 4.5,
-      reviewCount: "240.4k",
-      image:
-        "https://images.unsplash.com/photo-1550583724-12558182c603?w=200&q=80",
-      inStock: true,
-      boughtEarlier: true,
-      category: "Milk",
-    },
-    {
-      id: 2,
-      name: "Amul Moti Toned Milk (90 Days Shelf Life)",
-      price: 32,
-      originalPrice: null,
-      weight: "450 ml",
-      rating: 4.4,
-      reviewCount: "66.9k",
-      image:
-        "https://images.unsplash.com/photo-1563636619-e9143da7973b?w=200&q=80",
-      inStock: true,
-      boughtEarlier: true,
-      category: "Milk",
-    },
-    {
-      id: 3,
-      name: "Verka Standard Toned Milk",
-      price: 63,
-      originalPrice: null,
-      weight: "1 l",
-      rating: 4.3,
-      reviewCount: "89.3k",
-      image:
-        "https://images.unsplash.com/photo-1600788907416-456578634209?w=200&q=80",
-      inStock: true,
-      boughtEarlier: true,
-      category: "Milk",
-    },
-    {
-      id: 4,
-      name: "Amul Shakti Milk (Fresh)",
-      price: 26,
-      originalPrice: null,
-      weight: "500 ml",
-      rating: 4.4,
-      reviewCount: "21 MINS",
-      image:
-        "https://images.unsplash.com/photo-1628088062854-d1870b4553da?w=200&q=80",
-      inStock: true,
-      category: "Milk",
-    },
-    {
-      id: 5,
-      name: "Verka Double Toned Milk",
-      price: 26,
-      originalPrice: null,
-      weight: "500 ml",
-      rating: 4.2,
-      reviewCount: "23 MINS",
-      image:
-        "https://images.unsplash.com/photo-1623065422902-30a2d299bbe4?w=200&q=80",
-      inStock: true,
-      category: "Milk",
-    },
-    {
-      id: 6,
-      name: "Verka Full Cream Milk",
-      price: 69,
-      originalPrice: null,
-      weight: "1 l",
-      rating: 4.5,
-      reviewCount: "21 MINS",
-      image:
-        "https://images.unsplash.com/photo-1550583724-b2692b85b150?w=200&q=80",
-      inStock: true,
-      category: "Milk",
-    },
-    {
-      id: 7,
-      name: "Organic Brown Bread",
-      price: 45,
-      originalPrice: 50,
-      weight: "400 g",
-      rating: 4.6,
-      reviewCount: "5.2k",
-      image:
-        "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=200&q=80",
-      inStock: true,
-      category: "Bread",
-    },
-    {
-      id: 8,
-      name: "Farm Fresh Eggs",
-      price: 90,
-      originalPrice: 100,
-      weight: "12 pcs",
-      rating: 4.7,
-      reviewCount: "12.4k",
-      image:
-        "https://images.unsplash.com/photo-1506976785307-8732e854ad03?w=200&q=80",
-      inStock: true,
-      category: "Bread",
-    },
-  ];
-
-  // Filter products based on search query and category
-  const filteredProducts = allProducts.filter((product) => {
-    const matchesCategory =
-      selectedCategory === 0 ||
-      product.category === categories[selectedCategory].name;
-    return matchesCategory;
-  });
+  if (!store) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-lg font-bold mb-4">Store not found</h2>
+          <button
+            onClick={handleBack}
+            className="bg-[rgb(49,134,22)] text-white px-4 py-2 rounded-xl text-sm"
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-black text-white pb-20">
@@ -252,11 +190,11 @@ const StoreDetailPage = () => {
           <div className="grid grid-cols-3 gap-2">
             {filteredProducts.map((product) => (
               <div
-                key={product.id}
+                key={product._id || product.id}
                 className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-2 relative flex flex-col transition-all duration-200 hover:bg-white/10 hover:border-white/20 active:scale-95"
                 onClick={() =>
                   navigate(
-                    `/product/${product.name
+                    `/product/${product.slug || product.name
                       .toLowerCase()
                       .replace(/\s+/g, "-")}/info`
                   )
@@ -265,7 +203,7 @@ const StoreDetailPage = () => {
                 {/* Product Image */}
                 <div className="w-full aspect-square bg-white/5 rounded-lg overflow-hidden mb-2">
                   <img
-                    src={product.image}
+                    src={product.images?.[0] || product.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&q=80"}
                     alt={product.name}
                     className="w-full h-full object-cover"
                   />
@@ -278,7 +216,7 @@ const StoreDetailPage = () => {
                   </h3>
 
                   <div className="text-[8px] text-zinc-500 mb-1">
-                    {product.weight}
+                    {product.unit || product.weight}
                   </div>
 
                   {/* Rating */}
@@ -288,7 +226,7 @@ const StoreDetailPage = () => {
                         <Star
                           key={i}
                           className={`w-2 h-2 ${
-                            i < Math.floor(product.rating)
+                            i < Math.floor(product.averageRating || product.rating || 0)
                               ? "fill-yellow-400 text-yellow-400"
                               : "text-white/20"
                           }`}
@@ -296,7 +234,7 @@ const StoreDetailPage = () => {
                       ))}
                     </div>
                     <span className="text-white/40 text-[8px]">
-                      ({product.reviewCount})
+                      ({product.totalReviews || product.reviewCount || 0})
                     </span>
                   </div>
 

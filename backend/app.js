@@ -6,6 +6,9 @@ import userRoutes from "./routes/userRoutes.js";
 import customerProfileRoutes from "./routes/customerProfileRoutes.js";
 import driverAuthRoutes from "./routes/driverAuthRoutes.js";
 import driverProfileRoutes from "./routes/driverProfileRoutes.js";
+import categoryRoutes from "./routes/categoryRoutes.js";
+import productRoutes from "./routes/productRoutes.js";
+import storeRoutes from "./routes/storeRoutes.js";
 import { errorHandler, notFound } from "./middleware/validation.js";
 
 // Load environment variables
@@ -55,12 +58,18 @@ app.get("/api/", (req, res) => {
     endpoints: {
       users: "/api/users",
       customerProfile: "/api/customer-profile",
+      categories: "/api/categories",
+      products: "/api/products",
+      stores: "/api/stores",
       health: "/api/health",
     },
     documentation: "/api/docs", // TODO: Add API documentation
   });
 });
 
+app.use("/api/categories", categoryRoutes);
+app.use("/api/products", productRoutes);
+app.use("/api/stores", storeRoutes);
 // Routes
 app.use("/api/users", userRoutes);
 app.use("/api/customer-profile", customerProfileRoutes);
