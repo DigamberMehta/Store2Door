@@ -1,6 +1,8 @@
 import Product from "../models/Product.js";
 import Category from "../models/Category.js";
 import { asyncHandler } from "../middleware/validation.js";
+import { expandQueryWithSynonyms } from "../config/synonyms.js";
+import fuzzysort from "fuzzysort";
 
 /**
  * @desc Get all products with filters
@@ -277,5 +279,119 @@ export const searchProducts = asyncHandler(async (req, res) => {
       limit: parseInt(limit),
       pages: Math.ceil(total / parseInt(limit)),
     },
+  });
+});
+
+/**
+ * @desc Get store products with search context prioritization
+ * @route GET /api/products/store/:storeId/context
+ * @access Public
+ */
+export const getStoreProductsWithContext = asyncHandler(async (req, res) => {
+  const { storeId } = req.params;
+  const { query = "", category = "", limit = 50 } = req.query;
+
+  // Fetch all active products from this store
+  const allProducts = await Product.find({
+    storeId,
+    isActive: true,
+    isAvailable: true,
+  })
+    .select("name description shortDescription category subcategory price images tags averageRating totalSold")
+    .lean();
+
+  if (!allProducts.length) {
+    return res.status(200).json({
+      success: true,
+      data: {
+        matchingProducts: [],
+        categoryProducts: [],
+        otherProducts: [],
+        searchContext: { query, category },
+      },
+    });
+  }
+
+  let matchingProducts = [];
+  let categoryProducts = [];
+  let otherProducts = [];
+
+  if (query && query.trim()) {
+    // Expand query with synonyms
+    const queryVariations = expandQueryWithSynonyms(query.toLowerCase().trim());
+    const searchTerms = queryVariations.join(" ");
+
+    // Use fuzzy matching to find products that match the search query
+    allProducts.forEach(product => {
+      // Check if product matches the search query
+      const nameMatch = fuzzysort.single(query, product.name);
+      const descMatch = fuzzysort.single(query, product.description || "");
+      const tagsMatch = product.tags ? fuzzysort.go(query, product.tags, { threshold: -5000 }) : [];
+      
+      const bestScore = Math.max(
+        nameMatch?.score || -Infinity,
+        descMatch?.score || -Infinity,
+        tagsMatch.length > 0 ? tagsMatch[0].score : -Infinity
+      );
+
+      // If product matches search query (high fuzzy score or contains query terms)
+      const containsQuery = product.name.toLowerCase().includes(query.toLowerCase()) ||
+        product.description?.toLowerCase().includes(query.toLowerCase()) ||
+        product.tags?.some(tag => tag.toLowerCase().includes(query.toLowerCase()));
+
+      if (bestScore > -5000 || containsQuery) {
+        matchingProducts.push({ ...product, matchScore: bestScore });
+      } else if (category && product.category === category) {
+        categoryProducts.push(product);
+      } else if (category && product.subcategory === category) {
+        categoryProducts.push(product);
+      } else {
+        otherProducts.push(product);
+      }
+    });
+
+    // Sort matching products by relevance
+    matchingProducts.sort((a, b) => {
+      // Prioritize exact prefix matches
+      const aPrefix = a.name.toLowerCase().startsWith(query.toLowerCase());
+      const bPrefix = b.name.toLowerCase().startsWith(query.toLowerCase());
+      if (aPrefix && !bPrefix) return -1;
+      if (!aPrefix && bPrefix) return 1;
+      
+      // Then by match score
+      return b.matchScore - a.matchScore;
+    });
+
+    // Remove matchScore before sending to client
+    matchingProducts = matchingProducts.map(({ matchScore, ...product }) => product);
+  } else if (category) {
+    // If only category is provided (no search query)
+    allProducts.forEach(product => {
+      if (product.category === category || product.subcategory === category) {
+        categoryProducts.push(product);
+      } else {
+        otherProducts.push(product);
+      }
+    });
+  } else {
+    // No search context - return all products as "other"
+    otherProducts = allProducts;
+  }
+
+  // Limit results
+  const limitNum = parseInt(limit);
+  const response = {
+    matchingProducts: matchingProducts.slice(0, limitNum),
+    categoryProducts: categoryProducts.slice(0, limitNum - matchingProducts.length),
+    otherProducts: otherProducts.slice(0, limitNum - matchingProducts.length - categoryProducts.length),
+    searchContext: { query, category },
+    totalMatching: matchingProducts.length,
+    totalCategory: categoryProducts.length,
+    totalOther: otherProducts.length,
+  };
+
+  res.status(200).json({
+    success: true,
+    data: response,
   });
 });
