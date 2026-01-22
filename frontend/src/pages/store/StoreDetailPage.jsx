@@ -290,6 +290,38 @@ const StoreDetailPage = () => {
         </div>
       </div>
 
+      {/* Subcategory Navigation */}
+      {subcategories.length > 0 && (
+        <div className="sticky top-[60px] z-40 bg-black/80 backdrop-blur-xl border-b border-white/5 py-3">
+          <div className="flex gap-2 overflow-x-auto px-2 scrollbar-none">
+            {subcategories.map((subcategory) => (
+              <button
+                key={subcategory}
+                onClick={() => {
+                  const element = document.getElementById(`section-${subcategory}`);
+                  if (element) {
+                    const headerOffset = 120;
+                    const elementPosition = element.getBoundingClientRect().top;
+                    const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+                    window.scrollTo({
+                      top: offsetPosition,
+                      behavior: "smooth"
+                    });
+                  }
+                }}
+                className={`px-4 py-1.5 rounded-full text-[11px] font-bold whitespace-nowrap transition-all border ${
+                  fromSubcategory === subcategory
+                    ? "bg-blue-600 border-blue-600 text-white"
+                    : "bg-white/5 border-white/10 text-zinc-400 hover:bg-white/10"
+                }`}
+              >
+                {subcategory}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Products Section */}
       <div className="px-2 pt-4 pb-6">
         {subcategories.length === 0 ? (
@@ -302,7 +334,7 @@ const StoreDetailPage = () => {
           </div>
         ) : (
           subcategories.map((subcategory) => (
-            <div key={subcategory} className="mb-6">
+            <div key={subcategory} id={`section-${subcategory}`} className="mb-6 scroll-mt-32">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-[15px] font-black text-white">
                   {subcategory}

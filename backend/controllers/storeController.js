@@ -1,6 +1,9 @@
 import Store from "../models/Store.js";
+import Product from "../models/Product.js";
 import mongoose from "mongoose";
 import { asyncHandler } from "../middleware/validation.js";
+import fuzzysort from "fuzzysort";
+import { expandQueryWithSynonyms } from "../config/synonyms.js";
 
 /**
  * @desc Get all stores with filters
@@ -167,25 +170,86 @@ export const searchStores = asyncHandler(async (req, res) => {
   }
 
   const skip = (parseInt(page) - 1) * parseInt(limit);
-  const searchRegex = new RegExp(q, "i");
+  
+  // Expand query with synonyms for better results
+  const queryVariations = expandQueryWithSynonyms(q);
+  
+  // Create OR conditions for all query variations
+  const queryConditions = queryVariations.map(variation => ({
+    $or: [
+      { name: { $regex: variation, $options: 'i' } },
+      { description: { $regex: variation, $options: 'i' } },
+      { category: { $regex: variation, $options: 'i' } },
+      { tags: { $regex: variation, $options: 'i' } }
+    ]
+  }));
 
+  // 1. Find products matching the query with synonyms to get their store IDs
+  const matchingProducts = await Product.find({
+    isActive: true,
+    $or: queryConditions
+  }).select("storeId name");
+
+  const productStoreIds = [...new Set(matchingProducts.map((p) => p.storeId.toString()))];
+
+  // 2. Build store query: matching store details OR selling matching products
   const query = {
     isActive: true,
     $or: [
-      { name: searchRegex },
-      { description: searchRegex },
-      { categories: searchRegex },
+      { _id: { $in: productStoreIds } },
+      ...queryConditions
     ],
   };
 
-  const [stores, total] = await Promise.all([
-    Store.find(query)
-      .select("-__v")
-      .sort({ rating: -1, totalOrders: -1 })
-      .skip(skip)
-      .limit(parseInt(limit)),
-    Store.countDocuments(query),
-  ]);
+  const allStores = await Store.find(query)
+    .select("-__v")
+    .lean();
+
+  // 3. Apply fuzzy matching and ranking
+  const storesWithScore = allStores.map(store => {
+    const nameMatch = fuzzysort.single(q, store.name);
+    const descMatch = fuzzysort.single(q, store.description || '');
+    const categoryMatch = fuzzysort.single(q, store.category || '');
+    
+    // Check if store carries a matching product
+    const hasMatchingProduct = productStoreIds.includes(store._id.toString());
+    
+    return {
+      ...store,
+      fuzzyScore: Math.max(
+        nameMatch?.score || -Infinity,
+        descMatch?.score || -Infinity,
+        categoryMatch?.score || -Infinity
+      ),
+      hasMatchingProduct
+    };
+  });
+
+  // 4. Sort by relevance (product match, then prefix, then fuzzy score, then rating)
+  const sortedStores = storesWithScore
+    .sort((a, b) => {
+      // Prioritize stores with matching products
+      if (a.hasMatchingProduct && !b.hasMatchingProduct) return -1;
+      if (!a.hasMatchingProduct && b.hasMatchingProduct) return 1;
+      
+      // Then prefix matches
+      const aPrefix = a.name.toLowerCase().startsWith(q.toLowerCase());
+      const bPrefix = b.name.toLowerCase().startsWith(q.toLowerCase());
+      if (aPrefix && !bPrefix) return -1;
+      if (!aPrefix && bPrefix) return 1;
+      
+      // Then fuzzy score
+      if (Math.abs(b.fuzzyScore - a.fuzzyScore) > 100) {
+        return b.fuzzyScore - a.fuzzyScore;
+      }
+      
+      // Finally by rating and orders
+      return (b.rating || 0) - (a.rating || 0) || (b.totalOrders || 0) - (a.totalOrders || 0);
+    });
+
+  // 5. Paginate
+  const total = sortedStores.length;
+  const stores = sortedStores.slice(skip, skip + parseInt(limit));
 
   res.status(200).json({
     success: true,

@@ -12,8 +12,6 @@ import { CategoryFilter } from "../pages/homepage/category";
 import { customerProfileAPI } from "../services/api";
 
 const Header = ({
-  searchQuery,
-  setSearchQuery,
   selectedCategory,
   setSelectedCategory,
 }) => {
@@ -90,15 +88,14 @@ const Header = ({
 
       {/* Search Bar */}
       <div className="relative px-4 py-2 pb-3">
-        <div className="flex items-center bg-black/30 backdrop-blur-sm border border-white/20 rounded-2xl px-5 py-3.5 gap-3 shadow-lg transition-all duration-300 focus-within:bg-black/40 focus-within:border-white/40 focus-within:shadow-xl hover:bg-black/35">
+        <div 
+          onClick={() => navigate("/search")}
+          className="flex items-center bg-black/30 backdrop-blur-sm border border-white/20 rounded-2xl px-5 py-3.5 gap-3 shadow-lg transition-all duration-300 focus-within:bg-black/40 focus-within:border-white/40 focus-within:shadow-xl hover:bg-black/35 cursor-pointer"
+        >
           <HiOutlineSearch className="text-xl text-white/80 flex-shrink-0 transition-colors duration-300 group-focus-within:text-white" />
-          <input
-            type="text"
-            placeholder="Search for stores, products..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="flex-1 border-none outline-none text-sm text-white font-normal bg-transparent placeholder:text-white/60 placeholder:font-light selection:bg-blue-500/30"
-          />
+          <div className="flex-1 text-sm text-white/60 font-light">
+            Search for stores, products...
+          </div>
           <button className="bg-transparent border-none cursor-pointer p-1 flex items-center justify-center transition-all duration-300 flex-shrink-0 hover:scale-110 hover:bg-white/10 rounded-lg active:scale-95 group">
             <HiOutlineMicrophone className="text-xl text-white/80 group-hover:text-white transition-colors duration-300" />
           </button>

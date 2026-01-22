@@ -11,7 +11,6 @@ import { storeAPI, categoryAPI } from "../../services/api";
 import { StoreListShimmer } from "../../components/shimmer";
 
 const HomePage = ({ onStoreClick, onCategoryClick }) => {
-  const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [stores, setStores] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -53,27 +52,19 @@ const HomePage = ({ onStoreClick, onCategoryClick }) => {
     fetchData();
   }, []);
 
-  // Filter stores based on search and category
+  // Filter stores based on category
   const filteredStores = stores.filter((store) => {
     const matchesCategory =
       selectedCategory === "All" ||
       store.categories?.some(
         (cat) => cat.toLowerCase() === selectedCategory.toLowerCase(),
       );
-    const matchesSearch =
-      store.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      store.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      store.categories?.some((cat) =>
-        cat.toLowerCase().includes(searchQuery.toLowerCase()),
-      );
-    return matchesCategory && matchesSearch;
+    return matchesCategory;
   });
 
   return (
     <div className="min-h-screen bg-black pb-20">
       <Header
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
         selectedCategory={selectedCategory}
         setSelectedCategory={setSelectedCategory}
       />
