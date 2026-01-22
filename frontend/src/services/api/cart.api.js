@@ -49,6 +49,15 @@ export const removeCoupon = () => {
   return apiClient.delete("/cart/coupon");
 };
 
+/**
+ * Get tip options based on bill amount
+ */
+export const getTipOptions = (billAmount) => {
+  return apiClient.get("/cart/tip-options", {
+    params: { billAmount },
+  });
+};
+
 const cartAPI = {
   getCart,
   addToCart,
@@ -57,6 +66,7 @@ const cartAPI = {
   clearCart,
   applyCoupon,
   removeCoupon,
+  getTipOptions,
 };
 
 export default cartAPI;
