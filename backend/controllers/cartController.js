@@ -1,6 +1,61 @@
 import Cart from "../models/Cart.js";
 import Product from "../models/Product.js";
 import Store from "../models/Store.js";
+import Coupon from "../models/Coupon.js";
+import Order from "../models/Order.js";
+
+/**
+ * Calculate tip options based on bill amount
+ * GET /api/cart/tip-options
+ */
+export const getTipOptions = async (req, res) => {
+  try {
+    const { billAmount } = req.query;
+
+    if (!billAmount || isNaN(billAmount) || billAmount <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Valid bill amount is required",
+      });
+    }
+
+    const amount = parseFloat(billAmount);
+
+    // Calculate tip percentages
+    const tipOptions = [
+      {
+        label: "10%",
+        percentage: 10,
+        amount: Math.round((amount * 10) / 100),
+      },
+      {
+        label: "20%",
+        percentage: 20,
+        amount: Math.round((amount * 20) / 100),
+      },
+      {
+        label: "30%",
+        percentage: 30,
+        amount: Math.round((amount * 30) / 100),
+      },
+    ];
+
+    res.json({
+      success: true,
+      data: {
+        billAmount: amount,
+        tipOptions,
+      },
+    });
+  } catch (error) {
+    console.error("Error calculating tip options:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to calculate tip options",
+      error: error.message,
+    });
+  }
+};
 
 /**
  * Get user's active cart
@@ -157,6 +212,12 @@ export const addToCart = async (req, res) => {
           success: false,
           message: error.message,
           code: "DIFFERENT_STORE",
+          data: {
+            currentStoreName: cart.storeName,
+            currentStoreId: cart.storeId,
+            newStoreName: store.name,
+            newStoreId: store._id,
+          },
         });
       }
       throw error;
@@ -307,34 +368,110 @@ export const applyCoupon = async (req, res) => {
       });
     }
 
+    // Find active cart
     const cart = await Cart.findOne({ userId, status: "active" });
     if (!cart) {
       return res.status(404).json({
         success: false,
-        message: "Cart not found",
+        message: "Cart not found or empty",
       });
     }
 
-    // TODO: Implement coupon validation with Coupon model
-    // For now, apply a simple discount
-    const discountAmount = Math.round(cart.subtotal * 0.1); // 10% discount
+    // Check if cart has items
+    if (!cart.items || cart.items.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot apply coupon to empty cart",
+      });
+    }
 
-    cart.coupon = {
-      code: couponCode,
-      discountAmount,
-      appliedAt: new Date(),
+    // Find coupon in database
+    const coupon = await Coupon.findOne({
+      code: couponCode.toUpperCase().trim(),
+      isActive: true,
+    });
+
+    if (!coupon) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid coupon code",
+      });
+    }
+
+    // Check if coupon is valid for this user
+    const userValidation = coupon.canUserUse(userId);
+    if (!userValidation.valid) {
+      return res.status(400).json({
+        success: false,
+        message: userValidation.message,
+      });
+    }
+
+    // Check minimum order value
+    if (cart.subtotal < coupon.minOrderValue) {
+      return res.status(400).json({
+        success: false,
+        message: `Minimum order value of R${coupon.minOrderValue} required for this coupon`,
+      });
+    }
+
+    // Check if coupon is for first order only
+    if (coupon.firstOrderOnly) {
+      const previousOrders = await Order.countDocuments({
+        customerId: userId,
+        status: { $ne: "cancelled" },
+      });
+      if (previousOrders > 0) {
+        return res.status(400).json({
+          success: false,
+          message: "This coupon is valid for first order only",
+        });
+      }
+    }
+
+    // Check store applicability
+    if (
+      coupon.applicableStores &&
+      coupon.applicableStores.length > 0 &&
+      cart.storeId
+    ) {
+      const isStoreApplicable = coupon.applicableStores.some(
+        (storeId) => storeId.toString() === cart.storeId.toString(),
+      );
+      if (!isStoreApplicable) {
+        return res.status(400).json({
+          success: false,
+          message: "This coupon is not applicable for this store",
+        });
+      }
+    }
+
+    // Calculate discount amount
+    let discountAmount = 0;
+    if (coupon.discountType === "free_delivery") {
+      discountAmount = 0; // Will be handled at checkout for delivery fee
+    } else {
+      discountAmount = coupon.calculateDiscount(cart.subtotal);
+    }
+
+    // Apply coupon to cart
+    cart.appliedCoupon = {
+      code: coupon.code,
+      discountType: coupon.discountType,
+      discountValue: coupon.discountValue,
+      discountAmount: discountAmount,
+      expiresAt: coupon.validUntil,
     };
-    cart.discount = discountAmount;
-    cart.total = cart.subtotal - discountAmount;
 
     await cart.save();
 
+    // Populate cart details
     await cart.populate("items.productId", "name images price isAvailable");
     await cart.populate("storeId", "name logo address");
 
     res.json({
       success: true,
-      message: "Coupon applied successfully",
+      message: `Coupon applied! You save R${discountAmount}`,
       data: cart,
     });
   } catch (error) {
@@ -363,12 +500,18 @@ export const removeCoupon = async (req, res) => {
       });
     }
 
-    cart.coupon = undefined;
-    cart.discount = 0;
-    cart.total = cart.subtotal;
+    if (!cart.appliedCoupon || !cart.appliedCoupon.code) {
+      return res.status(400).json({
+        success: false,
+        message: "No coupon applied to remove",
+      });
+    }
 
+    // Remove coupon
+    cart.appliedCoupon = undefined;
     await cart.save();
 
+    // Populate cart details
     await cart.populate("items.productId", "name images price isAvailable");
     await cart.populate("storeId", "name logo address");
 
