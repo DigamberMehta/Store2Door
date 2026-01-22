@@ -1,8 +1,16 @@
 import { Heart, Star } from "lucide-react";
 import { useState } from "react";
+import toast from "react-hot-toast";
+import cartAPI from "../../services/api/cart.api";
+import StoreConflictModal from "../../components/StoreConflictModal";
+import { formatPrice } from "../../utils/formatPrice";
 
 const RecommendedProducts = () => {
   const [wishlist, setWishlist] = useState([]);
+  const [showConflictModal, setShowConflictModal] = useState(false);
+  const [conflictData, setConflictData] = useState(null);
+  const [pendingCartItem, setPendingCartItem] = useState(null);
+  const [addingToCart, setAddingToCart] = useState(false);
 
   const products = [
     {
@@ -66,8 +74,104 @@ const RecommendedProducts = () => {
     );
   };
 
-  const handleAddToCart = (product) => {
-    console.log("Adding to cart:", product);
+  const handleAddToCart = async (product) => {
+    try {
+      setAddingToCart(true);
+      await cartAPI.addToCart({
+        productId: product.id,
+        storeId: product.storeId,
+        quantity: 1,
+      });
+
+      // Trigger cart update
+      window.dispatchEvent(new CustomEvent("cartUpdated"));
+
+      toast.success("Added to cart!", {
+        duration: 2000,
+        position: "top-center",
+        style: {
+          background: "#1a1a1a",
+          color: "#fff",
+          border: "1px solid rgba(49,134,22,0.3)",
+        },
+      });
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      if (error.response?.data?.code === "DIFFERENT_STORE") {
+        setConflictData(error.response.data.data);
+        setPendingCartItem({
+          productId: product.id,
+          storeId: product.storeId,
+          quantity: 1,
+        });
+        setShowConflictModal(true);
+      } else {
+        toast.error("Failed to add to cart", {
+          duration: 2000,
+          position: "top-center",
+          style: {
+            background: "#1a1a1a",
+            color: "#fff",
+            border: "1px solid rgba(239,68,68,0.3)",
+          },
+        });
+      }
+    } finally {
+      setAddingToCart(false);
+    }
+  };
+
+  const handleKeepCurrentCart = () => {
+    setShowConflictModal(false);
+    setConflictData(null);
+    setPendingCartItem(null);
+    toast("Kept your current cart items", {
+      duration: 2000,
+      position: "top-center",
+      icon: "ℹ️",
+      style: {
+        background: "#1a1a1a",
+        color: "#fff",
+        border: "1px solid rgba(255,255,255,0.1)",
+      },
+    });
+  };
+
+  const handleReplaceCart = async () => {
+    try {
+      setAddingToCart(true);
+      await cartAPI.clearCart();
+      await cartAPI.addToCart(pendingCartItem);
+
+      window.dispatchEvent(new CustomEvent("cartUpdated"));
+
+      setShowConflictModal(false);
+      setConflictData(null);
+      setPendingCartItem(null);
+
+      toast.success("Added to cart!", {
+        duration: 2000,
+        position: "top-center",
+        style: {
+          background: "#1a1a1a",
+          color: "#fff",
+          border: "1px solid rgba(49,134,22,0.3)",
+        },
+      });
+    } catch (error) {
+      console.error("Error replacing cart:", error);
+      toast.error("Failed to update cart. Please try again.", {
+        duration: 2000,
+        position: "top-center",
+        style: {
+          background: "#1a1a1a",
+          color: "#fff",
+          border: "1px solid rgba(239,68,68,0.3)",
+        },
+      });
+    } finally {
+      setAddingToCart(false);
+    }
   };
 
   return (
@@ -120,7 +224,7 @@ const RecommendedProducts = () => {
               {/* Price */}
               <div className="mt-auto mb-1">
                 <span className="text-white font-bold text-xs">
-                  R{product.price}
+                  R{formatPrice(product.price)}
                 </span>
               </div>
 
@@ -177,6 +281,16 @@ const RecommendedProducts = () => {
           </div>
         </div>
       </div>
+
+      {/* Store Conflict Modal */}
+      <StoreConflictModal
+        isOpen={showConflictModal}
+        onClose={() => setShowConflictModal(false)}
+        currentStoreName={conflictData?.currentStoreName}
+        newStoreName={conflictData?.newStoreName}
+        onKeepCurrent={handleKeepCurrentCart}
+        onReplaceCart={handleReplaceCart}
+      />
     </div>
   );
 };

@@ -8,11 +8,15 @@ import {
   Loader2,
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
+import toast from "react-hot-toast";
 import cartAPI from "../../services/api/cart.api";
 import RecommendedProducts from "./RecommendedProducts";
 import BillDetails from "./BillDetails";
 import CheckoutFooter from "./CheckoutFooter";
+import CouponSection from "./CouponSection";
+import TipSection from "./TipSection";
 import { CheckoutPageShimmer } from "../../components/shimmer";
+import { formatPrice } from "../../utils/formatPrice";
 import "./scrollbar.css";
 
 const CheckoutPage = () => {
@@ -21,6 +25,8 @@ const CheckoutPage = () => {
   const [cart, setCart] = useState(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const [tip, setTip] = useState(0);
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
 
   // Fetch cart on mount and when navigating to this page
   useEffect(() => {
@@ -105,11 +111,48 @@ const CheckoutPage = () => {
     }
   };
 
+  const handleApplyCoupon = async (couponCode) => {
+    try {
+      setIsApplyingCoupon(true);
+      const response = await cartAPI.applyCoupon(couponCode);
+      setCart(response?.data || response);
+      toast.success(response?.message || "Coupon applied successfully!");
+      return true;
+    } catch (error) {
+      console.error("Error applying coupon:", error);
+      toast.error(error.response?.data?.message || "Failed to apply coupon");
+      return false;
+    } finally {
+      setIsApplyingCoupon(false);
+    }
+  };
+
+  const handleRemoveCoupon = async () => {
+    try {
+      setIsApplyingCoupon(true);
+      const response = await cartAPI.removeCoupon();
+      setCart(response?.data || response);
+      toast.success("Coupon removed successfully");
+    } catch (error) {
+      console.error("Error removing coupon:", error);
+      toast.error("Failed to remove coupon");
+    } finally {
+      setIsApplyingCoupon(false);
+    }
+  };
+
+  const handleTipChange = (amount) => {
+    setTip(amount);
+  };
+
   const cartItems = cart?.items || [];
   const subtotal = cart?.subtotal || 0;
-  const deliveryFee = 30;
+  const appliedCoupon = cart?.appliedCoupon?.code ? cart.appliedCoupon : null;
+  const discount = appliedCoupon?.discountAmount || 0;
+  const isFreeDelivery = appliedCoupon?.discountType === "free_delivery";
+  const deliveryFee = isFreeDelivery || subtotal > 500 ? 0 : 30;
   const handlingCharge = 11;
-  const total = subtotal + deliveryFee + handlingCharge;
+  const total = subtotal + deliveryFee + handlingCharge + tip - discount;
 
   const handleShare = () => {
     // Share functionality
@@ -148,7 +191,7 @@ const CheckoutPage = () => {
       ) : (
         <>
           {/* Cart Items */}
-          <div className="pb-24">
+          <div className="pb-32">
             {cartItems.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 px-3">
                 <div className="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center mb-3">
@@ -234,7 +277,10 @@ const CheckoutPage = () => {
                       <div className="flex flex-col items-end justify-between">
                         <div className="text-right">
                           <div className="text-base font-bold text-[rgb(49,134,22)]">
-                            R{item.discountedPrice || item.unitPrice}
+                            R
+                            {formatPrice(
+                              item.discountedPrice || item.unitPrice,
+                            )}
                           </div>
                         </div>
                         <div className="flex items-center gap-1 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg px-1 py-1">
@@ -270,8 +316,34 @@ const CheckoutPage = () => {
             {/* Recommended Products Section */}
             {/* {cartItems.length > 0 && <RecommendedProducts />} */}
 
+            {/* Coupon Section */}
+            {cartItems.length > 0 && (
+              <CouponSection
+                onApplyCoupon={handleApplyCoupon}
+                onRemoveCoupon={handleRemoveCoupon}
+                appliedCoupon={appliedCoupon}
+                isApplying={isApplyingCoupon}
+              />
+            )}
+
+            {/* Tip Section */}
+            {cartItems.length > 0 && (
+              <TipSection
+                billAmount={subtotal}
+                onTipChange={handleTipChange}
+                selectedTip={tip}
+              />
+            )}
+
             {/* Bill Details Section */}
-            {cartItems.length > 0 && <BillDetails cartItems={cartItems} />}
+            {cartItems.length > 0 && (
+              <BillDetails
+                cartItems={cartItems}
+                tip={tip}
+                discount={discount}
+                isFreeDelivery={isFreeDelivery}
+              />
+            )}
           </div>
 
           {/* Checkout Footer - Fixed */}

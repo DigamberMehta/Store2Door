@@ -8,7 +8,6 @@ import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "./context/AuthContext";
 import HomePage from "./pages/homepage/HomePage";
 import StoreDetailPage from "./pages/store/StoreDetailPage";
-import StoreSearchPage from "./pages/store/StoreSearchPage";
 import FilterPage from "./pages/search/FilterPage";
 import CheckoutPage from "./pages/checkout/CheckoutPage";
 import ProfilePage from "./pages/profile/ProfilePage";
@@ -60,7 +59,6 @@ function AppContent() {
           }
         />
         <Route path="/store/:storeName" element={<StoreDetailPage />} />
-        <Route path="/store/:storeName/search" element={<StoreSearchPage />} />
         <Route
           path="/category/:categoryName"
           element={<FilterPage onStoreClick={handleStoreClick} />}

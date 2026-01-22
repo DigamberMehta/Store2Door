@@ -8,6 +8,7 @@ import ProductHeader from "./ProductHeader";
 import ProductInfo from "./ProductInfo";
 import RatingsReviews from "./RatingsReviews";
 import AddToCartBar from "./AddToCartBar";
+import StoreConflictModal from "../../components/StoreConflictModal";
 
 const ProductDetailPage = () => {
   const { id, slug } = useParams();
@@ -17,6 +18,9 @@ const ProductDetailPage = () => {
   const [addingToCart, setAddingToCart] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [selectedVariant, setSelectedVariant] = useState(0);
+  const [showConflictModal, setShowConflictModal] = useState(false);
+  const [conflictData, setConflictData] = useState(null);
+  const [pendingCartItem, setPendingCartItem] = useState(null);
 
   useEffect(() => {
     fetchProduct();
@@ -75,15 +79,15 @@ const ProductDetailPage = () => {
     } catch (error) {
       console.error("Error adding to cart:", error);
       if (error.response?.data?.code === "DIFFERENT_STORE") {
-        toast.error(error.response.data.message, {
-          duration: 3000,
-          position: "top-center",
-          style: {
-            background: "#1a1a1a",
-            color: "#fff",
-            border: "1px solid rgba(239,68,68,0.3)",
-          },
+        // Show modal instead of toast
+        setConflictData(error.response.data.data);
+        setPendingCartItem({
+          productId: product._id,
+          storeId: product.storeId,
+          quantity,
+          selectedVariant: selectedVariantData,
         });
+        setShowConflictModal(true);
       } else {
         toast.error("Failed to add to cart. Please try again.", {
           duration: 2000,
@@ -95,6 +99,66 @@ const ProductDetailPage = () => {
           },
         });
       }
+    } finally {
+      setAddingToCart(false);
+    }
+  };
+
+  const handleKeepCurrentCart = () => {
+    setShowConflictModal(false);
+    setConflictData(null);
+    setPendingCartItem(null);
+    toast("Kept your current cart items", {
+      duration: 2000,
+      position: "top-center",
+      icon: "ℹ️",
+      style: {
+        background: "#1a1a1a",
+        color: "#fff",
+        border: "1px solid rgba(255,255,255,0.1)",
+      },
+    });
+  };
+
+  const handleReplaceCart = async () => {
+    try {
+      setAddingToCart(true);
+      // Clear the cart first
+      await cartAPI.clearCart();
+
+      // Add the new item
+      await cartAPI.addToCart(pendingCartItem);
+
+      // Trigger cart update
+      window.dispatchEvent(new CustomEvent("cartUpdated"));
+
+      setShowConflictModal(false);
+      setConflictData(null);
+      setPendingCartItem(null);
+
+      toast.success(
+        `Added ${pendingCartItem.quantity} ${pendingCartItem.quantity === 1 ? "item" : "items"} to cart!`,
+        {
+          duration: 2000,
+          position: "top-center",
+          style: {
+            background: "#1a1a1a",
+            color: "#fff",
+            border: "1px solid rgba(49,134,22,0.3)",
+          },
+        },
+      );
+    } catch (error) {
+      console.error("Error replacing cart:", error);
+      toast.error("Failed to update cart. Please try again.", {
+        duration: 2000,
+        position: "top-center",
+        style: {
+          background: "#1a1a1a",
+          color: "#fff",
+          border: "1px solid rgba(239,68,68,0.3)",
+        },
+      });
     } finally {
       setAddingToCart(false);
     }
@@ -172,6 +236,16 @@ const ProductDetailPage = () => {
         isAvailable={product.isAvailable}
         onQuantityChange={handleQuantityChange}
         onAddToCart={handleAddToCart}
+      />
+
+      {/* Store Conflict Modal */}
+      <StoreConflictModal
+        isOpen={showConflictModal}
+        onClose={() => setShowConflictModal(false)}
+        currentStoreName={conflictData?.currentStoreName}
+        newStoreName={conflictData?.newStoreName}
+        onKeepCurrent={handleKeepCurrentCart}
+        onReplaceCart={handleReplaceCart}
       />
     </div>
   );

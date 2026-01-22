@@ -2,6 +2,7 @@ import { ShoppingCart } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import cartAPI from "../services/api/cart.api";
+import { formatPrice } from "../utils/formatPrice";
 
 const FloatingCartButton = () => {
   const navigate = useNavigate();
@@ -91,7 +92,7 @@ const FloatingCartButton = () => {
             {totalItems} {totalItems === 1 ? "item" : "items"}
           </span>
           <span className="text-sm font-black leading-tight text-[rgb(49,134,22)]">
-            R{cart?.subtotal?.toFixed(0) || 0}
+            R{formatPrice(cart?.subtotal || 0)}
           </span>
         </div>
 

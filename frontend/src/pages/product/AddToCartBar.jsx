@@ -1,5 +1,6 @@
 import { HiOutlineMinus, HiOutlinePlus } from "react-icons/hi";
 import { Loader2 } from "lucide-react";
+import { formatPrice } from "../../utils/formatPrice";
 
 const AddToCartBar = ({
   quantity,
@@ -44,7 +45,7 @@ const AddToCartBar = ({
               Adding...
             </>
           ) : (
-            <>Add • R{currentPrice * quantity}</>
+            <>Add • R{formatPrice(currentPrice * quantity)}</>
           )}
         </button>
       </div>

@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
-import { HiOutlineArrowLeft, HiOutlineSearch } from "react-icons/hi";
-import { Star } from "lucide-react";
+import { HiOutlineArrowLeft } from "react-icons/hi";
 import toast from "react-hot-toast";
-import { storeAPI, productAPI, categoryAPI } from "../../services/api";
+import { storeAPI, productAPI } from "../../services/api";
 import cartAPI from "../../services/api/cart.api";
+import StoreConflictModal from "../../components/StoreConflictModal";
+import StoreBanner from "./StoreBanner";
+import ProductsGrid from "./ProductsGrid";
 import {
   StoreBannerShimmer,
   ProductGridShimmer,
@@ -17,7 +19,10 @@ const StoreDetailPage = () => {
   const [store, setStore] = useState(location.state?.store || null);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [cartItems, setCartItems] = useState(new Set());
+  const [cartItems, setCartItems] = useState(new Map());
+  const [showConflictModal, setShowConflictModal] = useState(false);
+  const [conflictData, setConflictData] = useState(null);
+  const [pendingCartItem, setPendingCartItem] = useState(null);
   const fromSubcategory = location.state?.fromSubcategory;
 
   // Fetch cart items
@@ -25,10 +30,13 @@ const StoreDetailPage = () => {
     try {
       const response = await cartAPI.getCart();
       const cart = response?.data || response;
-      const productIds = new Set(
-        cart?.items?.map((item) => item.productId?._id || item.productId) || [],
+      const itemsMap = new Map(
+        cart?.items?.map((item) => [
+          item.productId?._id || item.productId,
+          { itemId: item._id, quantity: item.quantity },
+        ]) || [],
       );
-      setCartItems(productIds);
+      setCartItems(itemsMap);
     } catch (error) {
       console.error("Error fetching cart:", error);
     }
@@ -88,6 +96,75 @@ const StoreDetailPage = () => {
     navigate(-1);
   };
 
+  const handleUpdateQuantity = async (product, newQuantity, e) => {
+    e.stopPropagation();
+
+    if (newQuantity < 1) return;
+
+    const productId = product._id || product.id;
+    const cartItem = cartItems.get(productId);
+    if (!cartItem) return;
+
+    // Optimistic update - update UI immediately
+    const previousCartItems = new Map(cartItems);
+    const updatedCartItems = new Map(cartItems);
+    updatedCartItems.set(productId, {
+      ...cartItem,
+      quantity: newQuantity,
+    });
+    setCartItems(updatedCartItems);
+
+    try {
+      await cartAPI.updateCartItem(cartItem.itemId, newQuantity);
+      window.dispatchEvent(new CustomEvent("cartUpdated"));
+    } catch (error) {
+      console.error("Error updating quantity:", error);
+      // Revert to previous state on error
+      setCartItems(previousCartItems);
+      toast.error("Failed to update quantity", {
+        duration: 2000,
+        position: "top-center",
+        style: {
+          background: "#1a1a1a",
+          color: "#fff",
+          border: "1px solid rgba(239,68,68,0.3)",
+        },
+      });
+    }
+  };
+
+  const handleRemoveFromCart = async (product, e) => {
+    e.stopPropagation();
+
+    const productId = product._id || product.id;
+    const cartItem = cartItems.get(productId);
+    if (!cartItem) return;
+
+    // Optimistic update - remove from UI immediately
+    const previousCartItems = new Map(cartItems);
+    const updatedCartItems = new Map(cartItems);
+    updatedCartItems.delete(productId);
+    setCartItems(updatedCartItems);
+
+    try {
+      await cartAPI.removeFromCart(cartItem.itemId);
+      window.dispatchEvent(new CustomEvent("cartUpdated"));
+    } catch (error) {
+      console.error("Error removing from cart:", error);
+      // Revert to previous state on error
+      setCartItems(previousCartItems);
+      toast.error("Failed to remove from cart", {
+        duration: 2000,
+        position: "top-center",
+        style: {
+          background: "#1a1a1a",
+          color: "#fff",
+          border: "1px solid rgba(239,68,68,0.3)",
+        },
+      });
+    }
+  };
+
   const handleAddToCart = async (product, e) => {
     e.stopPropagation();
 
@@ -114,15 +191,14 @@ const StoreDetailPage = () => {
     } catch (error) {
       console.error("Error adding to cart:", error);
       if (error.response?.data?.code === "DIFFERENT_STORE") {
-        toast.error(error.response.data.message, {
-          duration: 3000,
-          position: "top-center",
-          style: {
-            background: "#1a1a1a",
-            color: "#fff",
-            border: "1px solid rgba(239,68,68,0.3)",
-          },
+        // Show modal instead of toast
+        setConflictData(error.response.data.data);
+        setPendingCartItem({
+          productId: product._id || product.id,
+          storeId: store._id || store.id,
+          quantity: 1,
         });
+        setShowConflictModal(true);
       } else {
         toast.error("Failed to add to cart", {
           duration: 2000,
@@ -134,6 +210,63 @@ const StoreDetailPage = () => {
           },
         });
       }
+    }
+  };
+
+  const handleKeepCurrentCart = () => {
+    setShowConflictModal(false);
+    setConflictData(null);
+    setPendingCartItem(null);
+    toast("Kept your current cart items", {
+      duration: 2000,
+      position: "top-center",
+      icon: "ℹ️",
+      style: {
+        background: "#1a1a1a",
+        color: "#fff",
+        border: "1px solid rgba(255,255,255,0.1)",
+      },
+    });
+  };
+
+  const handleReplaceCart = async () => {
+    try {
+      // Clear the cart first
+      await cartAPI.clearCart();
+
+      // Add the new item
+      await cartAPI.addToCart(pendingCartItem);
+
+      // Trigger cart update
+      window.dispatchEvent(new CustomEvent("cartUpdated"));
+
+      setShowConflictModal(false);
+      setConflictData(null);
+      setPendingCartItem(null);
+
+      // Refresh cart items
+      fetchCartItems();
+
+      toast.success("Added to cart!", {
+        duration: 2000,
+        position: "top-center",
+        style: {
+          background: "#1a1a1a",
+          color: "#fff",
+          border: "1px solid rgba(49,134,22,0.3)",
+        },
+      });
+    } catch (error) {
+      console.error("Error replacing cart:", error);
+      toast.error("Failed to update cart. Please try again.", {
+        duration: 2000,
+        position: "top-center",
+        style: {
+          background: "#1a1a1a",
+          color: "#fff",
+          border: "1px solid rgba(239,68,68,0.3)",
+        },
+      });
     }
   };
 
@@ -227,68 +360,8 @@ const StoreDetailPage = () => {
         </button>
       </div>
 
-      {/* Store Banner & Info Section */}
-      <div className="px-2 pt-2">
-        <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 overflow-hidden shadow-2xl">
-          {/* Store Image */}
-          <div className="w-full h-44 relative">
-            <img
-              src={
-                store.coverImage ||
-                store.image ||
-                "https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=800&q=80"
-              }
-              alt={store.name}
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-          </div>
-
-          {/* Store Info */}
-          <div className="p-4 relative">
-            <div className="flex justify-between items-start">
-              <div className="flex-1 min-w-0 pr-2">
-                <h1 className="text-xl font-black text-white leading-tight mb-1">
-                  {store.name}
-                </h1>
-                <div className="flex items-center gap-1.5 text-zinc-400 text-[12px] font-medium">
-                  <span>{store.deliveryTime || "25-30 mins"}</span>
-                  <span className="opacity-30">|</span>
-                  <span className="truncate">
-                    {store.location || "Local Area"}
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex flex-col items-end gap-1">
-                <div className="flex items-center gap-0.5 bg-[rgb(49,134,22)] px-2 py-0.5 rounded-lg text-white text-[11px] font-bold shadow-lg">
-                  <span>
-                    {store.stats?.averageRating || store.rating || "4.5"}
-                  </span>
-                  <Star className="w-3 h-3 fill-blue-950" />
-                </div>
-                <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-tighter">
-                  {store.stats?.totalReviews || store.reviewCount || "1K+"}{" "}
-                  ratings
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Search Bar */}
-      <div className="px-2 pt-4">
-        <div
-          className="bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 flex items-center gap-2 cursor-pointer transition-all duration-200 hover:bg-white/10 hover:border-white/20 active:scale-[0.98]"
-          onClick={() => navigate(`/store/${storeName}/search`)}
-        >
-          <HiOutlineSearch className="text-zinc-500 text-lg flex-shrink-0 transition-colors" />
-          <div className="text-[13px] text-zinc-500 w-full transition-colors">
-            Search for product
-          </div>
-        </div>
-      </div>
+      {/* Store Banner */}
+      <StoreBanner store={store} />
 
       {/* Subcategory Navigation */}
       {subcategories.length > 0 && (
@@ -323,117 +396,25 @@ const StoreDetailPage = () => {
       )}
 
       {/* Products Section */}
-      <div className="px-2 pt-4 pb-6">
-        {subcategories.length === 0 ? (
-          <div className="text-center py-12 px-4">
-            <HiOutlineSearch className="text-5xl text-zinc-600 mx-auto mb-3" />
-            <p className="text-zinc-400 text-sm">No products found</p>
-            <p className="text-zinc-600 text-xs mt-1">
-              This store doesn't have any products yet
-            </p>
-          </div>
-        ) : (
-          subcategories.map((subcategory) => (
-            <div key={subcategory} id={`section-${subcategory}`} className="mb-6 scroll-mt-32">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-[15px] font-black text-white">
-                  {subcategory}
-                  {fromSubcategory === subcategory && (
-                    <span className="ml-2 text-[10px] text-[rgb(49,134,22)] font-normal">
-                      • From your search
-                    </span>
-                  )}
-                </h2>
-                <p className="text-[10px] text-zinc-500">
-                  {groupedProducts[subcategory].length} items
-                </p>
-              </div>
+      <ProductsGrid
+        subcategories={subcategories}
+        groupedProducts={groupedProducts}
+        fromSubcategory={fromSubcategory}
+        cartItems={cartItems}
+        onAddToCart={handleAddToCart}
+        onUpdateQuantity={handleUpdateQuantity}
+        onRemoveFromCart={handleRemoveFromCart}
+      />
 
-              <div className="grid grid-cols-3 gap-2">
-                {groupedProducts[subcategory].map((product) => (
-                  <div
-                    key={product._id || product.id}
-                    className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-2 relative flex flex-col transition-all duration-200 hover:bg-white/10 hover:border-white/20 active:scale-95"
-                    onClick={() =>
-                      navigate(
-                        `/product/${product._id || product.id}/${
-                          product.slug ||
-                          product.name.toLowerCase().replace(/\s+/g, "-")
-                        }`,
-                      )
-                    }
-                  >
-                    {/* Product Image */}
-                    <div className="w-full aspect-square bg-white/5 rounded-lg overflow-hidden mb-2">
-                      <img
-                        src={
-                          product.images?.[0]?.url ||
-                          product.image ||
-                          "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&q=80"
-                        }
-                        alt={product.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-
-                    {/* Product Info */}
-                    <div className="flex flex-col flex-1">
-                      <h3 className="text-white text-[9px] font-medium line-clamp-2 leading-snug mb-0.5">
-                        {product.name}
-                      </h3>
-
-                      <div className="text-[8px] text-zinc-500 mb-1">
-                        {product.unit || product.weight}
-                      </div>
-
-                      {/* Rating */}
-                      <div className="flex items-center gap-0.5 mb-1.5">
-                        <div className="flex items-center">
-                          {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              className={`w-2 h-2 ${
-                                i <
-                                Math.floor(
-                                  product.averageRating || product.rating || 0,
-                                )
-                                  ? "fill-yellow-400 text-yellow-400"
-                                  : "text-white/20"
-                              }`}
-                            />
-                          ))}
-                        </div>
-                        <span className="text-white/40 text-[8px]">
-                          ({product.totalReviews || product.reviewCount || 0})
-                        </span>
-                      </div>
-
-                      {/* Price & Add Button */}
-                      <div className="mt-auto">
-                        <div className="text-white font-bold text-xs mb-1.5">
-                          R{product.price}
-                        </div>
-                        <button
-                          className={`w-full py-1 border rounded-md font-semibold text-[9px] transition-all ${
-                            cartItems.has(product._id || product.id)
-                              ? "bg-[rgb(49,134,22)] border-[rgb(49,134,22)] text-white"
-                              : "border-[rgb(49,134,22)] text-[rgb(49,134,22)] active:bg-[rgb(49,134,22)] active:text-white"
-                          }`}
-                          onClick={(e) => handleAddToCart(product, e)}
-                        >
-                          {cartItems.has(product._id || product.id)
-                            ? "ADDED"
-                            : "ADD"}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))
-        )}
-      </div>
+      {/* Store Conflict Modal */}
+      <StoreConflictModal
+        isOpen={showConflictModal}
+        onClose={() => setShowConflictModal(false)}
+        currentStoreName={conflictData?.currentStoreName}
+        newStoreName={conflictData?.newStoreName}
+        onKeepCurrent={handleKeepCurrentCart}
+        onReplaceCart={handleReplaceCart}
+      />
     </div>
   );
 };

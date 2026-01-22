@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { driverProfileAPI } from "../../services/api";
-import toast, { Toaster } from 'react-hot-toast';
-import { 
-  ArrowLeft, 
-  Upload, 
-  CheckCircle2, 
-  FileText, 
-  ShieldCheck, 
-  CreditCard, 
+import { driverProfileAPI } from "../../../services/api";
+import toast, { Toaster } from "react-hot-toast";
+import {
+  ArrowLeft,
+  Upload,
+  CheckCircle2,
+  FileText,
+  ShieldCheck,
+  CreditCard,
   Car,
   User,
   Home,
@@ -16,13 +16,16 @@ import {
   Clock,
   AlertCircle,
   XCircle,
-  Camera
+  Camera,
 } from "lucide-react";
+import DocumentUploadModal from "./DocumentUploadModal";
 
 const DocumentsPage = () => {
   const navigate = useNavigate();
   const [uploading, setUploading] = useState(null);
   const [documentsStatus, setDocumentsStatus] = useState({});
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [selectedDocumentType, setSelectedDocumentType] = useState(null);
   const [isNotSACitizen, setIsNotSACitizen] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -40,17 +43,58 @@ const DocumentsPage = () => {
       console.error("Error fetching documents:", error);
       // Fallback to mock data on error
       setDocumentsStatus({
-        profilePhoto: { uploaded: true, status: "verified", canReupload: false },
-        vehiclePhoto: { uploaded: true, status: "verified", canReupload: false },
+        profilePhoto: {
+          uploaded: true,
+          status: "verified",
+          canReupload: false,
+        },
+        vehiclePhoto: {
+          uploaded: true,
+          status: "verified",
+          canReupload: false,
+        },
         idDocument: { uploaded: true, status: "verified", canReupload: false },
-        driversLicence: { uploaded: true, status: "pending", canReupload: true },
-        proofOfBankingDetails: { uploaded: true, status: "verified", canReupload: false },
-        proofOfAddress: { uploaded: true, status: "verified", canReupload: false },
-        vehicleLicense: { uploaded: true, status: "verified", canReupload: false },
-        thirdPartyInsurance: { uploaded: false, status: "not_uploaded", canReupload: true },
-        vehicleAssessment: { uploaded: true, status: "verified", canReupload: false },
-        carrierAgreement: { uploaded: false, status: "not_uploaded", canReupload: true },
-        workPermit: { uploaded: false, status: "not_uploaded", canReupload: true, rejectionReason: null }
+        driversLicence: {
+          uploaded: true,
+          status: "pending",
+          canReupload: true,
+        },
+        proofOfBankingDetails: {
+          uploaded: true,
+          status: "verified",
+          canReupload: false,
+        },
+        proofOfAddress: {
+          uploaded: true,
+          status: "verified",
+          canReupload: false,
+        },
+        vehicleLicense: {
+          uploaded: true,
+          status: "verified",
+          canReupload: false,
+        },
+        thirdPartyInsurance: {
+          uploaded: false,
+          status: "not_uploaded",
+          canReupload: true,
+        },
+        vehicleAssessment: {
+          uploaded: true,
+          status: "verified",
+          canReupload: false,
+        },
+        carrierAgreement: {
+          uploaded: false,
+          status: "not_uploaded",
+          canReupload: true,
+        },
+        workPermit: {
+          uploaded: false,
+          status: "not_uploaded",
+          canReupload: true,
+          rejectionReason: null,
+        },
       });
     } finally {
       setLoading(false);
@@ -63,14 +107,14 @@ const DocumentsPage = () => {
       title: "Vehicle Photo",
       description: "(photo)",
       icon: Camera,
-      required: true
+      required: true,
     },
     {
       id: "idDocument",
       title: "ID Document",
       description: "(photo/pdf)",
       icon: CreditCard,
-      required: true
+      required: true,
     },
     {
       id: "workPermit",
@@ -78,57 +122,50 @@ const DocumentsPage = () => {
       description: "(photo/pdf)",
       icon: FileCheck,
       required: isNotSACitizen,
-      conditional: true
+      conditional: true,
     },
     {
       id: "driversLicence",
       title: "Drivers Licence",
       description: "(photo/pdf)",
       icon: FileText,
-      required: true
+      required: true,
     },
     {
       id: "proofOfBankingDetails",
       title: "Proof Of Banking Details",
       description: "(photo/pdf)",
       icon: CreditCard,
-      required: true
+      required: true,
     },
     {
       id: "proofOfAddress",
       title: "Proof Of Address",
       description: "(photo/pdf)",
       icon: Home,
-      required: true
+      required: true,
     },
     {
       id: "vehicleLicense",
       title: "Vehicle License",
       description: "(photo/pdf)",
       icon: Car,
-      required: true
-    },
-    {
-      id: "thirdPartyInsurance",
-      title: "3rd Party Insurance",
-      description: "(photo/pdf)",
-      icon: ShieldCheck,
-      required: true
+      required: true,
     },
     {
       id: "vehicleAssessment",
       title: "Vehicle Assessment",
       description: "(photo/pdf)",
       icon: FileCheck,
-      required: true
+      required: true,
     },
     {
       id: "carrierAgreement",
       title: "Carrier Agreement",
       description: "(photo/pdf)",
       icon: FileText,
-      required: true
-    }
+      required: true,
+    },
   ];
 
   const getStatusStyle = (status) => {
@@ -178,75 +215,69 @@ const DocumentsPage = () => {
 
   const handleUpload = async (docId) => {
     const docStatus = documentsStatus[docId];
-    
+
     // Only allow upload when status is "not_uploaded" or "rejected"
-    if (docStatus && docStatus.status !== "not_uploaded" && docStatus.status !== "rejected") {
+    if (
+      docStatus &&
+      docStatus.status !== "not_uploaded" &&
+      docStatus.status !== "rejected"
+    ) {
       if (docStatus.status === "pending") {
-        toast.error("Your document is pending review by admin. Please wait for approval.", {
-          duration: 4000,
-        });
+        toast.error(
+          "Your document is pending review by admin. Please wait for approval.",
+          {
+            duration: 4000,
+          },
+        );
       } else if (docStatus.status === "verified") {
-        toast.error("This document is already verified. Contact admin if you need to update it.", {
-          duration: 4000,
-        });
+        toast.error(
+          "This document is already verified. Contact admin if you need to update it.",
+          {
+            duration: 4000,
+          },
+        );
       }
       return;
     }
 
+    setSelectedDocumentType(docId);
+    setShowUploadModal(true);
+  };
+
+  const handleDocumentUpload = async (docId, file, additionalData) => {
     setUploading(docId);
-    
-    // Create file input element
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*,application/pdf';
-    
-    input.onchange = async (e) => {
-      const file = e.target.files[0];
-      if (!file) {
-        setUploading(null);
-        return;
-      }
 
-      // Validate file size (5MB max)
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error("File size must be less than 5MB", {
-          duration: 3000,
-        });
-        setUploading(null);
-        return;
-      }
+    try {
+      // Upload to server with Cloudinary
+      await driverProfileAPI.uploadDocument(docId, file, additionalData);
 
-      try {
-        // Upload to server with Cloudinary
-        await driverProfileAPI.uploadDocument(docId, file, {
-          // Add additional data based on document type
-          // e.g., number, expiryDate, etc.
-        });
-        
-        // Refresh document status
-        await fetchDocumentsStatus();
-        toast.success("Document uploaded successfully!", {
-          duration: 3000,
-        });
-      } catch (error) {
-        console.error("Upload error:", error);
-        toast.error(error.message || "Failed to upload document. Please try again.", {
+      // Refresh document status
+      await fetchDocumentsStatus();
+      toast.success("Document uploaded successfully!", {
+        duration: 3000,
+      });
+      setShowUploadModal(false);
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast.error(
+        error.message || "Failed to upload document. Please try again.",
+        {
           duration: 4000,
-        });
-      } finally {
-        setUploading(null);
-      }
-    };
-    
-    input.click();
+        },
+      );
+    } finally {
+      setUploading(null);
+    }
   };
 
   const calculateVerificationPercentage = () => {
-    const requiredDocs = documentList.filter(doc => 
-      doc.required && (!doc.conditional || (doc.conditional && isNotSACitizen))
+    const requiredDocs = documentList.filter(
+      (doc) =>
+        doc.required &&
+        (!doc.conditional || (doc.conditional && isNotSACitizen)),
     );
-    const verifiedDocs = requiredDocs.filter(doc => 
-      documentsStatus[doc.id]?.status === "verified"
+    const verifiedDocs = requiredDocs.filter(
+      (doc) => documentsStatus[doc.id]?.status === "verified",
     );
     return Math.round((verifiedDocs.length / requiredDocs.length) * 100) || 0;
   };
@@ -261,32 +292,44 @@ const DocumentsPage = () => {
 
   return (
     <div className="bg-black min-h-screen text-white flex flex-col">
-      <Toaster 
+      <Toaster
         position="top-center"
         toastOptions={{
           style: {
-            background: '#18181b',
-            color: '#fff',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
+            background: "#18181b",
+            color: "#fff",
+            border: "1px solid rgba(255, 255, 255, 0.1)",
           },
           success: {
             iconTheme: {
-              primary: '#10b981',
-              secondary: '#fff',
+              primary: "#10b981",
+              secondary: "#fff",
             },
           },
           error: {
             iconTheme: {
-              primary: '#ef4444',
-              secondary: '#fff',
+              primary: "#ef4444",
+              secondary: "#fff",
             },
           },
         }}
       />
-      
+
+      {/* Document Upload Modal */}
+      <DocumentUploadModal
+        show={showUploadModal}
+        onClose={() => {
+          setShowUploadModal(false);
+          setSelectedDocumentType(null);
+        }}
+        documentType={selectedDocumentType}
+        onUpload={handleDocumentUpload}
+        uploading={uploading === selectedDocumentType}
+      />
+
       {/* Header */}
       <div className="pt-8 px-4 pb-4 bg-zinc-900/50 backdrop-blur-xl border-b border-white/5 flex items-center gap-4 sticky top-0 z-10">
-        <button 
+        <button
           onClick={() => navigate(-1)}
           className="bg-white/5 p-1.5 rounded-full border border-white/5 active:scale-90 transition-transform"
         >
@@ -294,7 +337,9 @@ const DocumentsPage = () => {
         </button>
         <div>
           <p className="text-lg font-bold">Profile</p>
-          <p className="text-[10px] text-zinc-500 font-medium">Verify your identity and vehicle</p>
+          <p className="text-[10px] text-zinc-500 font-medium">
+            Verify your identity and vehicle
+          </p>
         </div>
       </div>
 
@@ -305,9 +350,11 @@ const DocumentsPage = () => {
             <ShieldCheck className="w-5 h-5 text-blue-300" />
           </div>
           <div>
-            <p className="font-bold text-xs">Verification Status: {calculateVerificationPercentage()}%</p>
+            <p className="font-bold text-xs">
+              Verification Status: {calculateVerificationPercentage()}%
+            </p>
             <p className="text-[10px] text-zinc-400 mt-1">
-              {calculateVerificationPercentage() === 100 
+              {calculateVerificationPercentage() === 100
                 ? "All documents verified! You can start accepting orders."
                 : "Submit and verify all documents to start accepting orders."}
             </p>
@@ -323,7 +370,9 @@ const DocumentsPage = () => {
               onChange={(e) => setIsNotSACitizen(e.target.checked)}
               className="w-5 h-5 rounded accent-blue-300"
             />
-            <span className="text-sm font-medium">I am not a South African citizen</span>
+            <span className="text-sm font-medium">
+              I am not a South African citizen
+            </span>
           </label>
         </div>
 
@@ -332,48 +381,68 @@ const DocumentsPage = () => {
           {documentList.map((doc) => {
             // Skip work permit if SA citizen
             if (doc.conditional && !isNotSACitizen) return null;
-            
-            const docStatus = documentsStatus[doc.id] || { status: "not_uploaded", canReupload: true };
-            const showRejectionReason = docStatus.status === "rejected" && docStatus.rejectionReason;
-            
+
+            const docStatus = documentsStatus[doc.id] || {
+              status: "not_uploaded",
+              canReupload: true,
+            };
+            const showRejectionReason =
+              docStatus.status === "rejected" && docStatus.rejectionReason;
+
             // Only allow upload when status is "not_uploaded" or "rejected" (admin asked to reupload)
-            const canUpload = docStatus.status === "not_uploaded" || docStatus.status === "rejected";
+            const canUpload =
+              docStatus.status === "not_uploaded" ||
+              docStatus.status === "rejected";
 
             return (
               <div key={doc.id} className="space-y-2">
                 <div className="bg-white/5 border border-white/5 rounded-2xl p-3">
                   <div className="flex items-start gap-3">
-                    <div className={`p-2 rounded-xl ${
-                      docStatus.status === "verified" ? "bg-emerald-500/20" :
-                      docStatus.status === "rejected" ? "bg-red-500/20" :
-                      docStatus.status === "pending" ? "bg-amber-500/20" :
-                      "bg-white/5"
-                    }`}>
-                      <doc.icon className={`w-5 h-5 ${
-                        docStatus.status === "verified" ? "text-emerald-400" :
-                        docStatus.status === "rejected" ? "text-red-400" :
-                        docStatus.status === "pending" ? "text-amber-400" :
-                        "text-zinc-400"
-                      }`} />
-                    </div>
-                    
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-xs">{doc.title}</h3>
-                      <p className="text-[10px] text-zinc-500 leading-tight">{doc.description}</p>
-                      <p className="text-[10px] text-zinc-400 mt-1">{getStatusText(docStatus.status)}</p>
+                    <div
+                      className={`p-2 rounded-xl ${
+                        docStatus.status === "verified"
+                          ? "bg-emerald-500/20"
+                          : docStatus.status === "rejected"
+                            ? "bg-red-500/20"
+                            : docStatus.status === "pending"
+                              ? "bg-amber-500/20"
+                              : "bg-white/5"
+                      }`}
+                    >
+                      <doc.icon
+                        className={`w-5 h-5 ${
+                          docStatus.status === "verified"
+                            ? "text-emerald-400"
+                            : docStatus.status === "rejected"
+                              ? "text-red-400"
+                              : docStatus.status === "pending"
+                                ? "text-amber-400"
+                                : "text-zinc-400"
+                        }`}
+                      />
                     </div>
 
-                    <button 
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-bold text-xs">{doc.title}</h3>
+                      <p className="text-[10px] text-zinc-500 leading-tight">
+                        {doc.description}
+                      </p>
+                      <p className="text-[10px] text-zinc-400 mt-1">
+                        {getStatusText(docStatus.status)}
+                      </p>
+                    </div>
+
+                    <button
                       onClick={() => handleUpload(doc.id)}
                       disabled={uploading === doc.id || !canUpload}
                       className={`p-2 rounded-xl shrink-0 transition-all active:scale-90 ${
                         uploading === doc.id
                           ? "bg-blue-300/20 border border-blue-300/30"
                           : !canUpload
-                          ? "bg-zinc-800 border border-zinc-700 opacity-50 cursor-not-allowed"
-                          : docStatus.status === "rejected"
-                          ? "bg-red-500 border border-red-500 shadow-lg shadow-red-500/20"
-                          : "bg-blue-300 text-black border border-blue-300 shadow-lg shadow-blue-300/10"
+                            ? "bg-zinc-800 border border-zinc-700 opacity-50 cursor-not-allowed"
+                            : docStatus.status === "rejected"
+                              ? "bg-red-500 border border-red-500 shadow-lg shadow-red-500/20"
+                              : "bg-blue-300 text-black border border-blue-300 shadow-lg shadow-blue-300/10"
                       }`}
                     >
                       {uploading === doc.id ? (
@@ -401,18 +470,25 @@ const DocumentsPage = () => {
 
         {/* Guidelines */}
         <div className="mt-6">
-          <h2 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-1 mb-3">Guidelines</h2>
+          <h2 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-1 mb-3">
+            Guidelines
+          </h2>
           <div className="space-y-2">
             {[
               "Ensure documents are original and valid",
               "Photos should be clear with all text readable",
               "File size should be under 5MB (JPG, PNG, PDF)",
               "Verification process takes 24-48 hours",
-              "You can re-upload if document is rejected"
+              "You can re-upload if document is rejected",
             ].map((text, i) => (
-              <div key={i} className="flex items-start gap-3 bg-white/5 p-3 rounded-2xl border border-white/5">
+              <div
+                key={i}
+                className="flex items-start gap-3 bg-white/5 p-3 rounded-2xl border border-white/5"
+              >
                 <CheckCircle2 className="w-3.5 h-3.5 text-blue-300 shrink-0 mt-0.5" />
-                <p className="text-[10px] text-zinc-400 leading-relaxed font-medium">{text}</p>
+                <p className="text-[10px] text-zinc-400 leading-relaxed font-medium">
+                  {text}
+                </p>
               </div>
             ))}
           </div>
@@ -421,8 +497,12 @@ const DocumentsPage = () => {
 
       {/* Footer Support */}
       <div className="mt-auto p-4 pb-8 text-center">
-        <p className="text-[10px] text-zinc-500">Need help with document submission?</p>
-        <button className="text-blue-300 font-bold text-xs mt-1">Contact Support</button>
+        <p className="text-[10px] text-zinc-500">
+          Need help with document submission?
+        </p>
+        <button className="text-blue-300 font-bold text-xs mt-1">
+          Contact Support
+        </button>
       </div>
     </div>
   );

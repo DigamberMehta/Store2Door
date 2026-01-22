@@ -23,20 +23,25 @@ export const driverProfileAPI = {
 
   uploadDocument: async (documentType, file, additionalData = {}) => {
     const formData = new FormData();
-    formData.append('file', file);
-    
+    formData.append("file", file);
+
     // Append additional data (like number, expiryDate, etc.)
-    Object.keys(additionalData).forEach(key => {
+    Object.keys(additionalData).forEach((key) => {
       if (additionalData[key] !== undefined && additionalData[key] !== null) {
         formData.append(key, additionalData[key]);
       }
     });
 
-    return apiClient.put(`/driver-profile/documents/${documentType}`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
+    return apiClient.put(
+      `/driver-profile/documents/${documentType}`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        timeout: 60000, // 60 seconds for document uploads
       },
-    });
+    );
   },
 
   // Availability Management
@@ -55,7 +60,9 @@ export const driverProfileAPI = {
 
   // Work Areas
   updateWorkAreas: async (workAreas) => {
-    return apiClient.put("/driver-profile/work-areas", { preferredWorkAreas: workAreas });
+    return apiClient.put("/driver-profile/work-areas", {
+      preferredWorkAreas: workAreas,
+    });
   },
 
   // Statistics
@@ -70,5 +77,15 @@ export const driverProfileAPI = {
 
   updateBankAccount: async (bankData) => {
     return apiClient.put("/driver-profile/bank-account", bankData);
+  },
+
+  // Vehicle Management
+  updateVehicle: async (vehicleData) => {
+    return apiClient.put("/driver-profile/vehicle", vehicleData);
+  },
+
+  // Emergency Contact
+  updateEmergencyContact: async (contactData) => {
+    return apiClient.put("/driver-profile", { emergencyContact: contactData });
   },
 };

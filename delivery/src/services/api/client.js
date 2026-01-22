@@ -9,7 +9,7 @@ export const apiClient = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 10000, // 10 seconds
+  timeout: 30000, // 30 seconds
 });
 
 // Request interceptor - Add auth token to every request
@@ -23,7 +23,7 @@ apiClient.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 // Response interceptor - Handle errors and token refresh
@@ -71,5 +71,5 @@ apiClient.interceptors.response.use(
       error.response?.data?.message || error.message || "An error occurred";
 
     return Promise.reject(new Error(errorMessage));
-  }
+  },
 );

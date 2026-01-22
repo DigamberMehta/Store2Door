@@ -1,7 +1,10 @@
-import DeliveryRiderProfile from '../models/DeliveryRiderProfile.js';
-import { asyncHandler } from '../middleware/validation.js';
-import { uploadToCloudinary, deleteFromCloudinary } from '../config/cloudinary.js';
-import { deleteLocalFile } from '../middleware/upload.js';
+import DeliveryRiderProfile from "../models/DeliveryRiderProfile.js";
+import { asyncHandler } from "../middleware/validation.js";
+import {
+  uploadToCloudinary,
+  deleteFromCloudinary,
+} from "../config/cloudinary.js";
+import { deleteLocalFile } from "../middleware/upload.js";
 
 /**
  * @desc    Get driver profile with user data and stats
@@ -10,7 +13,9 @@ import { deleteLocalFile } from '../middleware/upload.js';
  */
 export const getDriverProfile = asyncHandler(async (req, res) => {
   // Get driver profile with populated user data
-  let profile = await DeliveryRiderProfile.findOne({ userId: req.user.id }).populate('userId', 'name email phone avatar');
+  let profile = await DeliveryRiderProfile.findOne({
+    userId: req.user.id,
+  }).populate("userId", "name email phone avatar");
 
   // If no profile exists, create one with all fields initialized
   if (!profile) {
@@ -59,8 +64,7 @@ export const getDriverProfile = asyncHandler(async (req, res) => {
         accountHolderName: "",
         accountNumber: "",
         bankName: "",
-        routingNumber: "",
-        accountType: "checking",
+        accountType: "cheque",
         isVerified: false,
       },
       emergencyContact: {
@@ -93,12 +97,14 @@ export const getDriverProfile = asyncHandler(async (req, res) => {
         notificationPreferences: {
           sms: true,
           email: true,
-          push: true
-        }
-      }
+          push: true,
+        },
+      },
     });
     // Re-fetch with populated user data
-    profile = await DeliveryRiderProfile.findOne({ userId: req.user.id }).populate('userId', 'name email phone avatar');
+    profile = await DeliveryRiderProfile.findOne({
+      userId: req.user.id,
+    }).populate("userId", "name email phone avatar");
   }
 
   // Prepare stats
@@ -127,7 +133,8 @@ export const getDriverProfile = asyncHandler(async (req, res) => {
  * @access  Private (Delivery Rider)
  */
 export const updateDriverProfile = asyncHandler(async (req, res) => {
-  const { dateOfBirth, gender, emergencyContact, address, preferredWorkAreas } = req.body;
+  const { dateOfBirth, gender, emergencyContact, address, preferredWorkAreas } =
+    req.body;
 
   let profile = await DeliveryRiderProfile.findOne({ userId: req.user.id });
 
@@ -144,26 +151,29 @@ export const updateDriverProfile = asyncHandler(async (req, res) => {
   } else {
     // Update existing profile
     if (dateOfBirth !== undefined) {
-      profile.dateOfBirth = dateOfBirth === null || dateOfBirth === "" ? undefined : dateOfBirth;
+      profile.dateOfBirth =
+        dateOfBirth === null || dateOfBirth === "" ? undefined : dateOfBirth;
     }
     if (gender !== undefined) profile.gender = gender;
-    if (emergencyContact !== undefined) profile.emergencyContact = emergencyContact;
+    if (emergencyContact !== undefined)
+      profile.emergencyContact = emergencyContact;
     if (address !== undefined) {
       if (address === null || Object.keys(address).length === 0) {
         profile.address = undefined;
       } else {
         profile.address = address;
       }
-      profile.markModified('address'); // Mark nested object as modified
+      profile.markModified("address"); // Mark nested object as modified
     }
-    if (preferredWorkAreas !== undefined) profile.preferredWorkAreas = preferredWorkAreas;
+    if (preferredWorkAreas !== undefined)
+      profile.preferredWorkAreas = preferredWorkAreas;
 
     await profile.save();
   }
 
   res.json({
     success: true,
-    message: 'Profile updated successfully',
+    message: "Profile updated successfully",
     data: { profile },
   });
 });
@@ -174,12 +184,12 @@ export const updateDriverProfile = asyncHandler(async (req, res) => {
  * @access  Private (Delivery Rider)
  */
 export const updateVehicleInfo = asyncHandler(async (req, res) => {
-  const { type, make, model, year, color, licensePlate, registrationNumber, insuranceNumber, insuranceExpiry, registrationExpiry } = req.body;
+  const { type, make, model, year, color, licensePlate } = req.body;
 
   let profile = await DeliveryRiderProfile.findOne({ userId: req.user.id });
 
   if (!profile) {
-    profile = await DeliveryRiderProfile.create({ 
+    profile = await DeliveryRiderProfile.create({
       userId: req.user.id,
       vehicle: {},
     });
@@ -197,17 +207,13 @@ export const updateVehicleInfo = asyncHandler(async (req, res) => {
   if (year !== undefined) profile.vehicle.year = year;
   if (color !== undefined) profile.vehicle.color = color;
   if (licensePlate !== undefined) profile.vehicle.licensePlate = licensePlate;
-  if (registrationNumber !== undefined) profile.vehicle.registrationNumber = registrationNumber;
-  if (insuranceNumber !== undefined) profile.vehicle.insuranceNumber = insuranceNumber;
-  if (insuranceExpiry !== undefined) profile.vehicle.insuranceExpiry = insuranceExpiry;
-  if (registrationExpiry !== undefined) profile.vehicle.registrationExpiry = registrationExpiry;
 
-  profile.markModified('vehicle');
+  profile.markModified("vehicle");
   await profile.save();
 
   res.json({
     success: true,
-    message: 'Vehicle information updated successfully',
+    message: "Vehicle information updated successfully",
     data: { vehicle: profile.vehicle },
   });
 });
@@ -224,7 +230,7 @@ export const uploadDocument = asyncHandler(async (req, res) => {
   if (!req.file) {
     return res.status(400).json({
       success: false,
-      message: 'No file uploaded',
+      message: "No file uploaded",
     });
   }
 
@@ -234,7 +240,7 @@ export const uploadDocument = asyncHandler(async (req, res) => {
     deleteLocalFile(req.file.path);
     return res.status(404).json({
       success: false,
-      message: 'Profile not found. Please complete your profile first.',
+      message: "Profile not found. Please complete your profile first.",
     });
   }
 
@@ -242,19 +248,21 @@ export const uploadDocument = asyncHandler(async (req, res) => {
   // Exception: profilePhoto can be updated unlimited times without verification blocking
   // Also prevent re-upload if document is pending review
   const currentDoc = profile.documents?.[documentType];
-  if (documentType !== 'profilePhoto') {
+  if (documentType !== "profilePhoto") {
     if (currentDoc?.isVerified) {
       deleteLocalFile(req.file.path);
       return res.status(403).json({
         success: false,
-        message: 'Cannot upload this document. Document is already verified. Contact admin if changes are needed.',
+        message:
+          "Cannot upload this document. Document is already verified. Contact admin if changes are needed.",
       });
     }
-    if (currentDoc?.status === 'pending') {
+    if (currentDoc?.status === "pending") {
       deleteLocalFile(req.file.path);
       return res.status(403).json({
         success: false,
-        message: 'Cannot upload this document. Your previous upload is pending review by admin.',
+        message:
+          "Cannot upload this document. Your previous upload is pending review by admin.",
       });
     }
   }
@@ -264,27 +272,30 @@ export const uploadDocument = asyncHandler(async (req, res) => {
     const uploadResult = await uploadToCloudinary(
       req.file.path,
       `driver-documents/${req.user.id}`,
-      'auto'
+      "auto",
     );
 
     // Delete old document from Cloudinary if exists
     const oldDoc = profile.documents?.[documentType];
     if (oldDoc?.cloudinaryPublicId) {
       try {
-        await deleteFromCloudinary(oldDoc.cloudinaryPublicId, uploadResult.resourceType);
+        await deleteFromCloudinary(
+          oldDoc.cloudinaryPublicId,
+          uploadResult.resourceType,
+        );
       } catch (err) {
-        console.error('Error deleting old document from Cloudinary:', err);
+        console.error("Error deleting old document from Cloudinary:", err);
       }
     }
 
     // Prepare document data
     // profilePhoto is auto-verified and needs no admin approval
-    const isProfilePhoto = documentType === 'profilePhoto';
+    const isProfilePhoto = documentType === "profilePhoto";
     const documentData = {
       imageUrl: uploadResult.url,
       cloudinaryPublicId: uploadResult.publicId,
       isVerified: isProfilePhoto, // Auto-verify profile photo
-      status: isProfilePhoto ? 'verified' : 'pending', // Profile photo is instantly verified
+      status: isProfilePhoto ? "verified" : "pending", // Profile photo is instantly verified
       uploadedAt: new Date(),
       rejectionReason: null, // Clear any previous rejection reason
       ...req.body, // Include any additional fields like number, expiryDate, etc.
@@ -296,9 +307,9 @@ export const uploadDocument = asyncHandler(async (req, res) => {
     }
     profile.documents[documentType] = {
       ...profile.documents[documentType],
-      ...documentData
+      ...documentData,
     };
-    profile.markModified('documents');
+    profile.markModified("documents");
     await profile.save();
 
     // Delete local file after successful upload
@@ -306,16 +317,16 @@ export const uploadDocument = asyncHandler(async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Document uploaded successfully',
-      data: { 
+      message: "Document uploaded successfully",
+      data: {
         documentType,
-        document: profile.documents[documentType]
+        document: profile.documents[documentType],
       },
     });
   } catch (error) {
     // Delete local file on error
     deleteLocalFile(req.file.path);
-    
+
     res.status(400).json({
       success: false,
       message: error.message,
@@ -336,24 +347,30 @@ export const getDocumentsStatus = asyncHandler(async (req, res) => {
     const defaultDocs = {};
     // profilePhoto is handled separately via profile upload
     const docTypes = [
-      'vehiclePhoto', 'idDocument', 'workPermit', 'driversLicence',
-      'proofOfBankingDetails', 'proofOfAddress', 'vehicleLicense', 
-      'thirdPartyInsurance', 'vehicleAssessment', 'carrierAgreement'
+      "vehiclePhoto",
+      "idDocument",
+      "workPermit",
+      "driversLicence",
+      "proofOfBankingDetails",
+      "proofOfAddress",
+      "vehicleLicense",
+      "vehicleAssessment",
+      "carrierAgreement",
     ];
-    
-    docTypes.forEach(docType => {
+
+    docTypes.forEach((docType) => {
       defaultDocs[docType] = {
         uploaded: false,
-        status: 'not_uploaded',
+        status: "not_uploaded",
         canReupload: true,
         isVerified: false,
-        imageUrl: null
+        imageUrl: null,
       };
     });
 
     return res.json({
       success: true,
-      data: { 
+      data: {
         documents: defaultDocs,
         allVerified: false,
       },
@@ -363,19 +380,25 @@ export const getDocumentsStatus = asyncHandler(async (req, res) => {
   // Prepare documents status for all document types
   // profilePhoto is handled separately via profile upload
   const docTypes = [
-    'vehiclePhoto', 'idDocument', 'workPermit', 'driversLicence',
-    'proofOfBankingDetails', 'proofOfAddress', 'vehicleLicense', 
-    'thirdPartyInsurance', 'vehicleAssessment', 'carrierAgreement'
+    "vehiclePhoto",
+    "idDocument",
+    "workPermit",
+    "driversLicence",
+    "proofOfBankingDetails",
+    "proofOfAddress",
+    "vehicleLicense",
+    "vehicleAssessment",
+    "carrierAgreement",
   ];
 
   const documentsStatus = {};
-  
-  docTypes.forEach(docType => {
+
+  docTypes.forEach((docType) => {
     const doc = profile.documents?.[docType];
     documentsStatus[docType] = {
       uploaded: !!doc?.imageUrl,
-      status: doc?.status || 'not_uploaded',
-      canReupload: doc?.status !== 'verified', // Can't reupload verified docs
+      status: doc?.status || "not_uploaded",
+      canReupload: doc?.status !== "verified", // Can't reupload verified docs
       isVerified: doc?.isVerified || false,
       imageUrl: doc?.imageUrl || null,
       rejectionReason: doc?.rejectionReason || null,
@@ -386,18 +409,23 @@ export const getDocumentsStatus = asyncHandler(async (req, res) => {
   // Check if all required documents are verified
   // profilePhoto is optional and handled separately
   const requiredDocs = [
-    'vehiclePhoto', 'idDocument', 'driversLicence',
-    'proofOfBankingDetails', 'proofOfAddress', 'vehicleLicense',
-    'thirdPartyInsurance', 'vehicleAssessment', 'carrierAgreement'
+    "vehiclePhoto",
+    "idDocument",
+    "driversLicence",
+    "proofOfBankingDetails",
+    "proofOfAddress",
+    "vehicleLicense",
+    "vehicleAssessment",
+    "carrierAgreement",
   ];
-  
-  const allVerified = requiredDocs.every(docType => 
-    documentsStatus[docType]?.isVerified === true
+
+  const allVerified = requiredDocs.every(
+    (docType) => documentsStatus[docType]?.isVerified === true,
   );
 
   res.json({
     success: true,
-    data: { 
+    data: {
       documents: documentsStatus,
       allVerified,
     },
@@ -418,7 +446,7 @@ export const verifyDocument = asyncHandler(async (req, res) => {
   if (!profile) {
     return res.status(404).json({
       success: false,
-      message: 'Driver profile not found',
+      message: "Driver profile not found",
     });
   }
 
@@ -427,10 +455,10 @@ export const verifyDocument = asyncHandler(async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Document verified successfully',
-      data: { 
+      message: "Document verified successfully",
+      data: {
         documentType,
-        document: profile.documents[documentType] 
+        document: profile.documents[documentType],
       },
     });
   } catch (error) {
@@ -453,7 +481,7 @@ export const rejectDocument = asyncHandler(async (req, res) => {
   if (!reason) {
     return res.status(400).json({
       success: false,
-      message: 'Rejection reason is required',
+      message: "Rejection reason is required",
     });
   }
 
@@ -462,7 +490,7 @@ export const rejectDocument = asyncHandler(async (req, res) => {
   if (!profile) {
     return res.status(404).json({
       success: false,
-      message: 'Driver profile not found',
+      message: "Driver profile not found",
     });
   }
 
@@ -471,10 +499,10 @@ export const rejectDocument = asyncHandler(async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Document rejected successfully',
-      data: { 
+      message: "Document rejected successfully",
+      data: {
         documentType,
-        document: profile.documents[documentType] 
+        document: profile.documents[documentType],
       },
     });
   } catch (error) {
@@ -496,7 +524,7 @@ export const updateAvailability = asyncHandler(async (req, res) => {
   let profile = await DeliveryRiderProfile.findOne({ userId: req.user.id });
 
   if (!profile) {
-    profile = await DeliveryRiderProfile.create({ 
+    profile = await DeliveryRiderProfile.create({
       userId: req.user.id,
       vehicle: {},
       bankDetails: {},
@@ -504,20 +532,23 @@ export const updateAvailability = asyncHandler(async (req, res) => {
   }
 
   if (isAvailable !== undefined) profile.isAvailable = isAvailable;
-  
+
   // Handle workSchedule - array of shift time strings (e.g., ["07:00 AM - 08:00 AM"])
   // User can change these daily as needed
   if (workSchedule !== undefined) {
-    profile.set('workSchedule', workSchedule);
-    profile.markModified('workSchedule');
+    profile.set("workSchedule", workSchedule);
+    profile.markModified("workSchedule");
   }
 
   await profile.save();
 
   res.json({
     success: true,
-    message: 'Availability updated successfully',
-    data: { isAvailable: profile.isAvailable, workSchedule: profile.workSchedule },
+    message: "Availability updated successfully",
+    data: {
+      isAvailable: profile.isAvailable,
+      workSchedule: profile.workSchedule,
+    },
   });
 });
 
@@ -532,14 +563,14 @@ export const updateLocation = asyncHandler(async (req, res) => {
   if (!latitude || !longitude) {
     return res.status(400).json({
       success: false,
-      message: 'Latitude and longitude are required',
+      message: "Latitude and longitude are required",
     });
   }
 
   let profile = await DeliveryRiderProfile.findOne({ userId: req.user.id });
 
   if (!profile) {
-    profile = await DeliveryRiderProfile.create({ 
+    profile = await DeliveryRiderProfile.create({
       userId: req.user.id,
       vehicle: {},
       bankDetails: {},
@@ -547,7 +578,7 @@ export const updateLocation = asyncHandler(async (req, res) => {
   }
 
   profile.currentLocation = {
-    type: 'Point',
+    type: "Point",
     coordinates: [longitude, latitude],
   };
   profile.lastLocationUpdate = new Date();
@@ -556,8 +587,8 @@ export const updateLocation = asyncHandler(async (req, res) => {
 
   res.json({
     success: true,
-    message: 'Location updated successfully',
-    data: { 
+    message: "Location updated successfully",
+    data: {
       currentLocation: profile.currentLocation,
       lastLocationUpdate: profile.lastLocationUpdate,
     },
@@ -575,7 +606,7 @@ export const getDriverStats = asyncHandler(async (req, res) => {
   if (!profile) {
     return res.status(404).json({
       success: false,
-      message: 'Driver profile not found',
+      message: "Driver profile not found",
     });
   }
 
@@ -605,14 +636,14 @@ export const updateWorkAreas = asyncHandler(async (req, res) => {
   if (!preferredWorkAreas || !Array.isArray(preferredWorkAreas)) {
     return res.status(400).json({
       success: false,
-      message: 'Preferred work areas must be an array',
+      message: "Preferred work areas must be an array",
     });
   }
 
   let profile = await DeliveryRiderProfile.findOne({ userId: req.user.id });
 
   if (!profile) {
-    profile = await DeliveryRiderProfile.create({ 
+    profile = await DeliveryRiderProfile.create({
       userId: req.user.id,
       vehicle: {},
       bankDetails: {},
@@ -620,13 +651,13 @@ export const updateWorkAreas = asyncHandler(async (req, res) => {
   }
 
   // Store as serviceAreas (simple array of area names)
-  profile.set('serviceAreas', preferredWorkAreas);
-  profile.markModified('serviceAreas');
+  profile.set("serviceAreas", preferredWorkAreas);
+  profile.markModified("serviceAreas");
   await profile.save();
 
   res.json({
     success: true,
-    message: 'Preferred work areas updated successfully',
+    message: "Preferred work areas updated successfully",
     data: { serviceAreas: profile.serviceAreas },
   });
 });
@@ -640,7 +671,7 @@ export const getBankAccount = asyncHandler(async (req, res) => {
   let profile = await DeliveryRiderProfile.findOne({ userId: req.user.id });
 
   if (!profile) {
-    profile = await DeliveryRiderProfile.create({ 
+    profile = await DeliveryRiderProfile.create({
       userId: req.user.id,
       vehicle: {},
       bankDetails: {},
@@ -659,12 +690,18 @@ export const getBankAccount = asyncHandler(async (req, res) => {
  * @access  Private (Delivery Rider)
  */
 export const updateBankAccount = asyncHandler(async (req, res) => {
-  const { accountHolderName, accountNumber, bankName, branchCode, routingNumber, accountType } = req.body;
+  const {
+    accountHolderName,
+    accountNumber,
+    bankName,
+    branchCode,
+    accountType,
+  } = req.body;
 
   let profile = await DeliveryRiderProfile.findOne({ userId: req.user.id });
 
   if (!profile) {
-    profile = await DeliveryRiderProfile.create({ 
+    profile = await DeliveryRiderProfile.create({
       userId: req.user.id,
       vehicle: {},
       bankDetails: {},
@@ -677,19 +714,20 @@ export const updateBankAccount = asyncHandler(async (req, res) => {
   }
 
   // Update bank account details
-  if (accountHolderName !== undefined) profile.bankDetails.accountHolderName = accountHolderName;
-  if (accountNumber !== undefined) profile.bankDetails.accountNumber = accountNumber;
+  if (accountHolderName !== undefined)
+    profile.bankDetails.accountHolderName = accountHolderName;
+  if (accountNumber !== undefined)
+    profile.bankDetails.accountNumber = accountNumber;
   if (bankName !== undefined) profile.bankDetails.bankName = bankName;
   if (branchCode !== undefined) profile.bankDetails.branchCode = branchCode;
-  if (routingNumber !== undefined) profile.bankDetails.routingNumber = routingNumber;
   if (accountType !== undefined) profile.bankDetails.accountType = accountType;
 
-  profile.markModified('bankDetails');
+  profile.markModified("bankDetails");
   await profile.save();
 
   res.json({
     success: true,
-    message: 'Bank account updated successfully',
+    message: "Bank account updated successfully",
     data: { bankDetails: profile.bankDetails },
   });
 });
@@ -702,17 +740,17 @@ export const updateBankAccount = asyncHandler(async (req, res) => {
 export const toggleOnlineStatus = asyncHandler(async (req, res) => {
   const { isAvailable } = req.body;
 
-  if (typeof isAvailable !== 'boolean') {
+  if (typeof isAvailable !== "boolean") {
     return res.status(400).json({
       success: false,
-      message: 'isAvailable must be a boolean value',
+      message: "isAvailable must be a boolean value",
     });
   }
 
   let profile = await DeliveryRiderProfile.findOne({ userId: req.user.id });
 
   if (!profile) {
-    profile = await DeliveryRiderProfile.create({ 
+    profile = await DeliveryRiderProfile.create({
       userId: req.user.id,
       vehicle: {},
       bankDetails: {},
@@ -724,8 +762,8 @@ export const toggleOnlineStatus = asyncHandler(async (req, res) => {
 
   res.json({
     success: true,
-    message: `Status updated to ${isAvailable ? 'online' : 'offline'}`,
-    data: { 
+    message: `Status updated to ${isAvailable ? "online" : "offline"}`,
+    data: {
       isAvailable: profile.isAvailable,
     },
   });

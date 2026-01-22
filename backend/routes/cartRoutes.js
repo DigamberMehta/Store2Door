@@ -7,6 +7,7 @@ import {
   clearCart,
   applyCoupon,
   removeCoupon,
+  getTipOptions,
 } from "../controllers/cartController.js";
 import { authenticate } from "../middleware/auth.js";
 
@@ -25,5 +26,8 @@ router.delete("/", clearCart);
 // Coupon operations
 router.post("/coupon", applyCoupon);
 router.delete("/coupon", removeCoupon);
+
+// Tip calculation
+router.get("/tip-options", getTipOptions);
 
 export default router;

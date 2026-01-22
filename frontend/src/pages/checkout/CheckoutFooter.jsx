@@ -1,6 +1,7 @@
 import { MapPin, ChevronDown } from "lucide-react";
 import { useState, useEffect } from "react";
 import { customerProfileAPI } from "../../services/api/profile.api";
+import { formatPrice } from "../../utils/formatPrice";
 
 const CheckoutFooter = ({ total }) => {
   const [defaultAddress, setDefaultAddress] = useState(null);
@@ -86,7 +87,9 @@ const CheckoutFooter = ({ total }) => {
         <button className="flex-1 bg-[rgb(49,134,22)] hover:bg-[rgb(49,134,22)]/90 text-white rounded-lg py-2 px-3 transition-all duration-300 hover:scale-[1.02] shadow-lg shadow-[rgb(49,134,22)]/20 flex items-center justify-between">
           <div className="text-left">
             <div className="text-black/70 text-[10px]">TOTAL</div>
-            <div className="text-black font-bold text-base">R{total}</div>
+            <div className="text-black font-bold text-base">
+              R{formatPrice(total)}
+            </div>
           </div>
           <div className="flex items-center gap-1">
             <span className="font-semibold text-sm">Place Order</span>

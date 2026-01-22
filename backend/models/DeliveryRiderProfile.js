@@ -42,26 +42,10 @@ const vehicleSchema = new mongoose.Schema(
       uppercase: true,
       maxlength: 20,
     },
-    registrationNumber: {
-      type: String,
-      trim: true,
-      maxlength: 50,
-    },
-    insuranceNumber: {
-      type: String,
-      trim: true,
-      maxlength: 50,
-    },
-    insuranceExpiry: {
-      type: Date,
-    },
-    registrationExpiry: {
-      type: Date,
-    },
   },
   {
     _id: false,
-  }
+  },
 );
 
 // Documents sub-schema
@@ -210,27 +194,6 @@ const documentsSchema = new mongoose.Schema(
       rejectionReason: String,
       uploadedAt: Date,
     },
-    thirdPartyInsurance: {
-      policyNumber: {
-        type: String,
-        trim: true,
-        maxlength: 50,
-      },
-      expiryDate: Date,
-      imageUrl: String,
-      cloudinaryPublicId: String,
-      isVerified: {
-        type: Boolean,
-        default: false,
-      },
-      status: {
-        type: String,
-        enum: ["not_uploaded", "pending", "verified", "rejected"],
-        default: "not_uploaded",
-      },
-      rejectionReason: String,
-      uploadedAt: Date,
-    },
     vehicleAssessment: {
       imageUrl: String,
       cloudinaryPublicId: String,
@@ -301,7 +264,7 @@ const documentsSchema = new mongoose.Schema(
   },
   {
     _id: false,
-  }
+  },
 );
 
 // Bank details sub-schema
@@ -323,15 +286,10 @@ const bankDetailsSchema = new mongoose.Schema(
       trim: true,
       maxlength: 100,
     },
-    routingNumber: {
-      type: String,
-      trim: true,
-      maxlength: 20,
-    },
     accountType: {
       type: String,
-      enum: ["checking", "savings"],
-      default: "checking",
+      enum: ["cheque", "savings", "transmission"],
+      default: "cheque",
     },
     isVerified: {
       type: Boolean,
@@ -340,7 +298,7 @@ const bankDetailsSchema = new mongoose.Schema(
   },
   {
     _id: false,
-  }
+  },
 );
 
 // Emergency contact sub-schema
@@ -368,7 +326,7 @@ const emergencyContactSchema = new mongoose.Schema(
   },
   {
     _id: false,
-  }
+  },
 );
 
 // Work schedule sub-schema
@@ -418,7 +376,7 @@ const workScheduleSchema = new mongoose.Schema(
   },
   {
     _id: false,
-  }
+  },
 );
 
 // Delivery statistics sub-schema
@@ -478,7 +436,7 @@ const deliveryStatsSchema = new mongoose.Schema(
   },
   {
     _id: false,
-  }
+  },
 );
 
 // Main delivery rider profile schema
@@ -544,7 +502,7 @@ const deliveryRiderProfileSchema = new mongoose.Schema(
     // Work Schedule - flexible to support both day-based and shift-based formats
     workSchedule: {
       type: mongoose.Schema.Types.Mixed,
-      default: []
+      default: [],
     },
 
     // Current Status
@@ -591,7 +549,7 @@ const deliveryRiderProfileSchema = new mongoose.Schema(
     // Service Areas - flexible format to store area names as strings
     serviceAreas: {
       type: mongoose.Schema.Types.Mixed,
-      default: []
+      default: [],
     },
 
     // Performance and Statistics
@@ -692,7 +650,7 @@ const deliveryRiderProfileSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // Indexes for performance
@@ -719,7 +677,7 @@ deliveryRiderProfileSchema.pre("save", function (next) {
   // Calculate completion rate
   if (this.stats.totalDeliveries > 0) {
     this.stats.completionRate = Math.round(
-      (this.stats.completedDeliveries / this.stats.totalDeliveries) * 100
+      (this.stats.completedDeliveries / this.stats.totalDeliveries) * 100,
     );
   }
 
@@ -748,7 +706,7 @@ deliveryRiderProfileSchema.pre("save", function (next) {
 // Instance methods
 deliveryRiderProfileSchema.methods.updateLocation = function (
   longitude,
-  latitude
+  latitude,
 ) {
   this.currentLocation = {
     type: "Point",
@@ -860,7 +818,7 @@ deliveryRiderProfileSchema.methods.approve = function (approvedBy) {
 deliveryRiderProfileSchema.statics.findAvailableRiders = function (
   latitude,
   longitude,
-  maxDistance = 10000
+  maxDistance = 10000,
 ) {
   return this.find({
     isActive: true,
@@ -879,7 +837,7 @@ deliveryRiderProfileSchema.statics.findAvailableRiders = function (
 
 deliveryRiderProfileSchema.statics.findByServiceArea = function (
   city,
-  zipCode = null
+  zipCode = null,
 ) {
   const query = {
     "serviceAreas.city": city,
@@ -914,7 +872,7 @@ deliveryRiderProfileSchema.statics.getTopPerformers = function (limit = 10) {
 deliveryRiderProfileSchema.statics.getRiderAnalytics = function (
   riderId,
   startDate,
-  endDate
+  endDate,
 ) {
   return this.aggregate([
     { $match: { userId: mongoose.Types.ObjectId(riderId) } },
@@ -951,14 +909,13 @@ deliveryRiderProfileSchema.methods.toJSON = function () {
   const rider = this.toObject();
   if (rider.bankDetails) {
     delete rider.bankDetails.accountNumber;
-    delete rider.bankDetails.routingNumber;
   }
   return rider;
 };
 
 const DeliveryRiderProfile = mongoose.model(
   "DeliveryRiderProfile",
-  deliveryRiderProfileSchema
+  deliveryRiderProfileSchema,
 );
 
 export default DeliveryRiderProfile;

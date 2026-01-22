@@ -305,7 +305,7 @@ const AddressPage = () => {
                   Getting your location...
                 </div>
               )}
- 
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-white/40 text-[11px] mb-1.5 block">

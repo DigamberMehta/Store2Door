@@ -11,6 +11,7 @@ import productRoutes from "./routes/productRoutes.js";
 import storeRoutes from "./routes/storeRoutes.js";
 import cartRoutes from "./routes/cartRoutes.js";
 import suggestionsRoutes from "./routes/suggestions.js";
+import couponRoutes from "./routes/couponRoutes.js";
 import { errorHandler, notFound } from "./middleware/validation.js";
 import { connectRedis } from "./config/redis.js";
 
@@ -81,6 +82,7 @@ app.use("/api/products", productRoutes);
 app.use("/api/stores", storeRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/suggestions", suggestionsRoutes);
+app.use("/api/coupons", couponRoutes);
 // Routes
 app.use("/api/users", userRoutes);
 app.use("/api/customer-profile", customerProfileRoutes);

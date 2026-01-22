@@ -1,5 +1,6 @@
 import { MdStar } from "react-icons/md";
 import { Clock, ShieldCheck, Package } from "lucide-react";
+import { formatPrice } from "../../utils/formatPrice";
 
 const ProductInfo = ({
   product,
@@ -121,7 +122,7 @@ const ProductInfo = ({
                       selectedVariant === index ? "text-white" : "text-white/70"
                     }`}
                   >
-                    R{product.price + (variant.priceModifier || 0)}
+                    R{formatPrice(product.price + (variant.priceModifier || 0))}
                   </span>
                 </button>
               ))}
