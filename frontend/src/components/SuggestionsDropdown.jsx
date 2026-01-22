@@ -16,7 +16,8 @@ const SuggestionsDropdown = ({
     products: [],
     stores: [],
     categories: [],
-    all: []
+    all: [],
+    corrections: []
   });
   const [popularSearches, setPopularSearches] = useState([]);
   const [trendingSearches, setTrendingSearches] = useState([]);
@@ -28,7 +29,7 @@ const SuggestionsDropdown = ({
   useEffect(() => {
     const fetchSuggestions = async () => {
       if (!searchQuery || searchQuery.length < 2) {
-        setSuggestions({ products: [], stores: [], categories: [], all: [] });
+        setSuggestions({ products: [], stores: [], categories: [], all: [], corrections: [] });
         return;
       }
 
@@ -37,7 +38,7 @@ const SuggestionsDropdown = ({
 
       try {
         const response = await suggestionsAPI.getSuggestions(searchQuery, { limit: 10, type: 'store' });
-        setSuggestions(response.suggestions || { products: [], stores: [], categories: [], all: [] });
+        setSuggestions(response.suggestions || { products: [], stores: [], categories: [], all: [], corrections: [] });
       } catch (err) {
         console.error('Failed to fetch suggestions:', err);
         setError('Failed to load suggestions');
@@ -159,11 +160,52 @@ const SuggestionsDropdown = ({
               Keep typing to search...
             </div>
           ) : suggestions.stores.length === 0 ? (
-            <div className="p-6 text-center text-zinc-500">
-              No stores found for "{searchQuery}"
+            <div className="space-y-4">
+              <div className="p-6 text-center text-zinc-500">
+                No stores found for "{searchQuery}"
+              </div>
+              {/* Show corrections even if no results */}
+              {suggestions.corrections && suggestions.corrections.length > 0 && (
+                <div className="px-4">
+                  <div className="text-[11px] text-zinc-500 mb-2">
+                    Did you mean?
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {suggestions.corrections.map((correction, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handleSearchTermClick(correction.suggestion)}
+                        className="px-3 py-1.5 text-sm bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 rounded-full transition-colors"
+                      >
+                        {correction.suggestion}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div className="space-y-4">
+              {/* Show corrections if available */}
+              {suggestions.corrections && suggestions.corrections.length > 0 && (
+                <div className="px-4 pb-2 border-b border-white/5">
+                  <div className="text-[11px] text-zinc-500 mb-2">
+                    Did you mean?
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {suggestions.corrections.map((correction, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handleSearchTermClick(correction.suggestion)}
+                        className="px-3 py-1.5 text-sm bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 rounded-full transition-colors"
+                      >
+                        {correction.suggestion}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
               {/* Stores */}
               {suggestions.stores.length > 0 && (
                 <div>

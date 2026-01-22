@@ -28,7 +28,8 @@ class SuggestionsService {
       const {
         type = null,
         limit = 10,
-        useCache = true
+        useCache = true,
+        includeCorrections = true
       } = options;
 
       // Generate cache key
@@ -45,8 +46,22 @@ class SuggestionsService {
       // Use MongoDB Atlas Search
       const suggestions = await this.atlasSearch(query, { type, limit });
 
+      // Check if results look like they might be from a typo (fuzzy matches or few results)
+      const hasFuzzyMatches = suggestions.some(s => s.isFuzzyMatch);
+      const hasLowResults = suggestions.length < 3;
+      
+      let corrections = [];
+      if (includeCorrections && (hasFuzzyMatches || hasLowResults)) {
+        corrections = await this.getSpellingCorrections(query, 3);
+      }
+
       // Group suggestions by type
       const grouped = this.groupSuggestionsByType(suggestions);
+      
+      // Add corrections if any
+      if (corrections.length > 0) {
+        grouped.corrections = corrections;
+      }
 
       // Cache the results
       if (useCache && suggestions.length > 0) {
@@ -68,15 +83,51 @@ class SuggestionsService {
    */
   static async atlasSearch(query, options = {}) {
     const { type, limit = 10 } = options;
+    let results = [];
+
+    try {
+      // First attempt: Autocomplete-style search with synonyms
+      const autocompleteResults = await this.autocompleteSearch(query, { type, limit });
+      
+      // If autocomplete returns too few results (< 3), fall back to aggressive fuzzy search
+      const AUTOCOMPLETE_THRESHOLD = 3;
+      
+      if (autocompleteResults.length < AUTOCOMPLETE_THRESHOLD) {
+        console.log(`⚠️ Autocomplete returned ${autocompleteResults.length} results for "${query}". Triggering fuzzy fallback...`);
+        
+        // Run aggressive fuzzy search
+        const fuzzyResults = await this.aggressiveFuzzySearch(query, { type, limit });
+        
+        // Merge results (prioritize autocomplete, then fuzzy)
+        const mergedResults = this.mergeAndDeduplicateResults(
+          autocompleteResults,
+          fuzzyResults,
+          limit
+        );
+        
+        return mergedResults;
+      }
+      
+      return autocompleteResults;
+    } catch (error) {
+      console.error('Atlas search error:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Autocomplete-style search with synonym expansion
+   * @param {string} query - Search query
+   * @param {Object} options - Search options
+   * @returns {Promise<Array>} Search results
+   */
+  static async autocompleteSearch(query, options = {}) {
+    const { type, limit = 10 } = options;
     const results = [];
 
     try {
       // Expand query with synonyms
       const queryVariations = expandQueryWithSynonyms(query);
-      
-      // Build regex patterns for autocomplete (prefix matching)
-      const prefixRegex = new RegExp(`^${query}`, 'i');
-      const containsRegex = new RegExp(query, 'i');
       
       // Create OR conditions for all query variations
       const queryConditions = queryVariations.map(variation => ({
@@ -256,7 +307,297 @@ class SuggestionsService {
 
       return results.slice(0, limit);
     } catch (error) {
-      console.error('Atlas search error:', error);
+      console.error('Autocomplete search error:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Aggressive fuzzy search for handling typos and misspellings
+   * @param {string} query - Search query (potentially with typos)
+   * @param {Object} options - Search options
+   * @returns {Promise<Array>} Search results
+   */
+  static async aggressiveFuzzySearch(query, options = {}) {
+    const { type, limit = 10 } = options;
+    const results = [];
+
+    try {
+      // Fetch broader set of data for client-side fuzzy matching
+      const fetchLimit = Math.min(limit * 10, 100); // Fetch more items for fuzzy filtering
+
+      // Search products
+      if (!type || type === 'product') {
+        const products = await Product.find({ isActive: true })
+          .sort({ popularity: -1, rating: -1 })
+          .limit(fetchLimit)
+          .select('name description price images category popularity rating storeId tags')
+          .populate('storeId', 'name')
+          .lean();
+
+        // Prepare data for fuzzy search
+        const productsWithPreparedData = products.map(p => ({
+          ...p,
+          _preparedName: fuzzysort.prepare(p.name),
+          _preparedTags: p.tags ? p.tags.map(t => fuzzysort.prepare(t)) : []
+        }));
+
+        // Fuzzy search on names
+        const nameMatches = fuzzysort.go(query, productsWithPreparedData, {
+          keys: ['name'],
+          threshold: -5000, // More lenient threshold for typos
+          limit: limit
+        });
+
+        // Fuzzy search on tags
+        const tagMatches = products
+          .map(p => {
+            if (!p.tags || p.tags.length === 0) return null;
+            const matches = fuzzysort.go(query, p.tags, { threshold: -5000 });
+            if (matches.length > 0) {
+              return {
+                obj: p,
+                score: matches[0].score
+              };
+            }
+            return null;
+          })
+          .filter(Boolean);
+
+        // Combine and deduplicate
+        const allMatches = new Map();
+        
+        nameMatches.forEach(match => {
+          allMatches.set(match.obj._id.toString(), {
+            product: match.obj,
+            score: match.score
+          });
+        });
+
+        tagMatches.forEach(match => {
+          const id = match.obj._id.toString();
+          if (!allMatches.has(id) || allMatches.get(id).score < match.score) {
+            allMatches.set(id, {
+              product: match.obj,
+              score: match.score
+            });
+          }
+        });
+
+        // Convert to array and sort by score
+        const sortedProducts = Array.from(allMatches.values())
+          .sort((a, b) => b.score - a.score)
+          .slice(0, limit)
+          .map(item => item.product);
+
+        results.push(...sortedProducts.map(p => ({
+          type: 'product',
+          name: p.name,
+          description: p.description,
+          price: p.price,
+          image: p.images?.[0]?.url || p.images?.[0] || '',
+          category: p.category,
+          popularity: p.popularity || 0,
+          rating: p.rating || 0,
+          storeName: p.storeId?.name || 'Unknown Store',
+          storeId: p.storeId?._id || p.storeId,
+          id: `product_${p._id}`,
+          isFuzzyMatch: true
+        })));
+      }
+
+      // Search stores
+      if (!type || type === 'store') {
+        // For stores, search products first to find stores carrying similar items
+        const products = await Product.find({ isActive: true })
+          .limit(fetchLimit)
+          .select('name tags storeId')
+          .lean();
+
+        // Fuzzy match products to find relevant store IDs
+        const productMatches = fuzzysort.go(query, products, {
+          keys: ['name'],
+          threshold: -5000,
+          limit: fetchLimit
+        });
+
+        const relevantStoreIds = [...new Set(
+          productMatches.map(match => match.obj.storeId?.toString()).filter(Boolean)
+        )];
+
+        // Fetch stores
+        const stores = await Store.find({
+          isActive: true,
+          $or: [
+            { _id: { $in: relevantStoreIds } }
+          ]
+        })
+          .limit(fetchLimit)
+          .select('name description image rating category')
+          .lean();
+
+        // Also fuzzy match on store names directly
+        const allStores = await Store.find({ isActive: true })
+          .limit(fetchLimit)
+          .select('name description image rating category')
+          .lean();
+
+        const storeNameMatches = fuzzysort.go(query, allStores, {
+          keys: ['name'],
+          threshold: -5000,
+          limit: limit
+        });
+
+        // Merge and deduplicate stores
+        const storeMap = new Map();
+        
+        // Add stores carrying matching products (higher priority)
+        stores.forEach(store => {
+          storeMap.set(store._id.toString(), {
+            store,
+            priority: 2,
+            score: 0
+          });
+        });
+
+        // Add stores with matching names
+        storeNameMatches.forEach(match => {
+          const id = match.obj._id.toString();
+          if (!storeMap.has(id)) {
+            storeMap.set(id, {
+              store: match.obj,
+              priority: 1,
+              score: match.score
+            });
+          }
+        });
+
+        // Sort by priority and score
+        const sortedStores = Array.from(storeMap.values())
+          .sort((a, b) => {
+            if (a.priority !== b.priority) return b.priority - a.priority;
+            return b.score - a.score;
+          })
+          .slice(0, limit)
+          .map(item => item.store);
+
+        results.push(...sortedStores.map(s => ({
+          type: 'store',
+          name: s.name,
+          description: s.description,
+          image: s.image || '',
+          rating: s.rating,
+          category: s.category,
+          id: `store_${s._id}`,
+          isFuzzyMatch: true
+        })));
+      }
+
+      // Search categories
+      if (!type || type === 'category') {
+        const categories = await Category.find({ isActive: true })
+          .limit(50)
+          .select('name description icon')
+          .lean();
+
+        const matches = fuzzysort.go(query, categories, {
+          keys: ['name'],
+          threshold: -5000,
+          limit: limit
+        });
+
+        results.push(...matches.map(match => ({
+          type: 'category',
+          name: match.obj.name,
+          description: match.obj.description,
+          image: match.obj.icon || '',
+          id: `category_${match.obj._id}`,
+          isFuzzyMatch: true
+        })));
+      }
+
+      return results;
+    } catch (error) {
+      console.error('Aggressive fuzzy search error:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Merge and deduplicate autocomplete and fuzzy results
+   * @param {Array} autocompleteResults - Results from autocomplete search
+   * @param {Array} fuzzyResults - Results from fuzzy search
+   * @param {number} limit - Maximum number of results
+   * @returns {Array} Merged and deduplicated results
+   */
+  static mergeAndDeduplicateResults(autocompleteResults, fuzzyResults, limit) {
+    const resultMap = new Map();
+
+    // Add autocomplete results first (higher priority)
+    autocompleteResults.forEach(result => {
+      resultMap.set(result.id, { ...result, matchType: 'autocomplete' });
+    });
+
+    // Add fuzzy results that don't exist
+    fuzzyResults.forEach(result => {
+      if (!resultMap.has(result.id)) {
+        resultMap.set(result.id, { ...result, matchType: 'fuzzy' });
+      }
+    });
+
+    // Convert to array and limit
+    return Array.from(resultMap.values()).slice(0, limit);
+  }
+
+  /**
+   * Get spelling correction suggestions ("Did you mean?")
+   * @param {string} query - Search query (potentially with typos)
+   * @param {number} limit - Number of suggestions
+   * @returns {Promise<Array>} Spelling correction suggestions
+   */
+  static async getSpellingCorrections(query, limit = 3) {
+    try {
+      // Fetch a sample of common product and category names
+      const [products, categories] = await Promise.all([
+        Product.find({ isActive: true })
+          .sort({ popularity: -1 })
+          .limit(200)
+          .select('name tags')
+          .lean(),
+        Category.find({ isActive: true })
+          .select('name')
+          .lean()
+      ]);
+
+      // Build a dictionary of common terms
+      const dictionary = new Set();
+      
+      products.forEach(p => {
+        dictionary.add(p.name.toLowerCase());
+        if (p.tags) {
+          p.tags.forEach(tag => dictionary.add(tag.toLowerCase()));
+        }
+      });
+      
+      categories.forEach(c => {
+        dictionary.add(c.name.toLowerCase());
+      });
+
+      // Convert to array for fuzzy matching
+      const terms = Array.from(dictionary);
+
+      // Find closest matches using fuzzy search
+      const matches = fuzzysort.go(query, terms, {
+        threshold: -3000,
+        limit: limit
+      });
+
+      return matches.map(match => ({
+        suggestion: match.target,
+        score: match.score
+      }));
+    } catch (error) {
+      console.error('Error getting spelling corrections:', error);
       return [];
     }
   }
