@@ -5,6 +5,11 @@ import Category from '../models/Category.js';
 import fuzzysort from 'fuzzysort';
 import { expandQueryWithSynonyms, getSynonyms } from '../config/synonyms.js';
 
+// Global dictionary cache (refreshes every hour)
+let SPELLING_DICTIONARY = null;
+let DICTIONARY_CACHE_TIME = 0;
+const DICTIONARY_TTL = 3600000; // 1 hour in milliseconds
+
 /**
  * Suggestions Service
  * Handles search suggestions with fuzzy matching, synonyms, and autocomplete
@@ -144,48 +149,84 @@ class SuggestionsService {
         ]
       }));
 
-      // Search products
+      // Search products using Atlas Search
       if (!type || type === 'product') {
-        const products = await Product.find({
-          $and: [
-            { isActive: true },
-            { $or: queryConditions }
-          ]
-        })
-          .sort({ popularity: -1, rating: -1 })
-          .limit(limit * 2) // Fetch more for fuzzy filtering
-          .select('name description price images category popularity rating storeId tags')
-          .populate('storeId', 'name')
-          .lean();
+        const products = await Product.aggregate([
+          {
+            $search: {
+              index: 'products_search',
+              compound: {
+                should: [
+                  {
+                    autocomplete: {
+                      query: query,
+                      path: 'name',
+                      fuzzy: {
+                        maxEdits: 2,
+                        prefixLength: 1
+                      },
+                      score: { boost: { value: 3 } }
+                    }
+                  },
+                  {
+                    text: {
+                      query: queryVariations.join(' '),
+                      path: ['description', 'tags'],
+                      fuzzy: { maxEdits: 1 },
+                      score: { boost: { value: 1 } }
+                    }
+                  }
+                ],
+                must: [
+                  { equals: { path: 'isActive', value: true } }
+                ]
+              }
+            }
+          },
+          {
+            $addFields: {
+              searchScore: { $meta: 'searchScore' }
+            }
+          },
+          {
+            $sort: { searchScore: -1, popularity: -1, rating: -1 }
+          },
+          {
+            $limit: limit * 2
+          },
+          {
+            $lookup: {
+              from: 'stores',
+              localField: 'storeId',
+              foreignField: '_id',
+              as: 'storeData'
+            }
+          },
+          {
+            $unwind: {
+              path: '$storeData',
+              preserveNullAndEmptyArrays: true
+            }
+          },
+          {
+            $project: {
+              name: 1,
+              description: 1,
+              price: 1,
+              images: 1,
+              category: 1,
+              popularity: 1,
+              rating: 1,
+              tags: 1,
+              searchScore: 1,
+              storeId: '$storeData._id',
+              storeName: '$storeData.name'
+            }
+          }
+        ]);
 
-        // Apply fuzzy matching to filter and rank results
-        const productsWithScore = products.map(p => {
-          const nameMatch = fuzzysort.single(query, p.name);
-          const tagsMatch = p.tags ? fuzzysort.go(query, p.tags, { threshold: -10000 }) : [];
-          
-          return {
-            ...p,
-            fuzzyScore: Math.max(
-              nameMatch?.score || -Infinity,
-              tagsMatch.length > 0 ? tagsMatch[0].score : -Infinity
-            )
-          };
-        });
-
-        // Sort by fuzzy score and take top results
-        const sortedProducts = productsWithScore
-          .filter(p => p.fuzzyScore > -10000) // Filter out poor matches
-          .sort((a, b) => {
-            // Prioritize prefix matches
-            const aPrefix = a.name.toLowerCase().startsWith(query.toLowerCase());
-            const bPrefix = b.name.toLowerCase().startsWith(query.toLowerCase());
-            if (aPrefix && !bPrefix) return -1;
-            if (!aPrefix && bPrefix) return 1;
-            
-            // Then sort by fuzzy score
-            return b.fuzzyScore - a.fuzzyScore;
-          })
-          .slice(0, limit);
+        // Atlas Search already sorted by relevance, just limit and map
+        const sortedProducts = products.slice(0, limit);
 
         results.push(...sortedProducts.map(p => ({
           type: 'product',
@@ -196,73 +237,71 @@ class SuggestionsService {
           category: p.category,
           popularity: p.popularity || 0,
           rating: p.rating || 0,
-          storeName: p.storeId?.name || 'Unknown Store',
-          storeId: p.storeId?._id || p.storeId,
+          storeName: p.storeName || 'Unknown Store',
+          storeId: p.storeId,
           id: `product_${p._id}`,
-          score: p.fuzzyScore
+          score: p.searchScore
         })));
       }
 
-      // Search stores
+      // Search stores using Atlas Search
       if (!type || type === 'store') {
-        const searchRegex = new RegExp(query, 'i');
-        
-        // Find products matching the query to get their store IDs
-        const matchingProducts = await Product.find({
-          isActive: true,
-          $and: [
-            { $or: queryConditions }
-          ]
-        }).select('storeId');
+        const stores = await Store.aggregate([
+          {
+            $search: {
+              index: 'stores_search',
+              compound: {
+                should: [
+                  {
+                    autocomplete: {
+                      query: query,
+                      path: 'name',
+                      fuzzy: {
+                        maxEdits: 2,
+                        prefixLength: 1
+                      },
+                      score: { boost: { value: 3 } }
+                    }
+                  },
+                  {
+                    text: {
+                      query: queryVariations.join(' '),
+                      path: ['description', 'category'],
+                      fuzzy: { maxEdits: 1 }
+                    }
+                  }
+                ],
+                must: [
+                  { equals: { path: 'isActive', value: true } }
+                ]
+              }
+            }
+          },
+          {
+            $addFields: {
+              searchScore: { $meta: 'searchScore' }
+            }
+          },
+          {
+            $sort: { searchScore: -1, rating: -1 }
+          },
+          {
+            $limit: limit * 2
+          },
+          {
+            $project: {
+              name: 1,
+              description: 1,
+              image: 1,
+              rating: 1,
+              category: 1,
+              searchScore: 1
+            }
+          }
+        ]);
 
-        const productStoreIds = [...new Set(matchingProducts.map((p) => p.storeId.toString()))];
-
-        const stores = await Store.find({
-          isActive: true,
-          $or: [
-            { _id: { $in: productStoreIds } },
-            { name: searchRegex },
-            { description: searchRegex },
-            { category: searchRegex }
-          ]
-        })
-          .sort({ rating: -1 })
-          .limit(limit * 2)
-          .select('name description image rating category')
-          .lean();
-
-        // Apply fuzzy matching to stores
-        const storesWithScore = stores.map(s => {
-          const nameMatch = fuzzysort.single(query, s.name);
-          const descMatch = fuzzysort.single(query, s.description || '');
-          
-          return {
-            ...s,
-            fuzzyScore: Math.max(
-              nameMatch?.score || -Infinity,
-              descMatch?.score || -Infinity
-            )
-          };
-        });
-
-        const sortedStores = storesWithScore
-          .sort((a, b) => {
-            // Prioritize stores that carry matching products
-            const aHasProduct = productStoreIds.includes(a._id.toString());
-            const bHasProduct = productStoreIds.includes(b._id.toString());
-            if (aHasProduct && !bHasProduct) return -1;
-            if (!aHasProduct && bHasProduct) return 1;
-            
-            // Then by prefix match
-            const aPrefix = a.name.toLowerCase().startsWith(query.toLowerCase());
-            const bPrefix = b.name.toLowerCase().startsWith(query.toLowerCase());
-            if (aPrefix && !bPrefix) return -1;
-            if (!aPrefix && bPrefix) return 1;
-            
-            // Then by fuzzy score
-            return b.fuzzyScore - a.fuzzyScore;
-          })
-          .slice(0, limit);
+        // Atlas Search already sorted by relevance, just limit and map
+        const sortedStores = stores.slice(0, limit);
 
         results.push(...sortedStores.map(s => ({
           type: 'store',
@@ -272,42 +311,69 @@ class SuggestionsService {
           rating: s.rating,
           category: s.category,
           id: `store_${s._id}`,
-          score: s.fuzzyScore
+          score: s.searchScore
         })));
       }
 
-      // Search categories
+      // Search categories using Atlas Search
       if (!type || type === 'category') {
-        const categories = await Category.find({
-          $and: [
-            { isActive: true },
-            { $or: queryConditions }
-          ]
-        })
-          .limit(limit)
-          .select('name description icon')
-          .lean();
+        const categories = await Category.aggregate([
+          {
+            $search: {
+              index: 'categories_search',
+              compound: {
+                should: [
+                  {
+                    autocomplete: {
+                      query: query,
+                      path: 'name',
+                      fuzzy: {
+                        maxEdits: 2,
+                        prefixLength: 1
+                      },
+                      score: { boost: { value: 2 } }
+                    }
+                  },
+                  {
+                    text: {
+                      query: queryVariations.join(' '),
+                      path: 'description',
+                      fuzzy: { maxEdits: 1 }
+                    }
+                  }
+                ],
+                must: [
+                  { equals: { path: 'isActive', value: true } }
+                ]
+              }
+            }
+          },
+          {
+            $addFields: {
+              searchScore: { $meta: 'searchScore' }
+            }
+          },
+          {
+            $limit: limit
+          },
+          {
+            $project: {
+              name: 1,
+              description: 1,
+              icon: 1,
+              searchScore: 1
+            }
+          }
+        ]);
 
-        // Fuzzy match categories
-        const categoriesWithScore = categories.map(c => {
-          const nameMatch = fuzzysort.single(query, c.name);
-          return {
-            ...c,
-            fuzzyScore: nameMatch?.score || -Infinity
-          };
-        });
-
-        const sortedCategories = categoriesWithScore
-          .filter(c => c.fuzzyScore > -10000)
-          .sort((a, b) => b.fuzzyScore - a.fuzzyScore);
-
-        results.push(...sortedCategories.map(c => ({
+        // Atlas Search already sorted, just map
+        results.push(...categories.map(c => ({
           type: 'category',
           name: c.name,
           description: c.description,
           image: c.icon || '',
           id: `category_${c._id}`,
-          score: c.fuzzyScore
+          score: c.searchScore
         })));
       }
 
@@ -561,40 +627,58 @@ class SuggestionsService {
    * @param {number} limit - Number of suggestions
    * @returns {Promise<Array>} Spelling correction suggestions
    */
+  /**
+   * Build and cache the spelling dictionary
+   */
+  static async buildSpellingDictionary() {
+    console.log('🔄 Building spelling dictionary...');
+    
+    const [products, categories] = await Promise.all([
+      Product.find({ isActive: true })
+        .sort({ popularity: -1 })
+        .limit(200)
+        .select('name tags')
+        .lean(),
+      Category.find({ isActive: true })
+        .select('name')
+        .lean()
+    ]);
+
+    const dictionary = new Set();
+    
+    products.forEach(p => {
+      dictionary.add(p.name.toLowerCase());
+      if (p.tags) {
+        p.tags.forEach(tag => dictionary.add(tag.toLowerCase()));
+      }
+    });
+    
+    categories.forEach(c => {
+      dictionary.add(c.name.toLowerCase());
+    });
+
+    const terms = Array.from(dictionary);
+    console.log(`✅ Dictionary built: ${products.length} products, ${categories.length} categories, ${terms.length} total terms`);
+    
+    return terms;
+  }
+
   static async getSpellingCorrections(query, limit = 3) {
     try {
       console.log(`🔤 Getting spelling corrections for: "${query}"`);
       
-      // Fetch a sample of common product and category names
-      const [products, categories] = await Promise.all([
-        Product.find({ isActive: true })
-          .sort({ popularity: -1 })
-          .limit(200)
-          .select('name tags')
-          .lean(),
-        Category.find({ isActive: true })
-          .select('name')
-          .lean()
-      ]);
+      // Check if dictionary needs refresh (every hour)
+      const now = Date.now();
+      if (!SPELLING_DICTIONARY || (now - DICTIONARY_CACHE_TIME) > DICTIONARY_TTL) {
+        SPELLING_DICTIONARY = await this.buildSpellingDictionary();
+        DICTIONARY_CACHE_TIME = now;
+        console.log(`📦 Dictionary cached until ${new Date(DICTIONARY_CACHE_TIME + DICTIONARY_TTL).toLocaleTimeString()}`);
+      } else {
+        console.log(`♻️ Using cached dictionary (${SPELLING_DICTIONARY.length} terms)`);
+      }
 
-      console.log(`📚 Dictionary size: ${products.length} products, ${categories.length} categories`);
-
-      // Build a dictionary of common terms
-      const dictionary = new Set();
-      
-      products.forEach(p => {
-        dictionary.add(p.name.toLowerCase());
-        if (p.tags) {
-          p.tags.forEach(tag => dictionary.add(tag.toLowerCase()));
-        }
-      });
-      
-      categories.forEach(c => {
-        dictionary.add(c.name.toLowerCase());
-      });
-
-      // Convert to array for fuzzy matching
-      const terms = Array.from(dictionary);
+      // Use cached dictionary
+      const terms = SPELLING_DICTIONARY;
       
       console.log(`🎯 Total dictionary terms: ${terms.length}`);
 

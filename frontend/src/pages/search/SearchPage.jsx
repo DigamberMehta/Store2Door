@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { HiOutlineSearch, HiOutlineArrowLeft, HiOutlineMicrophone } from "react-icons/hi";
 import { motion, AnimatePresence } from "framer-motion";
 import { StoreList } from "../homepage/store";
-import { storeAPI, suggestionsAPI } from "../../services/api";
+import { suggestionsAPI } from "../../services/api";
 
 const SearchPage = () => {
   const navigate = useNavigate();
@@ -29,7 +29,7 @@ const SearchPage = () => {
     if (q) setSearchQuery(q);
   }, [searchParams]);
 
-  // Fetch suggestions and store results
+  // Fetch suggestions and store results (combined in single API call)
   useEffect(() => {
     const fetchResults = async () => {
       const query = searchQuery.trim();
@@ -42,7 +42,7 @@ const SearchPage = () => {
       try {
         setLoading(true);
         
-        // Get suggestions (includes corrections)
+        // Single API call - get suggestions which includes store data
         const suggestionsResponse = await suggestionsAPI.getSuggestions(query, { limit: 10, type: 'store' });
         
         // Extract corrections if available
@@ -52,18 +52,20 @@ const SearchPage = () => {
           setSpellingCorrections([]);
         }
 
-        // Get store results
-        const category = searchParams.get("category");
-        let storeResponse;
-        
-        if (category) {
-          storeResponse = await storeAPI.getByCategory(category);
+        // Extract stores from suggestions response
+        if (suggestionsResponse.suggestions?.stores) {
+          // Convert suggestion format to store format for display
+          const stores = suggestionsResponse.suggestions.stores.map(suggestion => ({
+            _id: suggestion.id?.replace('store_', ''),
+            name: suggestion.name,
+            description: suggestion.description,
+            image: suggestion.image,
+            rating: suggestion.rating,
+            category: suggestion.category
+          }));
+          setResults(stores);
         } else {
-          storeResponse = await storeAPI.search(query);
-        }
-
-        if (storeResponse.success) {
-          setResults(storeResponse.data);
+          setResults([]);
         }
       } catch (error) {
         console.error("Search error:", error);
