@@ -2,6 +2,8 @@ import { MdStar } from "react-icons/md";
 import { Heart } from "lucide-react";
 
 const StoreCard = ({ store, onStoreClick }) => {
+  console.log('StoreCard - Store:', store.name, 'Distance:', store.distance, 'Full store:', store);
+  
   return (
     <div
       className="bg-white/5 backdrop-blur-sm rounded-2xl p-2.5 flex gap-3.5 cursor-pointer transition-all duration-300 hover:bg-white/10 active:scale-[0.98] border border-white/5"
@@ -44,7 +46,7 @@ const StoreCard = ({ store, onStoreClick }) => {
 
         <p className="text-zinc-500 text-[11px] truncate font-medium">
           {store.address?.city || store.location || "Near Market"} •{" "}
-          {store.distance || "2.5 km"}
+          {store.distance ? `${store.distance} km` : "2.5 km"}
         </p>
       </div>
     </div>

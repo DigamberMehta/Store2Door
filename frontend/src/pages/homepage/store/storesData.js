@@ -20,7 +20,7 @@ export const storesData = [
     items: ["Milk", "Bread", "Eggs", "Butter", "Rice", "Atta", "Oil", "Sugar", "Soap", "Shampoo", "Fruits", "Vegetables"],
     offer: "Up to 40% OFF",
     image: "https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=400&q=80",
-    location: "Near Main Market",
+    location: "Law Gate Road, Near LPU",
     reviewCount: "17K+"
   },
   {
@@ -36,7 +36,7 @@ export const storesData = [
     items: ["Paracetamol", "Insulin", "Masks", "Sanitizer", "Band-aid", "Vitamins", "Baby Care", "Protein Powder"],
     offer: "Flat 20% OFF",
     image: "https://images.unsplash.com/photo-1586015555751-63bb77f4322a?w=400&q=80",
-    location: "Sector 12",
+    location: "Highway Plaza Market, Near LPU",
     reviewCount: "5K+"
   },
   {
@@ -52,7 +52,7 @@ export const storesData = [
     items: ["Pizza", "Burger", "Pasta", "Paneer Tikka", "Dal Makhani", "Roti", "Biryani", "Coca Cola", "Dessert"],
     offer: "50% OFF up to ₹100",
     image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400&q=80",
-    location: "Food Court Ave",
+    location: "Law Gate Market, Near LPU Girls Hostel",
     reviewCount: "12K+"
   },
   {
@@ -68,7 +68,7 @@ export const storesData = [
     items: ["iPhone", "Samsung", "Headphones", "Charger", "Laptop", "Mouse", "Keyboard", "Power Bank", "Smart Watch"],
     offer: "Up to 30% OFF",
     image: "https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=400&q=80",
-    location: "Electronic City",
+    location: "LPU Campus, Block 15-A",
     reviewCount: "8K+"
   },
   {
@@ -84,7 +84,7 @@ export const storesData = [
     items: ["T-shirt", "Jeans", "Jacket", "Shirt", "Dress", "Shoes", "Socks", "Belt", "Wallet", "Sunglasses"],
     offer: "Buy 2 Get 1 Free",
     image: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&q=80",
-    location: "South Plaza",
+    location: "Highway Plaza Mall, Law Gate Road",
     reviewCount: "3K+"
   },
 ];

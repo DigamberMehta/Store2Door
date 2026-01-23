@@ -4,6 +4,8 @@ import mongoose from "mongoose";
 import { asyncHandler } from "../middleware/validation.js";
 import fuzzysort from "fuzzysort";
 import { expandQueryWithSynonyms } from "../config/synonyms.js";
+import DeliverySettings from "../models/DeliverySettings.js";
+import { calculateDistance, calculateDeliveryCharge } from "../utils/distanceCalculator.js";
 
 /**
  * @desc Get all stores with filters
@@ -19,6 +21,8 @@ export const getStores = asyncHandler(async (req, res) => {
     featured,
     sortBy = "rating",
     order = "desc",
+    userLat,
+    userLon,
   } = req.query;
 
   const skip = (parseInt(page) - 1) * parseInt(limit);
@@ -35,28 +39,86 @@ export const getStores = asyncHandler(async (req, res) => {
     query.isFeatured = true;
   }
 
-  // Sort
-  const sortOptions = {};
-  sortOptions[sortBy] = order === "asc" ? 1 : -1;
+  // Get delivery settings for distance filtering
+  const deliverySettings = await DeliverySettings.findOne({ isActive: true });
+  const maxDistance = deliverySettings?.maxDeliveryDistance || 7;
 
-  const [stores, total] = await Promise.all([
-    Store.find(query)
-      .select("-__v")
-      .sort(sortOptions)
-      .skip(skip)
-      .limit(parseInt(limit)),
-    Store.countDocuments(query),
-  ]);
+  // Fetch all stores matching the query
+  let stores = await Store.find(query).select("-__v").lean();
+
+  // Calculate distance and filter by max delivery distance if user location provided
+  if (userLat && userLon) {
+    const userLatNum = parseFloat(userLat);
+    const userLonNum = parseFloat(userLon);
+
+    if (!isNaN(userLatNum) && !isNaN(userLonNum)) {
+      stores = stores
+        .map(store => {
+          const storeLat = store.address?.latitude;
+          const storeLon = store.address?.longitude;
+
+          if (!storeLat || !storeLon) {
+            return null;
+          }
+
+          const distance = calculateDistance(userLatNum, userLonNum, storeLat, storeLon);
+
+          // Filter out stores beyond max delivery distance
+          if (distance > maxDistance) {
+            return null;
+          }
+
+          // Calculate delivery charge
+          const deliveryCharge = deliverySettings
+            ? calculateDeliveryCharge(distance, deliverySettings.distanceTiers)
+            : 0;
+
+          return {
+            ...store,
+            distance,
+            deliveryCharge,
+            currency: deliverySettings?.currency || "R"
+          };
+        })
+        .filter(store => store !== null);
+
+      // Sort by distance if user location is provided
+      if (sortBy === "distance" || (userLat && userLon)) {
+        stores.sort((a, b) => a.distance - b.distance);
+      }
+    }
+  }
+
+  // Apply sorting if not sorted by distance
+  if (sortBy !== "distance" && !(userLat && userLon)) {
+    const sortOptions = {};
+    sortOptions[sortBy] = order === "asc" ? 1 : -1;
+    stores.sort((a, b) => {
+      if (order === "asc") {
+        return a[sortBy] > b[sortBy] ? 1 : -1;
+      }
+      return a[sortBy] < b[sortBy] ? 1 : -1;
+    });
+  }
+
+  // Apply pagination
+  const total = stores.length;
+  const paginatedStores = stores.slice(skip, skip + parseInt(limit));
 
   res.status(200).json({
     success: true,
-    data: stores,
+    data: paginatedStores,
     pagination: {
       total,
       page: parseInt(page),
       limit: parseInt(limit),
       pages: Math.ceil(total / parseInt(limit)),
     },
+    deliverySettings: deliverySettings ? {
+      maxDeliveryDistance: deliverySettings.maxDeliveryDistance,
+      currency: deliverySettings.currency,
+      distanceTiers: deliverySettings.distanceTiers
+    } : null
   });
 });
 

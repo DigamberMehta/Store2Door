@@ -13,3 +13,4 @@ export { productAPI } from "./product.api";
 export { storeAPI } from "./store.api";
 export { default as cartAPI } from "./cart.api";
 export { default as suggestionsAPI } from "./suggestions.api";
+export { default as deliverySettingsAPI } from "./deliverySettings.api";

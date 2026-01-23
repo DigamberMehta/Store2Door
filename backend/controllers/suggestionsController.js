@@ -6,7 +6,9 @@ import SuggestionsService from '../services/suggestionsService.js';
  */
 export const getSuggestions = async (req, res) => {
   try {
-    const { q, type, limit = 10 } = req.query;
+    const { q, type, limit = 10, userLat, userLon } = req.query;
+
+    console.log('🔍 getSuggestions - Query:', q, 'UserLat:', userLat, 'UserLon:', userLon);
 
     // Validate query
     if (!q || q.trim().length < 2) {
@@ -20,7 +22,9 @@ export const getSuggestions = async (req, res) => {
     const result = await SuggestionsService.getSuggestions(q.trim(), {
       type: type || null,
       limit: parseInt(limit),
-      useCache: true
+      useCache: true,
+      userLat: userLat ? parseFloat(userLat) : null,
+      userLon: userLon ? parseFloat(userLon) : null
     });
 
     // Track search query

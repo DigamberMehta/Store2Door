@@ -9,7 +9,7 @@ const suggestionsAPI = {
    */
   getSuggestions: async (query, options = {}) => {
     try {
-      const { type, limit = 10 } = options;
+      const { type, limit = 10, userLat, userLon } = options;
       
       const params = new URLSearchParams({
         q: query,
@@ -18,6 +18,11 @@ const suggestionsAPI = {
       
       if (type) {
         params.append('type', type);
+      }
+
+      if (userLat && userLon) {
+        params.append('userLat', userLat.toString());
+        params.append('userLon', userLon.toString());
       }
 
       const response = await apiClient.get(`/suggestions?${params}`);
