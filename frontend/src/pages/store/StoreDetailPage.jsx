@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { HiOutlineArrowLeft } from "react-icons/hi";
 import toast from "react-hot-toast";
@@ -24,7 +24,8 @@ const StoreDetailPage = () => {
   const [conflictData, setConflictData] = useState(null);
   const [pendingCartItem, setPendingCartItem] = useState(null);
   const fromSubcategory = location.state?.fromSubcategory;
-  const searchContext = location.state?.searchContext; // { query, category }
+  const searchContext = location.state?.searchContext; // { query, category, productId, highlightProduct }
+  const highlightProductRef = useRef(null);
 
   // Fetch cart items
   const fetchCartItems = async () => {
@@ -73,7 +74,7 @@ const StoreDetailPage = () => {
         // Fetch products for this store
         if (storeData) {
           let productsResponse;
-          
+
           // Use context-aware endpoint if we have search context
           if (searchContext?.query || searchContext?.category) {
             productsResponse = await productAPI.getByStoreWithContext(
@@ -82,16 +83,17 @@ const StoreDetailPage = () => {
                 query: searchContext.query || "",
                 category: searchContext.category || "",
                 limit: 50,
-              }
+              },
             );
-            
+
             // Flatten the prioritized product groups
             if (productsResponse.success && productsResponse.data) {
-              const { matchingProducts, categoryProducts, otherProducts } = productsResponse.data;
+              const { matchingProducts, categoryProducts, otherProducts } =
+                productsResponse.data;
               setProducts([
                 ...matchingProducts,
                 ...categoryProducts,
-                ...otherProducts
+                ...otherProducts,
               ]);
             }
           } else {
@@ -100,9 +102,9 @@ const StoreDetailPage = () => {
               storeData._id || storeData.id,
               {
                 limit: 50,
-              }
+              },
             );
-            
+
             if (productsResponse.success && productsResponse.data) {
               setProducts(productsResponse.data);
             }
@@ -117,6 +119,22 @@ const StoreDetailPage = () => {
 
     fetchStoreData();
   }, [storeName, store]);
+
+  // Scroll to highlighted product when search context includes productId
+  useEffect(() => {
+    if (
+      searchContext?.productId &&
+      searchContext?.highlightProduct &&
+      highlightProductRef.current
+    ) {
+      setTimeout(() => {
+        highlightProductRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }, 500);
+    }
+  }, [products, searchContext]);
 
   const handleBack = () => {
     navigate(-1);
@@ -298,27 +316,69 @@ const StoreDetailPage = () => {
 
   // Group products by subcategory or search context
   const groupedProducts = products.reduce((acc, product, index) => {
-    // When search context exists, group by priority
-    if (searchContext?.query) {
-      // First products are matching, then category, then others
-      // We need to determine which section this product belongs to
+    // When search context exists with highlighted product, prioritize it
+    if (searchContext?.productId && searchContext?.highlightProduct) {
+      const isHighlightedProduct =
+        product._id === searchContext.productId ||
+        product.id === searchContext.productId;
+
+      if (isHighlightedProduct) {
+        // Put highlighted product at top
+        if (!acc["Searched Product"]) {
+          acc["Searched Product"] = [];
+        }
+        acc["Searched Product"].push(product);
+      } else if (searchContext.query) {
+        // Check if product matches search query
+        const query = searchContext.query.toLowerCase();
+        const matchesQuery =
+          product.name?.toLowerCase().includes(query) ||
+          product.description?.toLowerCase().includes(query) ||
+          product.tags?.some((tag) => tag.toLowerCase().includes(query));
+
+        if (matchesQuery) {
+          if (!acc[`Similar Products`]) {
+            acc[`Similar Products`] = [];
+          }
+          acc[`Similar Products`].push(product);
+        } else {
+          // Other products
+          const subcategory =
+            product.subcategory || product.category || "Other";
+          if (!acc[subcategory]) {
+            acc[subcategory] = [];
+          }
+          acc[subcategory].push(product);
+        }
+      } else {
+        // Normal grouping by subcategory
+        const subcategory = product.subcategory || product.category || "Other";
+        if (!acc[subcategory]) {
+          acc[subcategory] = [];
+        }
+        acc[subcategory].push(product);
+      }
+    } else if (searchContext?.query) {
+      // When search context exists without specific product, group by priority
       let section = "Other Products";
-      
+
       // Check if product name/description contains search query
       const query = searchContext.query.toLowerCase();
-      const matchesQuery = 
+      const matchesQuery =
         product.name?.toLowerCase().includes(query) ||
         product.description?.toLowerCase().includes(query) ||
-        product.tags?.some(tag => tag.toLowerCase().includes(query));
-      
+        product.tags?.some((tag) => tag.toLowerCase().includes(query));
+
       if (matchesQuery) {
         section = `Matching "${searchContext.query}"`;
-      } else if (searchContext.category && 
-                (product.category === searchContext.category || 
-                 product.subcategory === searchContext.category)) {
+      } else if (
+        searchContext.category &&
+        (product.category === searchContext.category ||
+          product.subcategory === searchContext.category)
+      ) {
         section = `Similar Products`;
       }
-      
+
       if (!acc[section]) {
         acc[section] = [];
       }
@@ -336,14 +396,20 @@ const StoreDetailPage = () => {
 
   // Get subcategories sorted - put search matches first, then the one user came from
   const subcategories = Object.keys(groupedProducts).sort((a, b) => {
-    // When search context exists, prioritize match sections
-    if (searchContext?.query) {
-      if (a.startsWith('Matching')) return -1;
-      if (b.startsWith('Matching')) return 1;
-      if (a === 'Similar Products') return -1;
-      if (b === 'Similar Products') return 1;
+    // When search context exists with highlighted product, show it first
+    if (searchContext?.productId && searchContext?.highlightProduct) {
+      if (a === "Searched Product") return -1;
+      if (b === "Searched Product") return 1;
+      if (a === "Similar Products") return -1;
+      if (b === "Similar Products") return 1;
+    } else if (searchContext?.query) {
+      // When search context exists, prioritize match sections
+      if (a.startsWith("Matching")) return -1;
+      if (b.startsWith("Matching")) return 1;
+      if (a === "Similar Products") return -1;
+      if (b === "Similar Products") return 1;
     }
-    
+
     // Normal subcategory sorting
     if (fromSubcategory) {
       if (a === fromSubcategory) return -1;
@@ -432,7 +498,9 @@ const StoreDetailPage = () => {
           <div className="flex items-center gap-2">
             <div className="w-1.5 h-1.5 bg-blue-400 rounded-full"></div>
             <span className="text-[11px] text-blue-300/80 font-medium">
-              Results for '{searchContext.query}'
+              {searchContext.highlightProduct
+                ? `Product from search: '${searchContext.query}'`
+                : `Results for '${searchContext.query}'`}
             </span>
           </div>
         </div>
@@ -443,6 +511,8 @@ const StoreDetailPage = () => {
         subcategories={subcategories}
         groupedProducts={groupedProducts}
         fromSubcategory={fromSubcategory}
+        searchContext={searchContext}
+        highlightProductRef={highlightProductRef}
         cartItems={cartItems}
         onAddToCart={handleAddToCart}
         onUpdateQuantity={handleUpdateQuantity}

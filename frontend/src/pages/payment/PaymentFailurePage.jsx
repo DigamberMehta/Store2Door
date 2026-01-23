@@ -90,10 +90,10 @@ const PaymentFailurePage = () => {
           If you continue to experience issues, please contact our support team
           at{" "}
           <a
-            href="mailto:support@door2door.com"
-            className="text-primary-600 hover:underline"
+            href="mailto:support@store2door.com"
+            className="text-blue-400 hover:underline"
           >
-            support@door2door.com
+            support@store2door.com
           </a>
         </p>
       </div>

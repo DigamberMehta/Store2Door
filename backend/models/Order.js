@@ -225,11 +225,6 @@ const orderSchema = new mongoose.Schema(
       required: [true, "Delivery fee is required"],
       min: [0, "Delivery fee cannot be negative"],
     },
-    handlingFee: {
-      type: Number,
-      default: 0,
-      min: [0, "Handling fee cannot be negative"],
-    },
     tip: {
       type: Number,
       default: 0,
@@ -384,13 +379,8 @@ orderSchema.index({ "deliveryAddress.location": "2dsphere" });
 
 // Pre-save middleware
 orderSchema.pre("save", function (next) {
-  // Calculate total from subtotal, delivery fee, handling fee, tip, and discount
-  this.total =
-    this.subtotal +
-    this.deliveryFee +
-    this.handlingFee +
-    this.tip -
-    this.discount;
+  // Calculate total from subtotal, delivery fee, tip, and discount
+  this.total = this.subtotal + this.deliveryFee + this.tip - this.discount;
 
   // Auto-generate order number if not provided
   if (!this.orderNumber) {

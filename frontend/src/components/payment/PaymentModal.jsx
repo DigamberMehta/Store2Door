@@ -122,14 +122,6 @@ const PaymentModal = ({ isOpen, onClose, orderData, onSuccess }) => {
                 </span>
               </div>
             )}
-            {orderData.handlingFee > 0 && (
-              <div className="flex justify-between mb-2">
-                <span className="text-gray-600">Handling Fee</span>
-                <span className="font-medium">
-                  {formatPrice(orderData.handlingFee)}
-                </span>
-              </div>
-            )}
             {orderData.tip > 0 && (
               <div className="flex justify-between mb-2">
                 <span className="text-gray-600">Tip</span>

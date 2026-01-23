@@ -61,7 +61,7 @@ export const createYocoPopup = async (
       yoco.showPopup({
         amountInCents: Math.round(amount * 100),
         currency,
-        name: "Door2Door",
+        name: "Store2Door",
         description: metadata.description || "Order Payment",
         metadata,
         callback: function (result) {

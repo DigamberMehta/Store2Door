@@ -17,7 +17,6 @@ const PaymentPage = () => {
   const orderData = location.state?.orderData || {
     subtotal: parseFloat(searchParams.get("subtotal")) || 0,
     deliveryFee: parseFloat(searchParams.get("deliveryFee")) || 0,
-    handlingFee: parseFloat(searchParams.get("handlingFee")) || 0,
     tip: parseFloat(searchParams.get("tip")) || 0,
     discount: parseFloat(searchParams.get("discount")) || 0,
     total: parseFloat(searchParams.get("total")) || 0,
@@ -47,7 +46,6 @@ const PaymentPage = () => {
         })),
         subtotal: orderData.subtotal,
         deliveryFee: orderData.deliveryFee,
-        handlingFee: orderData.handlingFee,
         tip: orderData.tip,
         discount: orderData.discount,
         total: orderData.total,
@@ -127,14 +125,6 @@ const PaymentPage = () => {
                 <span className="text-white/60">Delivery Fee</span>
                 <span className="font-medium">
                   {formatPrice(orderData.deliveryFee)}
-                </span>
-              </div>
-            )}
-            {orderData.handlingFee > 0 && (
-              <div className="flex justify-between text-sm">
-                <span className="text-white/60">Handling Fee</span>
-                <span className="font-medium">
-                  {formatPrice(orderData.handlingFee)}
                 </span>
               </div>
             )}

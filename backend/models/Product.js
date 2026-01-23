@@ -478,7 +478,7 @@ productSchema.index({ createdAt: -1, isActive: 1 });
 productSchema.index({ isFeatured: 1, isActive: 1 });
 productSchema.index({ isOnSale: 1, isActive: 1 });
 
-// Text search index
+// Text search index with compound for performance
 productSchema.index({
   name: "text",
   description: "text",
@@ -487,6 +487,9 @@ productSchema.index({
   category: "text",
   subcategory: "text",
 });
+
+// Compound index for text search with filters
+productSchema.index({ isActive: 1, popularity: -1, averageRating: -1 });
 
 // Sparse indexes for optional fields
 productSchema.index({ "inventory.sku": 1 }, { sparse: true });

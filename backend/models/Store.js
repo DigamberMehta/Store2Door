@@ -399,7 +399,7 @@ const storeSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // Compound indexes for performance
@@ -420,6 +420,9 @@ storeSchema.index({
   tags: "text",
   categories: "text",
 });
+
+// Compound index for text search with filters
+storeSchema.index({ isActive: 1, rating: -1 });
 
 // Geospatial index for location-based queries
 storeSchema.index({ "address.location": "2dsphere" });
@@ -531,7 +534,7 @@ storeSchema.methods.canAcceptOrders = function () {
 storeSchema.statics.findNearby = function (
   latitude,
   longitude,
-  maxDistance = 10000
+  maxDistance = 10000,
 ) {
   return this.find({
     isActive: true,
@@ -578,7 +581,7 @@ storeSchema.statics.searchStores = function (
   query,
   latitude = null,
   longitude = null,
-  maxDistance = 10000
+  maxDistance = 10000,
 ) {
   const searchQuery = {
     $text: { $search: query },

@@ -85,7 +85,7 @@ const PaymentSuccessPage = () => {
                 <div className="w-24 h-24 bg-zinc-950 rounded-full flex items-center justify-center mx-auto border-4 border-zinc-800 shadow-xl">
                   <img
                     src={Logo}
-                    alt="Door2Door"
+                    alt="Store2Door"
                     className="w-14 h-14 object-contain"
                   />
                 </div>

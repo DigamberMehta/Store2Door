@@ -189,7 +189,7 @@ const LoginPage = () => {
       {/* Footer */}
       <div className="py-5 text-center">
         <p className="text-zinc-500 text-sm">
-          New to Door2Door?
+          New to Store2Door?
           <button
             onClick={() => navigate("/signup")}
             className="text-blue-300 font-bold ml-1 hover:underline"

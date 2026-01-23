@@ -1,7 +1,7 @@
 {
-  "name": "door2door-backend",
+  "name": "store2door-backend",
   "version": "1.0.0",
-  "description": "Door2Door Delivery Service Backend API",
+  "description": "Store2Door Delivery Service Backend API",
   "main": "app.js",
   "type": "module",
   "scripts": {

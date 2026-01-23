@@ -162,7 +162,6 @@ const CheckoutPage = () => {
         })),
         subtotal,
         deliveryFee,
-        handlingFee: handlingCharge,
         tip,
         discount,
         total,
@@ -196,8 +195,7 @@ const CheckoutPage = () => {
   const discount = appliedCoupon?.discountAmount || 0;
   const isFreeDelivery = appliedCoupon?.discountType === "free_delivery";
   const deliveryFee = isFreeDelivery || subtotal > 500 ? 0 : 30;
-  const handlingCharge = 11;
-  const total = subtotal + deliveryFee + handlingCharge + tip - discount;
+  const total = subtotal + deliveryFee + tip - discount;
 
   const handleShare = () => {
     // Share functionality
@@ -398,7 +396,6 @@ const CheckoutPage = () => {
               orderData={{
                 subtotal,
                 deliveryFee,
-                handlingFee: handlingCharge,
                 tip,
                 discount,
                 total,
