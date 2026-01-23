@@ -308,6 +308,8 @@ class SuggestionsService {
         const deliverySettings = await DeliverySettings.findOne();
         const maxDistance = deliverySettings?.maxDeliveryDistance || 7;
 
+        console.log(`📍 User location: (${userLat}, ${userLon}) | Max distance: ${maxDistance}km`);
+
         // Calculate distances if user location provided
         const storesWithDistance = stores.map(s => {
           const storeData = {
@@ -332,6 +334,9 @@ class SuggestionsService {
               Math.sin(dLon/2) * Math.sin(dLon/2);
             const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
             storeData.distance = Math.round(c * R * 10) / 10; // Round to 1 decimal
+            console.log(`  📏 ${s.name}: ${storeData.distance}km (Store: ${s.address.latitude}, ${s.address.longitude})`);
+          } else {
+            console.log(`  ⚠️ ${s.name}: No distance calculated (missing coords)`);
           }
 
           return storeData;
@@ -339,8 +344,16 @@ class SuggestionsService {
 
         // Filter stores by max delivery distance if user location provided
         const filteredStores = userLat && userLon
-          ? storesWithDistance.filter(s => !s.distance || s.distance <= maxDistance)
+          ? storesWithDistance.filter(s => {
+              const included = !s.distance || s.distance <= maxDistance;
+              if (!included && s.distance) {
+                console.log(`  ❌ ${s.name}: Filtered out (${s.distance}km > ${maxDistance}km)`);
+              }
+              return included;
+            })
           : storesWithDistance;
+
+        console.log(`✅ Returning ${filteredStores.length} stores within ${maxDistance}km`);
 
         // Sort by distance if available, otherwise keep search score order
         const sortedStores = userLat && userLon 
