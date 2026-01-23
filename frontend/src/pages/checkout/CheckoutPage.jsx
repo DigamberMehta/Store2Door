@@ -10,6 +10,8 @@ import {
 import { useNavigate, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
 import cartAPI from "../../services/api/cart.api";
+import { createOrder } from "../../services/api/order.api";
+import { useAuth } from "../../context/AuthContext";
 import RecommendedProducts from "./RecommendedProducts";
 import BillDetails from "./BillDetails";
 import CheckoutFooter from "./CheckoutFooter";
@@ -22,6 +24,7 @@ import "./scrollbar.css";
 const CheckoutPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
   const [cart, setCart] = useState(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
@@ -143,6 +146,48 @@ const CheckoutPage = () => {
 
   const handleTipChange = (amount) => {
     setTip(amount);
+  };
+
+  const handlePlaceOrder = async (paymentData) => {
+    try {
+      // Create order with payment data
+      const orderPayload = {
+        items: cartItems.map((item) => ({
+          product: item.productId?._id || item.productId,
+          store: item.storeId?._id || item.storeId,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          discountedPrice: item.discountedPrice,
+          selectedVariant: item.selectedVariant,
+        })),
+        subtotal,
+        deliveryFee,
+        handlingFee: handlingCharge,
+        tip,
+        discount,
+        total,
+        appliedCoupon: appliedCoupon
+          ? {
+              code: appliedCoupon.code,
+              discountAmount: appliedCoupon.discountAmount,
+              discountType: appliedCoupon.discountType,
+            }
+          : undefined,
+        paymentMethod:
+          paymentData.paymentMethod ||
+          paymentData.payment?.method ||
+          "yoco_card",
+        paymentId: paymentData.payment?._id,
+      };
+
+      const response = await createOrder(orderPayload);
+      toast.success("Order placed successfully!");
+      return response;
+    } catch (error) {
+      console.error("Error creating order:", error);
+      toast.error(error.response?.data?.message || "Failed to create order");
+      throw error;
+    }
   };
 
   const cartItems = cart?.items || [];
@@ -347,7 +392,23 @@ const CheckoutPage = () => {
           </div>
 
           {/* Checkout Footer - Fixed */}
-          {cartItems.length > 0 && <CheckoutFooter total={total.toFixed(0)} />}
+          {cartItems.length > 0 && (
+            <CheckoutFooter
+              total={total}
+              orderData={{
+                subtotal,
+                deliveryFee,
+                handlingFee: handlingCharge,
+                tip,
+                discount,
+                total,
+                items: cartItems,
+                customerName: user?.name,
+                customerEmail: user?.email,
+              }}
+              onPlaceOrder={handlePlaceOrder}
+            />
+          )}
         </>
       )}
     </div>

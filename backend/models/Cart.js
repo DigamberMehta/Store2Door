@@ -7,13 +7,11 @@ const cartItemSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Product",
       required: [true, "Product ID is required"],
-      index: true,
     },
     storeId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Store",
       required: [true, "Store ID is required"],
-      index: true,
     },
     name: {
       type: String,
@@ -206,7 +204,6 @@ const cartSchema = new mongoose.Schema(
     },
     abandonedAt: {
       type: Date,
-      index: true,
     },
     convertedToOrderAt: {
       type: Date,
