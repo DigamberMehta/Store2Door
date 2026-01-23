@@ -115,6 +115,7 @@ const trackingInfoSchema = new mongoose.Schema({
   status: {
     type: String,
     enum: [
+      "pending",
       "placed",
       "confirmed",
       "preparing",
@@ -124,7 +125,7 @@ const trackingInfoSchema = new mongoose.Schema({
       "delivered",
       "cancelled",
     ],
-    default: "placed",
+    default: "pending",
     index: true,
   },
   updatedAt: {
@@ -285,6 +286,7 @@ const orderSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: [
+        "pending", // Payment not yet verified
         "placed",
         "confirmed",
         "preparing",
@@ -294,7 +296,7 @@ const orderSchema = new mongoose.Schema(
         "delivered",
         "cancelled",
       ],
-      default: "placed",
+      default: "pending",
       index: true,
     },
     trackingHistory: [trackingInfoSchema],

@@ -2,6 +2,25 @@ import Order from "../models/Order.js";
 import Cart from "../models/Cart.js";
 import Payment from "../models/Payment.js";
 import Coupon from "../models/Coupon.js";
+import Product from "../models/Product.js";
+import DeliverySettings from "../models/DeliverySettings.js";
+
+/**
+ * Calculate distance between two coordinates (Haversine formula)
+ */
+const calculateDistance = (lat1, lon1, lat2, lon2) => {
+  const R = 6371; // Earth's radius in km
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+};
 
 /**
  * Create a new order
@@ -11,14 +30,10 @@ export const createOrder = async (req, res) => {
   try {
     const userId = req.user.id;
     const {
-      items,
-      subtotal,
-      deliveryFee,
+      items, // Array of { product: productId, quantity, selectedVariant }
+      deliveryAddress, // Must include location: { coordinates: [lng, lat] }
+      couponCode,
       tip,
-      discount,
-      total,
-      deliveryAddress,
-      appliedCoupon,
       paymentMethod,
       paymentId,
       notes,
@@ -29,58 +44,273 @@ export const createOrder = async (req, res) => {
       return res.status(400).json({ message: "Order items are required" });
     }
 
-    // Get the first item's store (for multi-store support, we'll need to create multiple orders)
-    const firstItem = items[0];
-    const storeId = firstItem.store;
-
-    if (!storeId) {
-      return res.status(400).json({ message: "Store ID is required" });
+    // Validate quantities (prevent negative or zero quantities)
+    const invalidQuantity = items.find(
+      (item) =>
+        !item.quantity ||
+        item.quantity <= 0 ||
+        !Number.isInteger(item.quantity),
+    );
+    if (invalidQuantity) {
+      return res.status(400).json({
+        message: "All items must have positive integer quantities",
+      });
     }
+
+    // Validate tip (prevent negative tips)
+    if (tip && (tip < 0 || isNaN(tip))) {
+      return res.status(400).json({ message: "Invalid tip amount" });
+    }
+
+    if (
+      !deliveryAddress ||
+      !deliveryAddress.location ||
+      !deliveryAddress.location.coordinates
+    ) {
+      return res
+        .status(400)
+        .json({ message: "Delivery address with coordinates is required" });
+    }
+
+    // Fetch all products from DB to get actual prices
+    const productIds = items.map((item) => item.product);
+    const products = await Product.find({
+      _id: { $in: productIds },
+      isActive: true,
+    }).populate("storeId", "name location");
+
+    if (products.length !== items.length) {
+      return res
+        .status(400)
+        .json({ message: "Some products are invalid or unavailable" });
+    }
+
+    // Get the store (assuming single store per order)
+    const storeId = products[0].storeId._id;
+    const storeLocation = products[0].storeId.location;
+
+    // Verify all products belong to the same store
+    const allSameStore = products.every(
+      (p) => p.storeId._id.toString() === storeId.toString(),
+    );
+    if (!allSameStore) {
+      return res
+        .status(400)
+        .json({ message: "All items must be from the same store" });
+    }
+
+    // Validate stock availability
+    for (const item of items) {
+      const product = products.find(
+        (p) => p._id.toString() === item.product.toString(),
+      );
+      if (product.inventory && product.inventory.quantity < item.quantity) {
+        return res.status(400).json({
+          message: `Insufficient stock for ${product.name}. Available: ${product.inventory.quantity}`,
+        });
+      }
+    }
+
+    // Calculate subtotal using DB prices (SECURE - no trust in frontend)
+    let calculatedSubtotal = 0;
+    const formattedItems = items.map((item) => {
+      const product = products.find(
+        (p) => p._id.toString() === item.product.toString(),
+      );
+
+      // Get actual price from DB
+      let unitPrice = product.discountedPrice || product.price;
+
+      // Add variant price modifier if applicable
+      if (item.selectedVariant) {
+        const variant = product.variants?.find(
+          (v) =>
+            v.name === item.selectedVariant.name &&
+            v.value === item.selectedVariant.value,
+        );
+        if (variant) {
+          unitPrice += variant.priceModifier || 0;
+        }
+      }
+
+      // Round unit price to 2 decimals before calculation
+      unitPrice = parseFloat(unitPrice.toFixed(2));
+      const totalPrice = parseFloat((unitPrice * item.quantity).toFixed(2));
+      calculatedSubtotal += totalPrice;
+
+      return {
+        productId: product._id,
+        name: product.name,
+        quantity: item.quantity,
+        unitPrice: unitPrice,
+        totalPrice: totalPrice,
+        customizations: item.selectedVariant
+          ? [
+              {
+                name: item.selectedVariant.name,
+                value: item.selectedVariant.value,
+              },
+            ]
+          : [],
+      };
+    });
+
+    // Round subtotal to 2 decimals
+
+    calculatedSubtotal = parseFloat(calculatedSubtotal.toFixed(2));
+
+    // Calculate delivery fee based on distance (SECURE)
+    let calculatedDeliveryFee = 0;
+    if (storeLocation && storeLocation.coordinates) {
+      const distance = calculateDistance(
+        deliveryAddress.location.coordinates[1], // lat
+        deliveryAddress.location.coordinates[0], // lng
+        storeLocation.coordinates[1],
+        storeLocation.coordinates[0],
+      );
+
+      // Get delivery settings
+      const deliverySettings = await DeliverySettings.findOne({
+        isActive: true,
+      });
+      if (deliverySettings && deliverySettings.distanceTiers) {
+        // Find applicable tier
+        const tier = deliverySettings.distanceTiers
+          .sort((a, b) => a.maxDistance - b.maxDistance)
+          .find((t) => distance <= t.maxDistance);
+
+        calculatedDeliveryFee = tier ? tier.charge : 30; // Default R30 if no tier matches
+      } else {
+        // Fallback: R30 flat rate
+        calculatedDeliveryFee = 30;
+      }
+    } else {
+      calculatedDeliveryFee = 30; // Default delivery fee
+    }
+
+    // Validate and apply coupon (SECURE)
+    let calculatedDiscount = 0;
+    let appliedCouponData = null;
+    let isFreeDelivery = false;
+
+    if (couponCode) {
+      const coupon = await Coupon.findOne({
+        code: couponCode.toUpperCase(),
+        isActive: true,
+        validFrom: { $lte: new Date() },
+        validUntil: { $gte: new Date() },
+      }).populate("applicableStores");
+
+      if (!coupon) {
+        return res.status(400).json({ message: "Invalid or expired coupon" });
+      }
+
+      // Check if coupon applies to this store
+      if (coupon.applicableStores.length > 0) {
+        const storeApplicable = coupon.applicableStores.some(
+          (s) => s._id.toString() === storeId.toString(),
+        );
+        if (!storeApplicable) {
+          return res
+            .status(400)
+            .json({ message: "Coupon not applicable to this store" });
+        }
+      }
+
+      // Check minimum order value
+      if (calculatedSubtotal < coupon.minOrderValue) {
+        return res.status(400).json({
+          message: `Minimum order value of R${coupon.minOrderValue} required`,
+        });
+      }
+
+      // Check usage limits
+      if (coupon.usageLimit && coupon.usedCount >= coupon.usageLimit) {
+        return res.status(400).json({ message: "Coupon usage limit reached" });
+      }
+
+      // Check user usage limit
+      const userUsageCount = coupon.usedBy.filter(
+        (u) => u.userId && u.userId.toString() === userId.toString(),
+      ).length;
+      if (userUsageCount >= coupon.userUsageLimit) {
+        return res
+          .status(400)
+          .json({ message: "You have already used this coupon" });
+      }
+
+      // Calculate discount based on type
+      if (coupon.discountType === "percentage") {
+        calculatedDiscount = parseFloat(
+          ((calculatedSubtotal * coupon.discountValue) / 100).toFixed(2),
+        );
+        if (coupon.maxDiscount) {
+          calculatedDiscount = Math.min(calculatedDiscount, coupon.maxDiscount);
+          calculatedDiscount = parseFloat(calculatedDiscount.toFixed(2));
+        }
+      } else if (coupon.discountType === "fixed") {
+        calculatedDiscount = parseFloat(coupon.discountValue.toFixed(2));
+      } else if (coupon.discountType === "free_delivery") {
+        isFreeDelivery = true;
+        calculatedDiscount = 0;
+      }
+
+      calculatedDiscount = parseFloat(calculatedDiscount.toFixed(2));
+
+      appliedCouponData = {
+        code: coupon.code,
+        discountType: coupon.discountType,
+        discountValue: coupon.discountValue,
+        discountAmount: calculatedDiscount,
+      };
+    }
+
+    // Apply free delivery
+    if (isFreeDelivery || calculatedSubtotal > 500) {
+      calculatedDeliveryFee = 0;
+    }
+
+    // Round delivery fee to 2 decimals
+    calculatedDeliveryFee = parseFloat(calculatedDeliveryFee.toFixed(2));
+
+    // Calculate final total (SECURE - all backend calculated)
+    // Round tip and ensure all components are 2 decimal places
+    const roundedTip = parseFloat((tip || 0).toFixed(2));
+    const calculatedTotal = parseFloat(
+      (
+        calculatedSubtotal +
+        calculatedDeliveryFee +
+        roundedTip -
+        calculatedDiscount
+      ).toFixed(2),
+    );
 
     // Generate unique order number
     const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
 
-    // Format items for order schema
-    const formattedItems = items.map((item) => ({
-      productId: item.product,
-      name: item.name || "Product", // We'll need to fetch this from product if not provided
-      quantity: item.quantity,
-      unitPrice: parseFloat(
-        (item.unitPrice || item.discountedPrice).toFixed(2),
-      ),
-      totalPrice: parseFloat(
-        ((item.discountedPrice || item.unitPrice) * item.quantity).toFixed(2),
-      ),
-      customizations: item.selectedVariant
-        ? [
-            {
-              name: item.selectedVariant.name,
-              value: item.selectedVariant.value,
-            },
-          ]
-        : [],
-    }));
-
-    // Create order
+    // Create order with BACKEND-CALCULATED values only
+    // Order starts as 'pending' until payment is verified
     const order = new Order({
       orderNumber,
       customerId: userId,
       storeId,
       items: formattedItems,
-      subtotal: parseFloat((subtotal || 0).toFixed(2)),
-      deliveryFee: parseFloat((deliveryFee || 0).toFixed(2)),
-      tip: parseFloat((tip || 0).toFixed(2)),
-      discount: parseFloat((discount || 0).toFixed(2)),
-      total: parseFloat((total || 0).toFixed(2)),
+      subtotal: calculatedSubtotal,
+      deliveryFee: calculatedDeliveryFee,
+      tip: roundedTip,
+      discount: calculatedDiscount,
+      total: calculatedTotal,
       deliveryAddress,
-      appliedCoupon,
+      appliedCoupon: appliedCouponData,
       paymentMethod: paymentMethod || "yoco_card",
       paymentId,
+      status: "pending", // Will be updated to 'placed' after payment verification
+      paymentStatus: "pending",
       trackingInfo: [
         {
-          status: "placed",
+          status: "pending",
           updatedAt: new Date(),
-          notes: notes || "Order placed",
+          notes: notes || "Order created - awaiting payment",
         },
       ],
     });
@@ -95,12 +325,19 @@ export const createOrder = async (req, res) => {
     }
 
     // If coupon was used, mark it as used
-    if (appliedCoupon && appliedCoupon.code) {
+    if (appliedCouponData && appliedCouponData.code) {
       await Coupon.findOneAndUpdate(
-        { code: appliedCoupon.code },
+        { code: appliedCouponData.code },
         {
           $inc: { usedCount: 1 },
-          $push: { usedBy: userId },
+          $push: {
+            usedBy: {
+              userId: userId,
+              usedAt: new Date(),
+              orderValue: calculatedSubtotal,
+              discountApplied: calculatedDiscount,
+            },
+          },
         },
       );
     }
@@ -146,8 +383,8 @@ export const getOrders = async (req, res) => {
     }
 
     const orders = await Order.find(query)
-      .populate("items.product", "name images")
-      .populate("items.store", "name")
+      .populate("items.productId", "name images")
+      .populate("storeId", "name")
       .populate("paymentId")
       .sort({ createdAt: -1 })
       .limit(limit * 1)
@@ -182,10 +419,10 @@ export const getOrder = async (req, res) => {
     const userId = req.user.id;
 
     const order = await Order.findOne({ _id: orderId, customerId: userId })
-      .populate("items.product")
-      .populate("items.store")
+      .populate("items.productId")
+      .populate("storeId")
       .populate("paymentId")
-      .populate("deliveryRider");
+      .populate("riderId");
 
     if (!order) {
       return res.status(404).json({
@@ -274,8 +511,8 @@ export const trackOrder = async (req, res) => {
     const userId = req.user.id;
 
     const order = await Order.findOne({ _id: orderId, customerId: userId })
-      .populate("deliveryRider", "name phone")
-      .populate("items.store", "name address");
+      .populate("riderId", "name phone")
+      .populate("storeId", "name address");
 
     if (!order) {
       return res.status(404).json({
