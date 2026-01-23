@@ -31,37 +31,49 @@ const PaymentPage = () => {
         return;
       }
 
+      // Ensure deliveryAddress has proper GeoJSON format
+      const deliveryAddress = orderData.deliveryAddress.location?.coordinates
+        ? orderData.deliveryAddress
+        : {
+            ...orderData.deliveryAddress,
+            location: {
+              type: "Point",
+              coordinates: [
+                orderData.deliveryAddress.longitude || 28.0473,
+                orderData.deliveryAddress.latitude || -26.2041,
+              ],
+            },
+          };
+
+      console.log("Delivery Address being sent:", deliveryAddress);
+
       setLoading(true);
 
-      // First create the order
+      // Send only essential data - backend calculates prices
       const orderPayload = {
         items: orderData.items.map((item) => ({
           product: item.productId?._id || item.productId,
-          store: item.storeId?._id || item.storeId,
-          name: item.name,
           quantity: item.quantity,
-          unitPrice: item.unitPrice,
-          discountedPrice: item.discountedPrice,
           selectedVariant: item.selectedVariant,
         })),
-        subtotal: orderData.subtotal,
-        deliveryFee: orderData.deliveryFee,
+        deliveryAddress,
+        couponCode: orderData.couponCode,
         tip: orderData.tip,
-        discount: orderData.discount,
-        total: orderData.total,
-        deliveryAddress: orderData.deliveryAddress,
         paymentMethod: "yoco_card",
         paymentStatus: "pending",
       };
 
+      console.log("Order Payload:", orderPayload);
+
       const orderResponse = await createOrder(orderPayload);
       const orderId = orderResponse.order._id;
+      const calculatedTotal = orderResponse.order.total; // Use backend-calculated total
 
       // Create Yoco checkout session with redirect URLs
       const baseUrl = window.location.origin;
       const checkoutResponse = await createCheckout({
         orderId,
-        amount: orderData.total,
+        amount: calculatedTotal, // Use backend total, not frontend
         currency: "ZAR",
         successUrl: `${baseUrl}/payment/success?orderId=${orderId}`,
         cancelUrl: `${baseUrl}/payment`,

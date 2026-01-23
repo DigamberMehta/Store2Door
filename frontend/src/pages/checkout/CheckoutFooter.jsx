@@ -51,10 +51,32 @@ const CheckoutFooter = ({ total, orderData }) => {
       return;
     }
 
-    // Include the selected address in the order data
+    // Convert address to GeoJSON format for backend
+    const transformedAddress = {
+      street: selectedAddress.street,
+      city: selectedAddress.city,
+      province: selectedAddress.province,
+      postalCode: selectedAddress.postalCode,
+      country: selectedAddress.country || "ZA",
+      label: selectedAddress.label,
+      instructions: selectedAddress.instructions || "",
+      location: {
+        type: "Point",
+        coordinates: [
+          selectedAddress.longitude ||
+            selectedAddress.location?.coordinates?.[0] ||
+            28.0473,
+          selectedAddress.latitude ||
+            selectedAddress.location?.coordinates?.[1] ||
+            -26.2041,
+        ],
+      },
+    };
+
+    // Include the transformed address in the order data
     const updatedOrderData = {
       ...orderData,
-      deliveryAddress: selectedAddress,
+      deliveryAddress: transformedAddress,
     };
 
     // Navigate to payment page with updated order data

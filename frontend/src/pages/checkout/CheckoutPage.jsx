@@ -150,28 +150,56 @@ const CheckoutPage = () => {
 
   const handlePlaceOrder = async (paymentData) => {
     try {
-      // Create order with payment data
+      // Get user's default address or first address
+      const userAddress =
+        user?.addresses?.find((addr) => addr.isDefault) || user?.addresses?.[0];
+
+      // Convert address format to GeoJSON if needed
+      let deliveryAddress;
+      if (userAddress) {
+        deliveryAddress = {
+          street: userAddress.street,
+          city: userAddress.city,
+          province: userAddress.province,
+          postalCode: userAddress.postalCode,
+          country: userAddress.country || "ZA",
+          label: userAddress.label,
+          instructions: userAddress.instructions,
+          location: {
+            type: "Point",
+            coordinates: [
+              userAddress.longitude ||
+                userAddress.location?.coordinates?.[0] ||
+                28.0473,
+              userAddress.latitude ||
+                userAddress.location?.coordinates?.[1] ||
+                -26.2041,
+            ],
+          },
+        };
+      } else {
+        deliveryAddress = {
+          street: "Default Street",
+          city: "Default City",
+          province: "Default Province",
+          postalCode: "0000",
+          location: {
+            type: "Point",
+            coordinates: [28.0473, -26.2041], // Default Johannesburg coordinates
+          },
+        };
+      }
+
+      // Only send product IDs, quantities, and user choices - backend calculates prices
       const orderPayload = {
         items: cartItems.map((item) => ({
           product: item.productId?._id || item.productId,
-          store: item.storeId?._id || item.storeId,
           quantity: item.quantity,
-          unitPrice: item.unitPrice,
-          discountedPrice: item.discountedPrice,
           selectedVariant: item.selectedVariant,
         })),
-        subtotal,
-        deliveryFee,
+        deliveryAddress,
+        couponCode: appliedCoupon?.code,
         tip,
-        discount,
-        total,
-        appliedCoupon: appliedCoupon
-          ? {
-              code: appliedCoupon.code,
-              discountAmount: appliedCoupon.discountAmount,
-              discountType: appliedCoupon.discountType,
-            }
-          : undefined,
         paymentMethod:
           paymentData.paymentMethod ||
           paymentData.payment?.method ||
