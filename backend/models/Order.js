@@ -93,13 +93,13 @@ const deliveryAddressSchema = new mongoose.Schema({
   },
   latitude: {
     type: Number,
-    required: [true, "Latitude is required"],
+    default: 0,
     min: -90,
     max: 90,
   },
   longitude: {
     type: Number,
-    required: [true, "Longitude is required"],
+    default: 0,
     min: -180,
     max: 180,
   },
@@ -107,49 +107,6 @@ const deliveryAddressSchema = new mongoose.Schema({
     type: String,
     trim: true,
     maxlength: 500,
-  },
-});
-
-// Payment information sub-schema
-const paymentInfoSchema = new mongoose.Schema({
-  method: {
-    type: String,
-    enum: [
-      "credit_card",
-      "debit_card",
-      "paypal",
-      "apple_pay",
-      "google_pay",
-      "cash_on_delivery",
-    ],
-    required: [true, "Payment method is required"],
-  },
-  status: {
-    type: String,
-    enum: [
-      "pending",
-      "processing",
-      "completed",
-      "failed",
-      "refunded",
-      "partially_refunded",
-    ],
-    default: "pending",
-    index: true,
-  },
-  transactionId: {
-    type: String,
-    trim: true,
-  },
-  paidAt: {
-    type: Date,
-  },
-  refundedAt: {
-    type: Date,
-  },
-  refundAmount: {
-    type: Number,
-    min: 0,
   },
 });
 
@@ -263,15 +220,15 @@ const orderSchema = new mongoose.Schema(
       required: [true, "Subtotal is required"],
       min: [0, "Subtotal cannot be negative"],
     },
-    tax: {
-      type: Number,
-      required: [true, "Tax is required"],
-      min: [0, "Tax cannot be negative"],
-    },
     deliveryFee: {
       type: Number,
       required: [true, "Delivery fee is required"],
       min: [0, "Delivery fee cannot be negative"],
+    },
+    handlingFee: {
+      type: Number,
+      default: 0,
+      min: [0, "Handling fee cannot be negative"],
     },
     tip: {
       type: Number,
@@ -294,6 +251,25 @@ const orderSchema = new mongoose.Schema(
       uppercase: true,
       enum: ["ZAR"],
       maxlength: 3,
+    },
+
+    // Coupon information
+    appliedCoupon: {
+      couponId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Coupon",
+      },
+      code: {
+        type: String,
+        trim: true,
+        uppercase: true,
+      },
+      discountType: {
+        type: String,
+        enum: ["percentage", "fixed", "free_delivery"],
+      },
+      discountValue: Number,
+      discountAmount: Number,
     },
 
     // Delivery information
@@ -328,8 +304,27 @@ const orderSchema = new mongoose.Schema(
     },
     trackingHistory: [trackingInfoSchema],
 
-    // Payment
-    paymentInfo: paymentInfoSchema,
+    // Payment reference
+    paymentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Payment",
+    },
+    paymentStatus: {
+      type: String,
+      enum: [
+        "pending",
+        "processing",
+        "succeeded",
+        "failed",
+        "refunded",
+        "partially_refunded",
+      ],
+      default: "pending",
+    },
+    paymentMethod: {
+      type: String,
+      enum: ["yoco_card", "yoco_eft", "yoco_instant_eft"],
+    },
 
     // Special instructions and notes
     specialInstructions: {
@@ -363,13 +358,8 @@ const orderSchema = new mongoose.Schema(
     // Delivery type
     deliveryType: {
       type: String,
-      enum: ["standard", "express", "scheduled"],
+      enum: ["standard", "express"],
       default: "standard",
-    },
-
-    // Scheduled delivery
-    scheduledFor: {
-      type: Date,
     },
   },
   {
@@ -382,7 +372,8 @@ orderSchema.index({ customerId: 1, createdAt: -1 });
 orderSchema.index({ storeId: 1, createdAt: -1 });
 orderSchema.index({ riderId: 1, createdAt: -1 });
 orderSchema.index({ status: 1, createdAt: -1 });
-orderSchema.index({ "paymentInfo.status": 1 });
+orderSchema.index({ paymentStatus: 1 });
+orderSchema.index({ paymentId: 1 });
 orderSchema.index({ estimatedDeliveryTime: 1, status: 1 });
 
 // Text search index for order number and customer search
@@ -393,9 +384,13 @@ orderSchema.index({ "deliveryAddress.location": "2dsphere" });
 
 // Pre-save middleware
 orderSchema.pre("save", function (next) {
-  // Calculate total from subtotal, tax, delivery fee, tip, and discount
+  // Calculate total from subtotal, delivery fee, handling fee, tip, and discount
   this.total =
-    this.subtotal + this.tax + this.deliveryFee + this.tip - this.discount;
+    this.subtotal +
+    this.deliveryFee +
+    this.handlingFee +
+    this.tip -
+    this.discount;
 
   // Auto-generate order number if not provided
   if (!this.orderNumber) {
