@@ -45,8 +45,6 @@ const PaymentPage = () => {
             },
           };
 
-      console.log("Delivery Address being sent:", deliveryAddress);
-
       setLoading(true);
 
       // Send only essential data - backend calculates prices
@@ -62,8 +60,6 @@ const PaymentPage = () => {
         paymentMethod: "yoco_card",
         paymentStatus: "pending",
       };
-
-      console.log("Order Payload:", orderPayload);
 
       const orderResponse = await createOrder(orderPayload);
       const orderId = orderResponse.order._id;

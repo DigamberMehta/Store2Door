@@ -1,0 +1,210 @@
+{
+  "userLocation": {
+    "lat": 31.25198291991715,
+    "lon": 75.70455379143716
+  },
+  "within5km": [
+    {
+      "name": "HomeStyle Furnishings",
+      "address": {
+        "street": "GT Road, Phagwara Sharki, Near Law Gate, Lovely Professional University",
+        "city": "Phagwara",
+        "province": "Punjab",
+        "postalCode": "144401",
+        "country": "India",
+        "latitude": 31.254320172708592,
+        "longitude": 75.69911412522612,
+        "_id": "697346209261a5fad6258941"
+      },
+      "distance": 0.58,
+      "distanceRounded": 0.6
+    },
+    {
+      "name": "TechHub Electronics",
+      "address": {
+        "street": "Law Gate Road, Guru Hargobind Nagar, Near Lovely Professional University",
+        "city": "Phagwara",
+        "province": "Punjab",
+        "postalCode": "144401",
+        "country": "India",
+        "latitude": 31.255457878363444,
+        "longitude": 75.69480113494721,
+        "_id": "697346209261a5fad6258937"
+      },
+      "distance": 1,
+      "distanceRounded": 1
+    },
+    {
+      "name": "AutoParts Express",
+      "address": {
+        "street": "Law Gate Road, Guru Hargobind Nagar, Near LPU",
+        "city": "Phagwara",
+        "province": "Punjab",
+        "postalCode": "144401",
+        "country": "India",
+        "latitude": 31.255457878363444,
+        "longitude": 75.69480113494721,
+        "_id": "697346219261a5fad625894b"
+      },
+      "distance": 1,
+      "distanceRounded": 1
+    },
+    {
+      "name": "Fresh Market Express",
+      "address": {
+        "street": "Adarsh Nagar, Phagwara Sharki, Law Gate Road, Near LPU",
+        "city": "Phagwara",
+        "province": "Punjab",
+        "postalCode": "144401",
+        "country": "India",
+        "latitude": 31.2587571435273,
+        "longitude": 75.69652739254981,
+        "_id": "697346209261a5fad625892d"
+      },
+      "distance": 1.07,
+      "distanceRounded": 1.1
+    },
+    {
+      "name": "HealthPlus Pharmacy",
+      "address": {
+        "street": "Highway Plaza Market, Law Gate Road, Near Lovely Professional University",
+        "city": "Phagwara",
+        "province": "Punjab",
+        "postalCode": "144401",
+        "country": "India",
+        "latitude": 31.262847599999986,
+        "longitude": 75.70308284213986,
+        "_id": "697346219261a5fad6258955"
+      },
+      "distance": 1.22,
+      "distanceRounded": 1.2
+    },
+    {
+      "name": "FitZone Sports",
+      "address": {
+        "street": "Beside Balaji Store, Law Gate, Near Lovely Professional University",
+        "city": "Phagwara",
+        "province": "Punjab",
+        "postalCode": "144411",
+        "country": "India",
+        "latitude": 31.25668276757237,
+        "longitude": 75.69151691895972,
+        "_id": "697346219261a5fad625895f"
+      },
+      "distance": 1.34,
+      "distanceRounded": 1.3
+    },
+    {
+      "name": "Organic Roots Market",
+      "address": {
+        "street": "Shop No. 505, Level 5, Block 15-A, Lovely Professional University Campus",
+        "city": "Phagwara",
+        "province": "Punjab",
+        "postalCode": "144411",
+        "country": "India",
+        "latitude": 31.26428672490753,
+        "longitude": 75.69526970367917,
+        "_id": "697346229261a5fad6258969"
+      },
+      "distance": 1.63,
+      "distanceRounded": 1.6
+    },
+    {
+      "name": "PawPals Pet Store",
+      "address": {
+        "street": "Near P.G. Niwas, Law Gate Back Road, Phagwara Sharki, Near LPU",
+        "city": "Phagwara",
+        "province": "Punjab",
+        "postalCode": "144401",
+        "country": "India",
+        "latitude": 31.26815428048833,
+        "longitude": 75.7039299511004,
+        "_id": "697346239261a5fad6258987"
+      },
+      "distance": 1.8,
+      "distanceRounded": 1.8
+    },
+    {
+      "name": "QuickStop Convenience",
+      "address": {
+        "street": "Law Gate Market, Near LPU Girls Hostel Area",
+        "city": "Phagwara",
+        "province": "Punjab",
+        "postalCode": "144401",
+        "country": "India",
+        "latitude": 31.26923253538051,
+        "longitude": 75.70126655791955,
+        "_id": "697346249261a5fad62589ae"
+      },
+      "distance": 1.94,
+      "distanceRounded": 1.9
+    }
+  ],
+  "between5and7km": [
+    {
+      "name": "StyleHub Fashion",
+      "address": {
+        "street": "Lovely View Estate, Law Gate Area, Jalandhar Cantt / Phagwara Border",
+        "city": "Phagwara",
+        "province": "Punjab",
+        "postalCode": "144401",
+        "country": "India",
+        "latitude": 31.2985,
+        "longitude": 75.698,
+        "_id": "697346229261a5fad625897d"
+      },
+      "distance": 5.21,
+      "distanceRounded": 5.2
+    },
+    {
+      "name": "BookWorm Corner",
+      "address": {
+        "street": "Highway Plaza Mall, Law Gate Road, Near Lovely Professional University",
+        "city": "Phagwara",
+        "province": "Punjab",
+        "postalCode": "144411",
+        "country": "India",
+        "latitude": 31.205,
+        "longitude": 75.712,
+        "_id": "697346239261a5fad625899b"
+      },
+      "distance": 5.27,
+      "distanceRounded": 5.3
+    },
+    {
+      "name": "ToyBox Kingdom",
+      "address": {
+        "street": "Law Gate Road, Meheru Village, Near Lovely Professional University",
+        "city": "Phagwara",
+        "province": "Punjab",
+        "postalCode": "144411",
+        "country": "India",
+        "latitude": 31.297,
+        "longitude": 75.728,
+        "_id": "697346239261a5fad6258991"
+      },
+      "distance": 5.48,
+      "distanceRounded": 5.5
+    },
+    {
+      "name": "BeautyBliss Salon Supply",
+      "address": {
+        "street": "Guru Harkrishan Nagar, Law Gate Back Side Road, Near LPU Hostels",
+        "city": "Phagwara",
+        "province": "Punjab",
+        "postalCode": "144401",
+        "country": "India",
+        "latitude": 31.247977850456564,
+        "longitude": 75.765,
+        "_id": "697346229261a5fad6258973"
+      },
+      "distance": 5.76,
+      "distanceRounded": 5.8
+    }
+  ],
+  "summary": {
+    "within5km": 9,
+    "between5and7km": 4,
+    "total": 13
+  }
+}

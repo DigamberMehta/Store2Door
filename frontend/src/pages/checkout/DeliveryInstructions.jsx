@@ -63,12 +63,11 @@ const DeliveryInstructions = () => {
     if (option.action === "record") {
       setIsRecording(!isRecording);
       // Add voice recording logic here
-      console.log("Recording toggled:", !isRecording);
     } else {
       setSelectedOptions((prev) =>
         prev.includes(option.id)
           ? prev.filter((id) => id !== option.id)
-          : [...prev, option.id]
+          : [...prev, option.id],
       );
     }
   };
