@@ -12,6 +12,7 @@ import { StoreList } from "../homepage/store";
 import { suggestionsAPI } from "../../services/api";
 import cartAPI from "../../services/api/cart.api";
 import { formatPrice } from "../../utils/formatPrice";
+import StoreConflictModal from "../../components/StoreConflictModal";
 
 const SearchPage = () => {
   const navigate = useNavigate();
@@ -28,6 +29,9 @@ const SearchPage = () => {
   const [userLocation, setUserLocation] = useState(null);
   const [locationError, setLocationError] = useState(null);
   const [cartItems, setCartItems] = useState(new Map());
+  const [showConflictModal, setShowConflictModal] = useState(false);
+  const [conflictData, setConflictData] = useState(null);
+  const [pendingCartItem, setPendingCartItem] = useState(null);
 
   // Fetch cart items
   const fetchCartItems = async () => {
@@ -42,7 +46,7 @@ const SearchPage = () => {
       );
       setCartItems(itemsMap);
     } catch (error) {
-      console.error("Error fetching cart:", error);
+      // Silently fail - cart icon will show 0 items
     }
   };
 
@@ -51,49 +55,63 @@ const SearchPage = () => {
 
     // Fetch user's saved address from backend
     const fetchUserLocation = async () => {
-      console.log('🔄 Attempting to fetch user location...');
+      console.log("🔄 Attempting to fetch user location...");
       try {
-        const token = localStorage.getItem('authToken');
-        console.log('🔑 Token found:', !!token, token ? `(${token.substring(0, 20)}...)` : 'null');
+        const token = localStorage.getItem("authToken");
+        console.log(
+          "🔑 Token found:",
+          !!token,
+          token ? `(${token.substring(0, 20)}...)` : "null",
+        );
         if (!token) {
-          setLocationError('Please login to see accurate distances');
-          console.warn('No auth token found - user not logged in');
+          setLocationError("Please login to see accurate distances");
+          console.warn("No auth token found - user not logged in");
           return;
         }
 
-        const response = await fetch('http://localhost:3000/api/customer-profile/addresses', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
+        const response = await fetch(
+          "http://localhost:3000/api/customer-profile/addresses",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+
         if (response.ok) {
           const data = await response.json();
-          console.log('📍 Address API response:', data);
+          console.log("📍 Address API response:", data);
           const addresses = data.data?.addresses || data.addresses || [];
           if (data.success && addresses.length > 0) {
             // Use the default address or first address
-            const defaultAddress = addresses.find(addr => addr.isDefault) || addresses[0];
+            const defaultAddress =
+              addresses.find((addr) => addr.isDefault) || addresses[0];
             if (defaultAddress.latitude && defaultAddress.longitude) {
               setUserLocation({
                 lat: defaultAddress.latitude,
-                lon: defaultAddress.longitude
+                lon: defaultAddress.longitude,
               });
-              console.log('✅ User location set:', defaultAddress.city, `(${defaultAddress.latitude}, ${defaultAddress.longitude})`);
+              console.log(
+                "✅ User location set:",
+                defaultAddress.city,
+                `(${defaultAddress.latitude}, ${defaultAddress.longitude})`,
+              );
               setLocationError(null);
               return;
             } else {
-              setLocationError('Address found but missing coordinates');
+              setLocationError("Address found but missing coordinates");
             }
           } else {
-            setLocationError('No delivery address found. Please add an address.');
+            setLocationError(
+              "No delivery address found. Please add an address.",
+            );
           }
         } else {
-          setLocationError('Failed to fetch address');
+          setLocationError("Failed to fetch address");
         }
       } catch (error) {
-        console.error('Error fetching user address:', error);
-        setLocationError('Failed to fetch location');
+        console.error("Error fetching user address:", error);
+        setLocationError("Failed to fetch location");
       }
     };
 
@@ -136,13 +154,16 @@ const SearchPage = () => {
         setLoading(true);
 
         // Get both products and stores from suggestions API with user location
-        console.log('🔍 Fetching suggestions with user location:', userLocation);
+        console.log(
+          "🔍 Fetching suggestions with user location:",
+          userLocation,
+        );
         const suggestionsResponse = await suggestionsAPI.getSuggestions(query, {
           limit: 20,
           userLat: userLocation?.lat,
-          userLon: userLocation?.lon
+          userLon: userLocation?.lon,
         });
-        console.log('📦 API Response:', suggestionsResponse);
+        console.log("📦 API Response:", suggestionsResponse);
 
         // Extract corrections if available
         if (suggestionsResponse.suggestions?.corrections) {
@@ -175,7 +196,14 @@ const SearchPage = () => {
         if (suggestionsResponse.suggestions?.stores) {
           const stores = suggestionsResponse.suggestions.stores.map(
             (suggestion) => {
-              console.log('📍 Store:', suggestion.name, '| Distance:', suggestion.distance, 'km | Has coords:', !!suggestion.address?.latitude);
+              console.log(
+                "📍 Store:",
+                suggestion.name,
+                "| Distance:",
+                suggestion.distance,
+                "km | Has coords:",
+                !!suggestion.address?.latitude,
+              );
               return {
                 _id: suggestion.id?.replace("store_", ""),
                 name: suggestion.name,
@@ -184,11 +212,14 @@ const SearchPage = () => {
                 rating: suggestion.rating,
                 category: suggestion.category,
                 distance: suggestion.distance, // Distance from backend
-                address: suggestion.address
+                address: suggestion.address,
               };
-            }
+            },
           );
-          console.log(`✅ Processed ${stores.length} stores with distances:`, stores.map(s => `${s.name}: ${s.distance}km`));
+          console.log(
+            `✅ Processed ${stores.length} stores with distances:`,
+            stores.map((s) => `${s.name}: ${s.distance}km`),
+          );
           setStoreResults(stores);
         } else {
           setStoreResults([]);
@@ -227,16 +258,29 @@ const SearchPage = () => {
         },
       });
     } catch (error) {
-      console.error("Error adding to cart:", error);
-      toast.error("Failed to add item to cart", {
-        duration: 2000,
-        position: "top-center",
-        style: {
-          background: "#1a1a1a",
-          color: "#fff",
-          border: "1px solid rgba(239,68,68,0.3)",
-        },
-      });
+      if (error.response?.data?.code === "DIFFERENT_STORE") {
+        // This is not an error - show modal for user to choose
+        setConflictData(error.response.data.data);
+        setPendingCartItem({
+          productId: product._id,
+          quantity: 1,
+          storeId: product.storeId,
+        });
+        setShowConflictModal(true);
+      } else {
+        // Actual error - show message from backend
+        const errorMessage =
+          error.response?.data?.message || "Failed to add item to cart";
+        toast.error(errorMessage, {
+          duration: 2000,
+          position: "top-center",
+          style: {
+            background: "#1a1a1a",
+            color: "#fff",
+            border: "1px solid rgba(239,68,68,0.3)",
+          },
+        });
+      }
     }
   };
 
@@ -559,6 +603,63 @@ const SearchPage = () => {
           )}
         </AnimatePresence>
       </div>
+
+      {/* Store Conflict Modal */}
+      <StoreConflictModal
+        isOpen={showConflictModal}
+        onClose={() => setShowConflictModal(false)}
+        currentStoreName={conflictData?.currentStoreName}
+        newStoreName={conflictData?.newStoreName}
+        onKeepCurrent={() => {
+          setShowConflictModal(false);
+          setConflictData(null);
+          setPendingCartItem(null);
+          toast("Kept your current cart items", {
+            duration: 2000,
+            position: "top-center",
+            icon: "ℹ️",
+            style: {
+              background: "#1a1a1a",
+              color: "#fff",
+              border: "1px solid rgba(255,255,255,0.1)",
+            },
+          });
+        }}
+        onReplaceCart={async () => {
+          try {
+            await cartAPI.clearCart();
+            await cartAPI.addItem(pendingCartItem);
+            await fetchCartItems();
+            window.dispatchEvent(new Event("cartUpdated"));
+
+            setShowConflictModal(false);
+            setConflictData(null);
+            setPendingCartItem(null);
+
+            toast.success("Added to cart!", {
+              duration: 2000,
+              position: "top-center",
+              style: {
+                background: "#1a1a1a",
+                color: "#fff",
+                border: "1px solid rgba(49,134,22,0.3)",
+              },
+            });
+          } catch (error) {
+            const errorMessage =
+              error.response?.data?.message || "Failed to replace cart";
+            toast.error(errorMessage, {
+              duration: 2000,
+              position: "top-center",
+              style: {
+                background: "#1a1a1a",
+                color: "#fff",
+                border: "1px solid rgba(239,68,68,0.3)",
+              },
+            });
+          }
+        }}
+      />
     </motion.div>
   );
 };

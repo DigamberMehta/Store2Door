@@ -23,7 +23,7 @@ apiClient.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 // Response interceptor - Handle errors and token refresh
@@ -69,10 +69,7 @@ apiClient.interceptors.response.use(
       }
     }
 
-    // Handle other errors
-    const errorMessage =
-      error.response?.data?.message || error.message || "An error occurred";
-
-    return Promise.reject(new Error(errorMessage));
-  }
+    // Handle other errors - preserve the full error response
+    return Promise.reject(error);
+  },
 );

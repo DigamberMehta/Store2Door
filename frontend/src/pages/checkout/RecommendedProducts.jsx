@@ -96,8 +96,8 @@ const RecommendedProducts = () => {
         },
       });
     } catch (error) {
-      console.error("Error adding to cart:", error);
       if (error.response?.data?.code === "DIFFERENT_STORE") {
+        // This is not an error - show modal for user to choose
         setConflictData(error.response.data.data);
         setPendingCartItem({
           productId: product.id,
@@ -106,7 +106,10 @@ const RecommendedProducts = () => {
         });
         setShowConflictModal(true);
       } else {
-        toast.error("Failed to add to cart", {
+        // Actual error - show message from backend
+        const errorMessage =
+          error.response?.data?.message || "Failed to add to cart";
+        toast.error(errorMessage, {
           duration: 2000,
           position: "top-center",
           style: {
@@ -159,8 +162,10 @@ const RecommendedProducts = () => {
         },
       });
     } catch (error) {
-      console.error("Error replacing cart:", error);
-      toast.error("Failed to update cart. Please try again.", {
+      const errorMessage =
+        error.response?.data?.message ||
+        "Failed to update cart. Please try again.";
+      toast.error(errorMessage, {
         duration: 2000,
         position: "top-center",
         style: {
