@@ -10,7 +10,7 @@ export const categoryAPI = {
    */
   getAll: async () => {
     const response = await apiClient.get("/categories");
-    return response.data.data; // Extract data from { success: true, data: [...] }
+    return response.data; // Interceptor already extracted response.data, so just need .data
   },
 
   /**
@@ -28,7 +28,7 @@ export const categoryAPI = {
    */
   getSubcategories: async (parentSlug) => {
     const response = await apiClient.get(
-      `/categories/${parentSlug}/subcategories`
+      `/categories/${parentSlug}/subcategories`,
     );
     return response.data; // Axios interceptor already returns { success, data }, so access .data
   },
