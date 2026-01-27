@@ -5,6 +5,7 @@ const BillDetails = ({
   tip = 0,
   discount = 0,
   isFreeDelivery = false,
+  deliveryCharge = 30,
 }) => {
   // Calculate totals
   const itemsTotal = cartItems.reduce(
@@ -12,8 +13,6 @@ const BillDetails = ({
       sum + (item.discountedPrice || item.unitPrice || 0) * item.quantity,
     0,
   );
-
-  const deliveryCharge = 30;
   const shouldBeFreeDelivery = isFreeDelivery || itemsTotal > 500; // Free delivery above R500 or via coupon
 
   const grandTotal =

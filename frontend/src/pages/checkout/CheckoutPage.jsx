@@ -12,6 +12,8 @@ import toast from "react-hot-toast";
 import cartAPI from "../../services/api/cart.api";
 import { createOrder } from "../../services/api/order.api";
 import { useAuth } from "../../context/AuthContext";
+import { apiClient } from "../../services/api/client";
+import { customerProfileAPI } from "../../services/api/profile.api";
 import RecommendedProducts from "./RecommendedProducts";
 import BillDetails from "./BillDetails";
 import CheckoutFooter from "./CheckoutFooter";
@@ -30,6 +32,41 @@ const CheckoutPage = () => {
   const [updating, setUpdating] = useState(false);
   const [tip, setTip] = useState(0);
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
+  const [deliveryFeeAmount, setDeliveryFeeAmount] = useState(30);
+  const [deliverySettings, setDeliverySettings] = useState(null);
+  const [userAddresses, setUserAddresses] = useState([]);
+
+  // Fetch delivery settings on mount
+  // Fetch delivery settings on mount
+  useEffect(() => {
+    const fetchDeliverySettings = async () => {
+      try {
+        const response = await apiClient.get("/delivery-settings");
+        // apiClient already extracts response.data, so response is the data object
+        setDeliverySettings(response.data || response);
+      } catch (error) {
+        console.error("Error fetching delivery settings:", error);
+      }
+    };
+    fetchDeliverySettings();
+  }, []);
+
+  // Fetch user addresses
+  useEffect(() => {
+    const fetchAddresses = async () => {
+      try {
+        const response = await customerProfileAPI.getAddresses();
+        setUserAddresses(
+          response?.data?.addresses || response?.addresses || [],
+        );
+      } catch (error) {
+        console.error("Error fetching addresses:", error);
+      }
+    };
+    if (user) {
+      fetchAddresses();
+    }
+  }, [user]);
 
   // Fetch cart on mount and when navigating to this page
   useEffect(() => {
@@ -222,7 +259,81 @@ const CheckoutPage = () => {
   const appliedCoupon = cart?.appliedCoupon?.code ? cart.appliedCoupon : null;
   const discount = appliedCoupon?.discountAmount || 0;
   const isFreeDelivery = appliedCoupon?.discountType === "free_delivery";
-  const deliveryFee = isFreeDelivery || subtotal > 500 ? 0 : 30;
+
+  // Calculate delivery fee based on distance
+  useEffect(() => {
+    const calculateDeliveryFee = () => {
+      if (!cart || !deliverySettings) {
+        setDeliveryFeeAmount(30);
+        return;
+      }
+
+      // Get delivery address from location state (passed from address selection)
+      const deliveryAddress =
+        location.state?.deliveryAddress ||
+        userAddresses?.find((addr) => addr.isDefault) ||
+        userAddresses?.[0];
+      const store = cart?.storeId;
+
+      if (!store?.address?.latitude || !store?.address?.longitude) {
+        // Default to first tier if no store location
+        const defaultCharge =
+          deliverySettings?.distanceTiers?.[0]?.charge || 30;
+        setDeliveryFeeAmount(defaultCharge);
+        return;
+      }
+
+      // Calculate distance using Haversine formula
+      const toRad = (deg) => (deg * Math.PI) / 180;
+      const R = 6371; // Earth's radius in km
+
+      // Handle both location.coordinates format and direct latitude/longitude format
+      const userLat =
+        deliveryAddress?.location?.coordinates?.[1] ||
+        deliveryAddress?.latitude;
+      const userLon =
+        deliveryAddress?.location?.coordinates?.[0] ||
+        deliveryAddress?.longitude;
+      const storeLat = store.address.latitude;
+      const storeLon = store.address.longitude;
+
+      if (!userLat || !userLon) {
+        // Default to first tier if no user location
+        const defaultCharge =
+          deliverySettings?.distanceTiers?.[0]?.charge || 30;
+        setDeliveryFeeAmount(defaultCharge);
+        return;
+      }
+
+      const dLat = toRad(storeLat - userLat);
+      const dLon = toRad(storeLon - userLon);
+
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(toRad(userLat)) *
+          Math.cos(toRad(storeLat)) *
+          Math.sin(dLon / 2) *
+          Math.sin(dLon / 2);
+
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      const distance = R * c;
+
+      // Find the appropriate tier
+      const sortedTiers = [...deliverySettings.distanceTiers].sort(
+        (a, b) => a.maxDistance - b.maxDistance,
+      );
+      const tier = sortedTiers.find((t) => distance <= t.maxDistance);
+      const charge = tier
+        ? tier.charge
+        : sortedTiers[sortedTiers.length - 1].charge;
+
+      setDeliveryFeeAmount(charge);
+    };
+
+    calculateDeliveryFee();
+  }, [cart, deliverySettings, location.state, userAddresses]);
+
+  const deliveryFee = isFreeDelivery || subtotal > 500 ? 0 : deliveryFeeAmount;
   const total = subtotal + deliveryFee + tip - discount;
 
   const handleShare = () => {
@@ -413,6 +524,7 @@ const CheckoutPage = () => {
                 tip={tip}
                 discount={discount}
                 isFreeDelivery={isFreeDelivery}
+                deliveryCharge={deliveryFeeAmount}
               />
             )}
           </div>
