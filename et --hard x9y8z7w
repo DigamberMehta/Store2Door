@@ -1,0 +1,117 @@
+[33m4cb4e9a[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m chore: Clean up unused files and update dependencies
+[33m1a3189e[m feat: Add store distance migration scripts
+[33m6af7405[m fix: Resolve cart not clearing after payment
+[33m6e04b47[m feat: Improve store conflict modal and error handling
+[33m2487223[m feat: Implement tiered delivery fee calculation
+[33me55f6f7[m feat: Add store distance calculation and display
+[33m84575d5[m fix: Update subcategory slugs to match new database schema
+[33m295d924[m fix: Correct category API response data extraction
+[33m88c08e4[m feat: Integrate dynamic category fetching from database
+[33m0ae51db[m feat: Update database category names to simpler versions
+[33mc8c46cf[m Merge branch 'main' of https://github.com/DigamberMehta/door2door
+[33m0345ce2[m Fix: Remove remaining merge conflict marker
+[33m75116eb[m Resolve merge conflicts: combine location-based distance filtering with cart integration
+[33m7e16399[m feat: add orders page in profile section
+[33m8c4163f[m fix: transform delivery address to GeoJSON format
+[33m224487e[m feat: remove refund payment functionality
+[33m66eea7f[m fix: add pending status to Order model enum and fix populate paths
+[33mad21eeb[m shop filter according to distance
+[33m6ac36bd[m delivery location based shop filter
+[33m48f46b4[m Merge remote changes and keep handling fee removal + search optimizations
+[33m76b1dab[m Remove handling fees from checkout flow and optimize search performance
+[33m06e78b4[m Add distance calculation debugging logs
+[33m7253556[m Merge: keep both delivery-settings and payment/order routes
+[33m70c8081[m delivery charges
+[33m29b2cba[m feat(ui): hide cart on checkout, improve address selection flow
+[33m09effcf[m feat(backend): remove COD support and update Order/Cart schemas
+[33mb931eba[m feat(frontend): add Yoco payment pages, services and payment success page redesign
+[33ma359cb0[m feat(backend): integrate Yoco payment gateway and order processing
+[33mf32ed44[m feat(frontend): implement search-context-aware store page
+[33mfc20351[m feat(frontend): pass search context when navigating to store
+[33m0bf522b[m feat(frontend): add API method for context-aware store products
+[33mb704e3a[m feat(backend): add search-context-aware store products endpoint
+[33mfac783f[m search optimised dictionary caching autocomplete boosted scroing and active filtering
+[33mcd7621c[m solved conflictt
+[33m1eec850[m feat: implement typo-tolerant search with fuzzy matching and bottom-to-top search transition
+[33mf93a696[m feat: implement hybrid autocomplete-fuzzy search with typo tolerance
+[33md89822b[m feat: add tips configuration file
+[33md4c2840[m feat: update AddressPage UI
+[33me444e17[m feat(delivery): update API client and auth pages
+[33m784c747[m feat(backend): update delivery rider profile model
+[33m104f114[m refactor(delivery): restructure driver profile pages
+[33ma1a91bc[m refactor: remove redundant StoreSearchPage
+[33md4f6a83[m refactor: split StoreDetailPage into reusable components
+[33mb6d3ef6[m feat: add store conflict modal for cart management
+[33m46e7f34[m feat(backend): add coupon system with database model
+[33m9da41b9[m feat: implement advanced search with fuzzy matching, synonyms, and autocomplete
+[33m3fb0120[m feat: add coupon section with formatPrice
+[33mca5e748[m feat(frontend): move tip calculation to backend
+[33mac04fb7[m feat(backend): add tip calculation API endpoint
+[33mc54a490[m fix: apply formatPrice to all price displays
+[33m6503775[m feat: add formatPrice utility for consistent currency formatting
+[33m429fdb4[m fix: update remaining utils/api imports in subcategory components
+[33m735144f[m refactor: remove unnecessary utils/api.js file
+[33m633fafe[m chore: cleanup and minor fixes
+[33m2d9d9aa[m feat: implement complete checkout page with optimistic UI
+[33m60e2007[m feat: add shimmer loading components for checkout page
+[33m15dee49[m feat: add floating cart button with glassmorphism design
+[33m56b6d1a[m feat: add react-hot-toast for user notifications
+[33mbcd18e5[m feat: implement shopping cart functionality
+[33ma7893f3[m feat: implement SEO-friendly product routes with :id/:slug pattern
+[33m36eff2b[m feat: refactor ProductDetailPage into modular sub-components
+[33m224b989[m chore(backend): format and organize dependencies
+[33m81e860e[m feat(store-detail): group products by subcategory with priority sorting
+[33mf4a33cc[m feat(filter): integrate API for store filtering by subcategory
+[33mab344e1[m refactor(ui): remove hardcoded image fallbacks and use database images
+[33me03690a[m feat(subcategory): make individual subcategory items clickable
+[33mbb0ac14[m feat(api): standardize API response handling pattern
+[33mef52c0b[m feat(backend): add slug-based store lookup with ObjectId validation
+[33m64de62c[m Remove hardcoded pending badge and restrict document re-uploads
+[33md526e98[m profile photo upload fixed and photo show in profile icon
+[33m99f21c6[m Merge branch 'main' of https://github.com/DigamberMehta/door2door
+[33me294e2d[m feat(frontend): connect preferred areas with backend API and add loading states
+[33m8328a77[m feat(frontend): add routing number field and implement work shifts saving with backend integration
+[33m71e5ab5[m chore(backend): add database migration scripts for workSchedule cleanup
+[33mad1d750[m refactor(backend): convert workSchedule and serviceAreas to Mixed type for flexibility
+[33m548640a[m feat(backend): add routing number support to bank account updates
+[33m029743e[m docs: add quick reference guide for API standardization
+[33m53f7b2e[m feat: standardize API response format across backend and frontend
+[33m5df5bd9[m feat: Integrate frontend with backend APIs for categories, products, and stores
+[33m79ea702[m fix: initialize driver profile fields on registration and update CORS, add protected routes
+[33m9c9df35[m docs: add comprehensive document upload setup guide
+[33m5e0f113[m feat: implement profile page with API integration and edit modals
+[33m48a6bfc[m feat: implement complete document upload system with toast notifications
+[33m46f5771[m feat: connect login and signup pages to backend API
+[33m5fa22d0[m feat: implement modular API service layer for delivery app
+[33m601530c[m chore: configure delivery app dependencies and port
+[33m4ce97bd[m chore: add database cleanup scripts for driver profiles
+[33m50eedcb[m feat: add comprehensive driver profile management system
+[33m946d002[m feat: implement separate authentication controllers for customers and drivers
+[33m1b9bfa4[m feat: add Cloudinary and Multer for file uploads
+[33mc8a182a[m refactor: rename address fields (state→province, zipCode→postalCode) across all models
+[33m6cab8c8[m refactor: update api.js to re-export from modular structure
+[33meb9edd5[m refactor: modularize API structure into feature-based files
+[33mc590e02[m feat: update routes from /settings to /profile
+[33m129c537[m feat: create profile pages with address management
+[33m01f1974[m feat: add address management endpoints and batch profile API
+[33m3515a7c[m optimised for mobile phone
+[33m7f14fa5[m login signin delivery app
+[33md85bb8d[m feat: include remaining delivery app configuration and assets
+[33mca435ce[m merge: resolve conflicts in frontend Header.jsx and merge remote changes
+[33m7f7108a[m style: modernize frontend header with improved location bar and search UI
+[33m324e0e5[m feat: implement rider profile with document upload and hourly shift selection
+[33m19f27a1[m feat: add wallet, activities, and withdrawal management pages
+[33m9225b52[m feat: implement core delivery workflow and home dashboard
+[33m7afa930[m chore: initialize delivery app scaffolding and core routing
+[33m283b6b0[m chore: migrate backend to MongoDB Atlas
+[33mc59ff2a[m refactor: modularize settings page into sub-components
+[33mb2a835a[m style: update color theme from blue to green
+[33m56be14d[m feat: implement authentication with Context API
+[33me41b11e[m feat: Add flexible product schema with food/non-food support
+[33m2b01cce[m product detail shop detail search pages added and changes in project stucture
+[33m7973fad[m setting page design
+[33maaa40ed[m Rename cart to checkout and optimize UI components
+[33mfb86df9[m cart page
+[33m1110c20[m Update header with modern glass morphism design and optimize category filter for mobile
+[33m223a66e[m Update navbar logo and improve mobile responsiveness
+[33me5e5aa2[m first commit

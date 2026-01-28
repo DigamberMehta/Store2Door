@@ -574,13 +574,13 @@ class SuggestionsService {
           $or: [{ _id: { $in: relevantStoreIds } }],
         })
           .limit(fetchLimit)
-          .select("name description image rating category")
+          .select("name description image rating category address")
           .lean();
 
         // Also fuzzy match on store names directly
         const allStores = await Store.find({ isActive: true })
           .limit(fetchLimit)
-          .select("name description image rating category")
+          .select("name description image rating category address")
           .lean();
 
         const storeNameMatches = fuzzysort.go(query, allStores, {
@@ -626,6 +626,8 @@ class SuggestionsService {
         const deliverySettings = await DeliverySettings.findOne();
         const maxDistance = deliverySettings?.maxDeliveryDistance || 7;
 
+        console.log(`🔍 Fuzzy search - Found ${sortedStores.length} stores, userLat: ${userLat}, userLon: ${userLon}, maxDistance: ${maxDistance}km`);
+
         // Calculate distances and filter by max distance
         const storesWithDistance = sortedStores.map(s => {
           const storeData = {
@@ -651,6 +653,9 @@ class SuggestionsService {
               Math.sin(dLon/2) * Math.sin(dLon/2);
             const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
             storeData.distance = Math.round(c * R * 10) / 10; // Round to 1 decimal
+            console.log(`  📏 Fuzzy: ${s.name}: ${storeData.distance}km (Store: ${s.address.latitude}, ${s.address.longitude})`);
+          } else {
+            console.log(`  ⚠️ Fuzzy: ${s.name}: No coords - address:`, !!s.address, 'lat:', s.address?.latitude, 'lon:', s.address?.longitude);
           }
 
           return storeData;
@@ -658,9 +663,16 @@ class SuggestionsService {
 
         // Filter by max delivery distance if user location provided
         const filteredStores = userLat && userLon
-          ? storesWithDistance.filter(s => !s.distance || s.distance <= maxDistance)
+          ? storesWithDistance.filter(s => {
+              const pass = !s.distance || s.distance <= maxDistance;
+              if (!pass && s.distance) {
+                console.log(`  ❌ Fuzzy filtered: ${s.name} (${s.distance}km > ${maxDistance}km)`);
+              }
+              return pass;
+            })
           : storesWithDistance;
 
+        console.log(`✅ Fuzzy search returning ${filteredStores.length} stores after filtering`);
         results.push(...filteredStores);
       }
 
