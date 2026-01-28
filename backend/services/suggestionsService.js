@@ -54,17 +54,16 @@ class SuggestionsService {
       // Use MongoDB Atlas Search
       const suggestions = await this.atlasSearch(query, { type, limit, userLat, userLon });
 
-      // Check if results look like they might be from a typo (fuzzy matches or few results)
-      const hasFuzzyMatches = suggestions.some((s) => s.isFuzzyMatch);
-      const hasLowResults = suggestions.length < 3;
+      // Only show corrections if there are NO results (not just low results)
+      const hasNoResults = suggestions.length === 0;
 
       console.log(
-        `🔍 Query: "${query}" | Results: ${suggestions.length} | FuzzyMatches: ${hasFuzzyMatches} | LowResults: ${hasLowResults}`,
+        `🔍 Query: "${query}" | Results: ${suggestions.length} | HasNoResults: ${hasNoResults}`,
       );
 
       let corrections = [];
-      if (includeCorrections && (hasFuzzyMatches || hasLowResults)) {
-        corrections = await this.getSpellingCorrections(query, 3);
+      if (includeCorrections && hasNoResults) {
+        corrections = await this.getSpellingCorrections(query, 3, userLat, userLon);
         console.log(
           `💡 Generated ${corrections.length} spelling corrections:`,
           corrections.map((c) => c.suggestion),
@@ -239,15 +238,20 @@ class SuggestionsService {
               searchScore: 1,
               storeId: "$storeData._id",
               storeName: "$storeData.name",
+              storeAddress: "$storeData.address",
             },
           },
         ]);
 
-        // Atlas Search already sorted by relevance, just limit and map
-        const sortedProducts = products.slice(0, limit);
+        // Get max delivery distance from settings (default 7km)
+        const deliverySettings = await DeliverySettings.findOne();
+        const maxDistance = deliverySettings?.maxDeliveryDistance || 7;
 
-        results.push(
-          ...sortedProducts.map((p) => ({
+        console.log(`🛍️ Product search - Found ${products.length} products, userLat: ${userLat}, userLon: ${userLon}, maxDistance: ${maxDistance}km`);
+
+        // Calculate distances for products based on their store location and filter by max distance
+        const productsWithDistance = products.map(p => {
+          const productData = {
             type: "product",
             name: p.name,
             description: p.description,
@@ -260,8 +264,45 @@ class SuggestionsService {
             storeId: p.storeId,
             id: `product_${p._id}`,
             score: p.searchScore,
-          })),
-        );
+          };
+
+          // Calculate distance if coordinates available
+          if (userLat && userLon && p.storeAddress?.latitude && p.storeAddress?.longitude) {
+            const R = 6371; // Earth radius in km
+            const dLat = (p.storeAddress.latitude - userLat) * Math.PI / 180;
+            const dLon = (p.storeAddress.longitude - userLon) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(userLat * Math.PI / 180) * Math.cos(p.storeAddress.latitude * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            productData.distance = Math.round(c * R * 10) / 10; // Round to 1 decimal
+            console.log(`  📦 ${p.name} (${p.storeName}): ${productData.distance}km`);
+          } else {
+            console.log(`  ⚠️ ${p.name}: No distance calculated (missing store coords)`);
+          }
+
+          return productData;
+        });
+
+        // Filter products by max delivery distance if user location provided
+        const filteredProducts = userLat && userLon
+          ? productsWithDistance.filter(p => {
+              const included = !p.distance || p.distance <= maxDistance;
+              if (!included && p.distance) {
+                console.log(`  ❌ ${p.name} (${p.storeName}): Filtered out (${p.distance}km > ${maxDistance}km)`);
+              }
+              return included;
+            })
+          : productsWithDistance;
+
+        console.log(`✅ Returning ${filteredProducts.length} products within ${maxDistance}km`);
+
+        // Sort by distance if available, otherwise keep search score order
+        const sortedProducts = userLat && userLon 
+          ? filteredProducts.sort((a, b) => (a.distance || Infinity) - (b.distance || Infinity)).slice(0, limit)
+          : filteredProducts.slice(0, limit);
+
+        results.push(...sortedProducts);
       }
 
       // Search stores using Atlas Search
@@ -469,7 +510,7 @@ class SuggestionsService {
           .select(
             "name description price images category popularity rating storeId tags",
           )
-          .populate("storeId", "name")
+          .populate("storeId", "name address")
           .lean();
 
         // Prepare data for fuzzy search
@@ -527,8 +568,15 @@ class SuggestionsService {
           .slice(0, limit)
           .map((item) => item.product);
 
-        results.push(
-          ...sortedProducts.map((p) => ({
+        // Get max delivery distance from settings (default 7km)
+        const deliverySettings = await DeliverySettings.findOne();
+        const maxDistance = deliverySettings?.maxDeliveryDistance || 7;
+
+        console.log(`🔍 Fuzzy product search - Found ${sortedProducts.length} products, userLat: ${userLat}, userLon: ${userLon}, maxDistance: ${maxDistance}km`);
+
+        // Calculate distances and filter by max distance
+        const productsWithDistance = sortedProducts.map(p => {
+          const productData = {
             type: "product",
             name: p.name,
             description: p.description,
@@ -541,8 +589,39 @@ class SuggestionsService {
             storeId: p.storeId?._id || p.storeId,
             id: `product_${p._id}`,
             isFuzzyMatch: true,
-          })),
-        );
+          };
+
+          // Calculate distance if coordinates available
+          if (userLat && userLon && p.storeId?.address?.latitude && p.storeId?.address?.longitude) {
+            const R = 6371; // Earth radius in km
+            const dLat = (p.storeId.address.latitude - userLat) * Math.PI / 180;
+            const dLon = (p.storeId.address.longitude - userLon) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(userLat * Math.PI / 180) * Math.cos(p.storeId.address.latitude * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            productData.distance = Math.round(c * R * 10) / 10; // Round to 1 decimal
+            console.log(`  📦 Fuzzy: ${p.name} (${p.storeId.name}): ${productData.distance}km`);
+          } else {
+            console.log(`  ⚠️ Fuzzy: ${p.name}: No coords for store`);
+          }
+
+          return productData;
+        });
+
+        // Filter by max delivery distance if user location provided
+        const filteredProducts = userLat && userLon
+          ? productsWithDistance.filter(p => {
+              const pass = !p.distance || p.distance <= maxDistance;
+              if (!pass && p.distance) {
+                console.log(`  ❌ Fuzzy filtered: ${p.name} (${p.storeName}) - ${p.distance}km > ${maxDistance}km`);
+              }
+              return pass;
+            })
+          : productsWithDistance;
+
+        console.log(`✅ Fuzzy search returning ${filteredProducts.length} products after filtering`);
+        results.push(...filteredProducts);
       }
 
       // Search stores
@@ -776,7 +855,7 @@ class SuggestionsService {
     return terms;
   }
 
-  static async getSpellingCorrections(query, limit = 3) {
+  static async getSpellingCorrections(query, limit = 3, userLat = null, userLon = null) {
     try {
       console.log(`🔤 Getting spelling corrections for: "${query}"`);
 
@@ -802,10 +881,10 @@ class SuggestionsService {
 
       console.log(`🎯 Total dictionary terms: ${terms.length}`);
 
-      // Find closest matches using fuzzy search
+      // Find closest matches using fuzzy search with stricter threshold
       const matches = fuzzysort.go(query, terms, {
-        threshold: -3000,
-        limit: limit,
+        threshold: -1000, // Much stricter - only show close matches
+        limit: limit * 3, // Get more candidates to filter
       });
 
       console.log(
@@ -813,13 +892,143 @@ class SuggestionsService {
         matches.map((m) => `${m.target} (${m.score})`),
       );
 
-      return matches.map((match) => ({
+      // Filter out suggestions that are too different from query
+      const relevantMatches = matches.filter(match => {
+        const suggestion = match.target.toLowerCase();
+        const queryLower = query.toLowerCase();
+        
+        // Only keep if they share at least 50% of characters or start with same letter(s)
+        const startsWithSame = suggestion.startsWith(queryLower[0]);
+        const lengthDiff = Math.abs(suggestion.length - queryLower.length);
+        const isSimilarLength = lengthDiff <= queryLower.length * 0.5;
+        
+        return startsWithSame && isSimilarLength;
+      });
+
+      console.log(
+        `🎯 Relevant matches after filtering: ${relevantMatches.length}`,
+        relevantMatches.map((m) => m.target),
+      );
+
+      // If user location provided, filter corrections by distance
+      if (userLat && userLon) {
+        const deliverySettings = await DeliverySettings.findOne();
+        const maxDistance = deliverySettings?.maxDeliveryDistance || 7;
+
+        console.log(`🔍 Filtering corrections by ${maxDistance}km radius...`);
+
+        const validCorrections = [];
+
+        for (const match of relevantMatches) {
+          // Check if this suggestion has products/stores within range
+          const hasNearbyResults = await this.checkIfTermHasNearbyResults(
+            match.target,
+            userLat,
+            userLon,
+            maxDistance
+          );
+
+          if (hasNearbyResults) {
+            validCorrections.push({
+              suggestion: match.target,
+              score: match.score,
+            });
+            console.log(`  ✅ "${match.target}" - has nearby results`);
+          } else {
+            console.log(`  ❌ "${match.target}" - no results within ${maxDistance}km`);
+          }
+
+          // Stop when we have enough valid corrections
+          if (validCorrections.length >= limit) {
+            break;
+          }
+        }
+
+        return validCorrections;
+      }
+
+      return relevantMatches.slice(0, limit).map((match) => ({
         suggestion: match.target,
         score: match.score,
       }));
     } catch (error) {
       console.error("Error getting spelling corrections:", error);
       return [];
+    }
+  }
+
+  /**
+   * Check if a search term has any products or stores within delivery range
+   * @param {string} term - Search term
+   * @param {number} userLat - User latitude
+   * @param {number} userLon - User longitude
+   * @param {number} maxDistance - Maximum delivery distance in km
+   * @returns {Promise<boolean>} True if term has nearby results
+   */
+  static async checkIfTermHasNearbyResults(term, userLat, userLon, maxDistance) {
+    try {
+      // Search for products matching this term
+      const products = await Product.find({
+        isActive: true,
+        $or: [
+          { name: { $regex: term, $options: 'i' } },
+          { tags: { $regex: term, $options: 'i' } }
+        ]
+      })
+      .limit(10)
+      .select('storeId')
+      .populate('storeId', 'address')
+      .lean();
+
+      // Check if any product's store is within range
+      for (const product of products) {
+        if (product.storeId?.address?.latitude && product.storeId?.address?.longitude) {
+          const R = 6371; // Earth radius in km
+          const dLat = (product.storeId.address.latitude - userLat) * Math.PI / 180;
+          const dLon = (product.storeId.address.longitude - userLon) * Math.PI / 180;
+          const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(userLat * Math.PI / 180) * Math.cos(product.storeId.address.latitude * Math.PI / 180) *
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+          const distance = R * c;
+
+          if (distance <= maxDistance) {
+            return true; // Found at least one product within range
+          }
+        }
+      }
+
+      // Search for stores matching this term
+      const stores = await Store.find({
+        isActive: true,
+        name: { $regex: term, $options: 'i' }
+      })
+      .limit(5)
+      .select('address')
+      .lean();
+
+      // Check if any store is within range
+      for (const store of stores) {
+        if (store.address?.latitude && store.address?.longitude) {
+          const R = 6371;
+          const dLat = (store.address.latitude - userLat) * Math.PI / 180;
+          const dLon = (store.address.longitude - userLon) * Math.PI / 180;
+          const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(userLat * Math.PI / 180) * Math.cos(store.address.latitude * Math.PI / 180) *
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+          const distance = R * c;
+
+          if (distance <= maxDistance) {
+            return true; // Found at least one store within range
+          }
+        }
+      }
+
+      return false; // No products or stores within range
+    } catch (error) {
+      console.error(`Error checking nearby results for "${term}":`, error);
+      return false;
     }
   }
 
