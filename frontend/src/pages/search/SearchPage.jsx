@@ -55,14 +55,9 @@ const SearchPage = () => {
 
     // Fetch user's saved address from backend
     const fetchUserLocation = async () => {
-      console.log("🔄 Attempting to fetch user location...");
       try {
         const token = localStorage.getItem("authToken");
-        console.log(
-          "🔑 Token found:",
-          !!token,
-          token ? `(${token.substring(0, 20)}...)` : "null",
-        );
+
         if (!token) {
           setLocationError("Please login to see accurate distances");
           console.warn("No auth token found - user not logged in");
@@ -80,7 +75,6 @@ const SearchPage = () => {
 
         if (response.ok) {
           const data = await response.json();
-          console.log("📍 Address API response:", data);
           const addresses = data.data?.addresses || data.addresses || [];
           if (data.success && addresses.length > 0) {
             // Use the default address or first address
@@ -91,11 +85,7 @@ const SearchPage = () => {
                 lat: defaultAddress.latitude,
                 lon: defaultAddress.longitude,
               });
-              console.log(
-                "✅ User location set:",
-                defaultAddress.city,
-                `(${defaultAddress.latitude}, ${defaultAddress.longitude})`,
-              );
+
               setLocationError(null);
               return;
             } else {
@@ -154,16 +144,11 @@ const SearchPage = () => {
         setLoading(true);
 
         // Get both products and stores from suggestions API with user location
-        console.log(
-          "🔍 Fetching suggestions with user location:",
-          userLocation,
-        );
         const suggestionsResponse = await suggestionsAPI.getSuggestions(query, {
           limit: 20,
           userLat: userLocation?.lat,
           userLon: userLocation?.lon,
         });
-        console.log("📦 API Response:", suggestionsResponse);
 
         // Extract corrections if available
         if (suggestionsResponse.suggestions?.corrections) {
@@ -196,14 +181,6 @@ const SearchPage = () => {
         if (suggestionsResponse.suggestions?.stores) {
           const stores = suggestionsResponse.suggestions.stores.map(
             (suggestion) => {
-              console.log(
-                "📍 Store:",
-                suggestion.name,
-                "| Distance:",
-                suggestion.distance,
-                "km | Has coords:",
-                !!suggestion.address?.latitude,
-              );
               return {
                 _id: suggestion.id?.replace("store_", ""),
                 name: suggestion.name,
@@ -215,10 +192,6 @@ const SearchPage = () => {
                 address: suggestion.address,
               };
             },
-          );
-          console.log(
-            `✅ Processed ${stores.length} stores with distances:`,
-            stores.map((s) => `${s.name}: ${s.distance}km`),
           );
           setStoreResults(stores);
         } else {

@@ -1,0 +1,32 @@
+/**
+ * Creates a debounced function that delays invoking func until after wait milliseconds
+ * have elapsed since the last time the debounced function was invoked.
+ *
+ * @param {Function} func - The function to debounce
+ * @param {number} wait - The number of milliseconds to delay
+ * @returns {Function} - The debounced function
+ */
+export const debounce = (func, wait = 300) => {
+  let timeout;
+
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+};
+
+/**
+ * React hook for creating a debounced function
+ * @param {Function} callback - The function to debounce
+ * @param {number} delay - The delay in milliseconds
+ * @returns {Function} - The debounced function
+ */
+export const useDebounce = (callback, delay = 300) => {
+  const [debouncedCallback] = React.useState(() => debounce(callback, delay));
+  return debouncedCallback;
+};
