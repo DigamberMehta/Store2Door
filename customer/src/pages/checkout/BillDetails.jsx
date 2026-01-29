@@ -47,29 +47,38 @@ const BillDetails = ({
       </div>
 
       {/* Delivery Charge */}
-      <div className="flex justify-between items-center mb-2">
-        <div className="flex items-center gap-2">
-          <svg
-            className="w-3 h-3 text-white/60"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"
-            />
-          </svg>
-          <span className="text-white/80 text-xs">Delivery charge</span>
+      <div className="mb-2">
+        <div className="flex justify-between items-center mb-1">
+          <div className="flex items-center gap-2">
+            <svg
+              className="w-3 h-3 text-white/60"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"
+              />
+            </svg>
+            <span className="text-white/80 text-xs">Delivery charge</span>
+          </div>
+          {shouldBeFreeDelivery ? (
+            <span className="text-[rgb(49,134,22)] font-bold text-xs">
+              FREE
+            </span>
+          ) : (
+            <span className="text-white font-semibold text-sm">
+              R{formatPrice(deliveryCharge)}
+            </span>
+          )}
         </div>
-        {shouldBeFreeDelivery ? (
-          <span className="text-[rgb(49,134,22)] font-bold text-xs">FREE</span>
-        ) : (
-          <span className="text-white font-semibold text-sm">
-            R{formatPrice(deliveryCharge)}
-          </span>
+        {!shouldBeFreeDelivery && (
+          <p className="text-white/40 text-[9px] ml-5">
+            100% delivery fees go to driver
+          </p>
         )}
       </div>
 

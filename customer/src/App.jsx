@@ -7,6 +7,7 @@ import {
 } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "./context/AuthContext";
+import ProtectedRoute from "./components/ProtectedRoute";
 import HomePage from "./pages/homepage/HomePage";
 import StoreDetailPage from "./pages/store/StoreDetailPage";
 import FilterPage from "./pages/search/FilterPage";
@@ -95,10 +96,38 @@ function AppContent() {
         <Route path="/payment/success" element={<PaymentSuccessPage />} />
         <Route path="/payment/failure" element={<PaymentFailurePage />} />
         <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/profile/details" element={<ProfileDetailsPage />} />
-        <Route path="/profile/addresses" element={<AddressPage />} />
-        <Route path="/profile/orders" element={<OrdersPage />} />
-        <Route path="/profile/orders/:orderId" element={<OrderDetailPage />} />
+        <Route
+          path="/profile/details"
+          element={
+            <ProtectedRoute>
+              <ProfileDetailsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile/addresses"
+          element={
+            <ProtectedRoute>
+              <AddressPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile/orders"
+          element={
+            <ProtectedRoute>
+              <OrdersPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile/orders/:orderId"
+          element={
+            <ProtectedRoute>
+              <OrderDetailPage />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/search" element={<SearchPage />} />
         <Route path="/product/:id/:slug" element={<ProductDetailPage />} />
         <Route path="/login" element={<Login />} />

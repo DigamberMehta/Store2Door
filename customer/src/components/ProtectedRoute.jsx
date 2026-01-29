@@ -1,8 +1,20 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useEffect } from "react";
+import toast from "react-hot-toast";
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      toast.error("Please sign in to continue", {
+        duration: 3000,
+        position: "top-center",
+      });
+    }
+  }, [isAuthenticated, loading]);
 
   // Show loading state while checking auth
   if (loading) {
@@ -14,8 +26,8 @@ const ProtectedRoute = ({ children }) => {
   }
 
   if (!isAuthenticated) {
-    // Redirect to login if not authenticated
-    return <Navigate to="/login" replace />;
+    // Redirect to login if not authenticated, preserve intended destination
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   return children;

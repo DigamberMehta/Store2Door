@@ -6,7 +6,8 @@ import Order from "../models/Order.js";
 // @access  Private
 export const createReview = async (req, res) => {
   try {
-    const { reviewType, productId, storeId, riderId, rating, comment } = req.body;
+    const { reviewType, productId, storeId, riderId, rating, comment } =
+      req.body;
 
     // For product reviews, check if user has purchased the product (optional)
     if (reviewType === "product" && productId) {
@@ -51,7 +52,12 @@ export const getProductReviews = async (req, res) => {
     const { productId } = req.params;
     const { page = 1, limit = 10, sortBy = "createdAt" } = req.query;
 
-    const reviews = await Review.getReviewsByProduct(productId, page, limit, sortBy);
+    const reviews = await Review.getReviewsByProduct(
+      productId,
+      page,
+      limit,
+      sortBy,
+    );
 
     res.status(200).json({
       success: true,
@@ -104,7 +110,9 @@ export const voteReview = async (req, res) => {
 
     const review = await Review.findById(id);
     if (!review) {
-      return res.status(404).json({ success: false, message: "Review not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Review not found" });
     }
 
     if (voteType === "helpful") {

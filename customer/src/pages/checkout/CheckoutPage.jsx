@@ -249,7 +249,11 @@ const CheckoutPage = () => {
       return response;
     } catch (error) {
       console.error("Error creating order:", error);
-      toast.error(error.response?.data?.message || "Failed to create order");
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to create order";
+      toast.error(errorMessage);
       throw error;
     }
   };

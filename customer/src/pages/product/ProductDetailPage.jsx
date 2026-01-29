@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Loader2, Info } from "lucide-react";
 import toast from "react-hot-toast";
+import { useAuth } from "../../context/AuthContext";
 import productAPI from "../../services/api/product.api";
 import cartAPI from "../../services/api/cart.api";
 import ProductHeader from "./ProductHeader";
@@ -13,6 +14,7 @@ import StoreConflictModal from "../../components/StoreConflictModal";
 const ProductDetailPage = () => {
   const { id, slug } = useParams();
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [addingToCart, setAddingToCart] = useState(false);
@@ -40,6 +42,16 @@ const ProductDetailPage = () => {
 
   const handleAddToCart = async () => {
     if (!product) return;
+
+    // Check authentication
+    if (!isAuthenticated) {
+      toast.error("Please sign in to continue", {
+        duration: 3000,
+        position: "top-center",
+      });
+      navigate("/login", { state: { from: window.location.pathname } });
+      return;
+    }
 
     try {
       setAddingToCart(true);

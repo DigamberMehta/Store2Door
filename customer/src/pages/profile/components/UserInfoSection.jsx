@@ -26,12 +26,20 @@ const UserInfoSection = ({ isAuthenticated, userData }) => {
         <p className="text-white/50 text-xs mb-4">
           Access your orders, saved addresses, and more
         </p>
-        <button
-          onClick={() => navigate("/login")}
-          className="w-full bg-[rgb(49,134,22)] text-white text-sm font-semibold py-2.5 rounded-xl active:bg-[rgb(49,134,22)]/90 transition-all"
-        >
-          Sign in
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => navigate("/login")}
+            className="flex-1 bg-[rgb(49,134,22)] text-white text-sm font-semibold py-2.5 rounded-xl active:bg-[rgb(49,134,22)]/90 transition-all"
+          >
+            Sign in
+          </button>
+          <button
+            onClick={() => navigate("/signup")}
+            className="flex-1 bg-white/10 border border-white/20 text-white text-sm font-semibold py-2.5 rounded-xl active:bg-white/20 transition-all"
+          >
+            Sign up
+          </button>
+        </div>
       </div>
     </div>
   );

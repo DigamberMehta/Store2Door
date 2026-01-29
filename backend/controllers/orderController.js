@@ -75,12 +75,17 @@ export const createOrder = async (req, res) => {
 
     // Fetch all products from DB to get actual prices
     const productIds = items.map((item) => item.product);
+    // Get unique product IDs to avoid duplicate queries
+    const uniqueProductIds = [
+      ...new Set(productIds.map((id) => id.toString())),
+    ];
     const products = await Product.find({
-      _id: { $in: productIds },
+      _id: { $in: uniqueProductIds },
       isActive: true,
     }).populate("storeId", "name location");
 
-    if (products.length !== items.length) {
+    // Validate that all unique products were found
+    if (products.length !== uniqueProductIds.length) {
       return res
         .status(400)
         .json({ message: "Some products are invalid or unavailable" });

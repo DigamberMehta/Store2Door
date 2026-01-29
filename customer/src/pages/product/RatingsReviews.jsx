@@ -39,8 +39,8 @@ const RatingsReviews = ({ product, avgRating, totalReviews }) => {
       setLoading(true);
       const response = await reviewAPI.getProductReviews(product._id);
       if (response.success && response.data) {
-        const reviewsData = Array.isArray(response.data) 
-          ? response.data 
+        const reviewsData = Array.isArray(response.data)
+          ? response.data
           : response.data?.reviews || [];
         setReviews(reviewsData);
       }
@@ -53,12 +53,12 @@ const RatingsReviews = ({ product, avgRating, totalReviews }) => {
 
   const handleSubmitReview = async (e) => {
     e.preventDefault();
-    
+
     if (rating === 0) {
       setError("Please select a rating");
       return;
     }
-    
+
     if (comment.trim().length > 0 && comment.trim().length < 10) {
       setError("Comment must be at least 10 characters");
       return;
@@ -74,19 +74,19 @@ const RatingsReviews = ({ product, avgRating, totalReviews }) => {
         rating: rating,
         storeId: product.storeId?._id || product.storeId,
       };
-      
+
       // Only add comment if it's not empty
       if (comment.trim().length > 0) {
         reviewData.comment = comment.trim();
       }
-      
+
       const response = await reviewAPI.create(reviewData);
 
       // Reset form
       setRating(0);
       setComment("");
       setShowReviewForm(false);
-      
+
       // Refresh reviews list
       await fetchReviews();
       await fetchStats();
@@ -118,9 +118,7 @@ const RatingsReviews = ({ product, avgRating, totalReviews }) => {
   return (
     <div className="bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/5 mx-3 mb-6">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-white font-semibold text-sm">
-          Ratings & Reviews
-        </h2>
+        <h2 className="text-white font-semibold text-sm">Ratings & Reviews</h2>
         <button
           onClick={() => setShowReviewForm(!showReviewForm)}
           className="px-3 py-1.5 bg-[rgb(49,134,22)]/20 border border-[rgb(49,134,22)]/30 rounded-lg text-xs font-medium text-white active:bg-[rgb(49,134,22)]/30 transition-all"
@@ -132,8 +130,10 @@ const RatingsReviews = ({ product, avgRating, totalReviews }) => {
       {/* Review Form */}
       {showReviewForm && (
         <div className="mb-4 bg-white/5 rounded-lg p-3 border border-white/10">
-          <h3 className="text-white font-medium text-sm mb-3">Write a Review</h3>
-          
+          <h3 className="text-white font-medium text-sm mb-3">
+            Write a Review
+          </h3>
+
           <form onSubmit={handleSubmitReview} className="space-y-3">
             {/* Star Rating Input */}
             <div>
@@ -239,27 +239,38 @@ const RatingsReviews = ({ product, avgRating, totalReviews }) => {
             ))}
           </div>
           <p className="text-white/40 text-[10px]">
-            {(stats?.totalReviews || totalReviews || 0).toLocaleString()} ratings
+            {(stats?.totalReviews || totalReviews || 0).toLocaleString()}{" "}
+            ratings
           </p>
-          {stats?.simpleAverage && stats.simpleAverage !== stats.averageRating && (
-            <p className="text-white/30 text-[9px] mt-1">
-              (Simple avg: {stats.simpleAverage})
-            </p>
-          )}
+          {stats?.simpleAverage &&
+            stats.simpleAverage !== stats.averageRating && (
+              <p className="text-white/30 text-[9px] mt-1">
+                (Simple avg: {stats.simpleAverage})
+              </p>
+            )}
         </div>
 
         <div className="flex-1 space-y-1.5">
           {[5, 4, 3, 2, 1].map((ratingItem) => {
-            const starKey = ratingItem === 5 ? 'fiveStars' : 
-                           ratingItem === 4 ? 'fourStars' : 
-                           ratingItem === 3 ? 'threeStars' : 
-                           ratingItem === 2 ? 'twoStars' : 'oneStar';
-            const count = stats?.[starKey] || product?.ratingBreakdown?.[ratingItem] || 0;
+            const starKey =
+              ratingItem === 5
+                ? "fiveStars"
+                : ratingItem === 4
+                  ? "fourStars"
+                  : ratingItem === 3
+                    ? "threeStars"
+                    : ratingItem === 2
+                      ? "twoStars"
+                      : "oneStar";
+            const count =
+              stats?.[starKey] || product?.ratingBreakdown?.[ratingItem] || 0;
             const total = stats?.totalReviews || totalReviews || 0;
             const percentage = total > 0 ? (count / total) * 100 : 0;
             return (
               <div key={ratingItem} className="flex items-center gap-2">
-                <span className="text-[10px] text-white/50 w-2">{ratingItem}</span>
+                <span className="text-[10px] text-white/50 w-2">
+                  {ratingItem}
+                </span>
                 <MdStar className="text-[10px] text-white/40" />
                 <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
                   <div
@@ -324,28 +335,31 @@ const RatingsReviews = ({ product, avgRating, totalReviews }) => {
               </p>
 
               <div className="flex items-center gap-3">
-                <button 
-                  onClick={() => handleVote(review._id, 'up')}
+                <button
+                  onClick={() => handleVote(review._id, "up")}
                   className="flex items-center gap-1 text-white/40 hover:text-white transition-colors"
                 >
                   <ThumbsUp className="w-3 h-3" />
-                  <span className="text-[10px]">{review.helpfulVotes || 0}</span>
+                  <span className="text-[10px]">
+                    {review.helpfulVotes || 0}
+                  </span>
                 </button>
-                <button 
-                  onClick={() => handleVote(review._id, 'down')}
+                <button
+                  onClick={() => handleVote(review._id, "down")}
                   className="flex items-center gap-1 text-white/40 hover:text-white transition-colors"
                 >
                   <ThumbsDown className="w-3 h-3" />
                 </button>
               </div>
             </div>
-          );
-          })
+          ))
         ) : (
           <div className="text-center py-6 bg-white/5 rounded-lg border border-dashed border-white/10">
             <MessageSquare className="w-8 h-8 text-white/10 mx-auto mb-2" />
             <p className="text-white/40 text-xs font-medium">No reviews yet</p>
-            <p className="text-white/20 text-[10px]">Be the first to share your thoughts!</p>
+            <p className="text-white/20 text-[10px]">
+              Be the first to share your thoughts!
+            </p>
           </div>
         )}
 

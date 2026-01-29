@@ -5,6 +5,7 @@ import { Info } from "lucide-react";
 import toast from "react-hot-toast";
 import { storeAPI, productAPI } from "../../services/api";
 import cartAPI from "../../services/api/cart.api";
+import { useAuth } from "../../context/AuthContext";
 import StoreConflictModal from "../../components/StoreConflictModal";
 import StoreBanner from "./StoreBanner";
 import ProductsGrid from "./ProductsGrid";
@@ -18,6 +19,7 @@ const StoreDetailPage = () => {
   const { storeName } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const [store, setStore] = useState(location.state?.store || null);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -86,12 +88,18 @@ const StoreDetailPage = () => {
           let productsResponse;
 
           // Use context-aware endpoint if we have search context
-          if (searchContext?.query || searchContext?.category || searchContext?.categoryId || searchContext?.categoryName) {
+          if (
+            searchContext?.query ||
+            searchContext?.category ||
+            searchContext?.categoryId ||
+            searchContext?.categoryName
+          ) {
             productsResponse = await productAPI.getByStoreWithContext(
               storeData._id || storeData.id,
               {
                 query: searchContext.query || "",
-                category: searchContext.categoryName || searchContext.category || "",
+                category:
+                  searchContext.categoryName || searchContext.category || "",
                 categoryId: searchContext.categoryId || "",
                 limit: 50,
               },
@@ -101,7 +109,7 @@ const StoreDetailPage = () => {
             if (productsResponse.success && productsResponse.data) {
               const { matchingProducts, categoryProducts, otherProducts } =
                 productsResponse.data;
-              
+
               // Maintain order: matching first, then category, then others
               setProducts([
                 ...matchingProducts,
@@ -227,6 +235,16 @@ const StoreDetailPage = () => {
   const handleAddToCart = async (product, e) => {
     e.stopPropagation();
 
+    // Check authentication
+    if (!isAuthenticated) {
+      toast.error("Please sign in to continue", {
+        duration: 3000,
+        position: "top-center",
+      });
+      navigate("/login", { state: { from: window.location.pathname } });
+      return;
+    }
+
     // If product has variants, navigate to product detail page to select variant
     if (product.variants && product.variants.length > 0) {
       navigate(`/product/${product._id}/${product.slug || "product"}`);
@@ -343,9 +361,13 @@ const StoreDetailPage = () => {
   // Group products by subcategory or search context
   const groupedProducts = products.reduce((acc, product, index) => {
     // When we have category context, group products but maintain order
-    if (searchContext?.categoryId || searchContext?.category || searchContext?.categoryName) {
+    if (
+      searchContext?.categoryId ||
+      searchContext?.category ||
+      searchContext?.categoryName
+    ) {
       const subcategory = product.subcategory || product.category || "Other";
-      
+
       // Add index to maintain original order within groups
       if (!acc[subcategory]) {
         acc[subcategory] = [];
@@ -353,7 +375,7 @@ const StoreDetailPage = () => {
       acc[subcategory].push({ ...product, _orderIndex: index });
       return acc;
     }
-    
+
     // When search context exists with highlighted product, prioritize it
     if (searchContext?.productId && searchContext?.highlightProduct) {
       const isHighlightedProduct =
@@ -442,16 +464,24 @@ const StoreDetailPage = () => {
   // Get subcategories sorted - put search matches first, then the one user came from
   const subcategories = Object.keys(groupedProducts).sort((a, b) => {
     // When we have category context, sort by the minimum order index (earliest appearance)
-    if (searchContext?.categoryId || searchContext?.category || searchContext?.categoryName) {
-      const aMinIndex = Math.min(...groupedProducts[a].map(p => p._orderIndex ?? 999999));
-      const bMinIndex = Math.min(...groupedProducts[b].map(p => p._orderIndex ?? 999999));
-      
+    if (
+      searchContext?.categoryId ||
+      searchContext?.category ||
+      searchContext?.categoryName
+    ) {
+      const aMinIndex = Math.min(
+        ...groupedProducts[a].map((p) => p._orderIndex ?? 999999),
+      );
+      const bMinIndex = Math.min(
+        ...groupedProducts[b].map((p) => p._orderIndex ?? 999999),
+      );
+
       // Lower index = earlier in prioritized list = should appear first
       if (aMinIndex !== bMinIndex) {
         return aMinIndex - bMinIndex;
       }
     }
-    
+
     // When search context exists with highlighted product, show it first
     if (searchContext?.productId && searchContext?.highlightProduct) {
       if (a === "Searched Product") return -1;

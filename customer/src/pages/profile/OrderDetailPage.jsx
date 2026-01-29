@@ -280,11 +280,18 @@ const OrderDetailPage = () => {
                 R{formatPrice(order.subtotal || 0)}
               </span>
             </div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-white/60">Delivery Fee</span>
-              <span className="text-white">
-                R{formatPrice(order.deliveryFee || 0)}
-              </span>
+            <div>
+              <div className="flex items-center justify-between text-xs mb-1">
+                <span className="text-white/60">Delivery Fee</span>
+                <span className="text-white">
+                  R{formatPrice(order.deliveryFee || 0)}
+                </span>
+              </div>
+              {order.deliveryFee > 0 && (
+                <p className="text-white/40 text-[9px] ml-0">
+                  100% delivery fees go to driver
+                </p>
+              )}
             </div>
             {order.discount > 0 && (
               <div className="flex items-center justify-between text-xs">

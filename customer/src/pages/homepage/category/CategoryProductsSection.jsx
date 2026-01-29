@@ -3,7 +3,13 @@ import { ChevronRight } from "lucide-react";
 import { productAPI, categoryAPI } from "../../../services/api";
 import { useUserLocation } from "../../../hooks/useUserLocation";
 
-const CategoryProductsSection = ({ parentSlug, title, onCategoryClick, selectedCategory, showTitle = true }) => {
+const CategoryProductsSection = ({
+  parentSlug,
+  title,
+  onCategoryClick,
+  selectedCategory,
+  showTitle = true,
+}) => {
   const [categoryGroups, setCategoryGroups] = useState([]);
   const [loading, setLoading] = useState(true);
   const { latitude, longitude } = useUserLocation();
@@ -13,11 +19,9 @@ const CategoryProductsSection = ({ parentSlug, title, onCategoryClick, selectedC
       try {
         setLoading(true);
 
-        console.log(`🔍 Fetching products for ${parentSlug}, selectedCategory: ${selectedCategory}`);
-
         // Fetch all categories to get Level 2 categories under the parent
         const categoriesResponse = await categoryAPI.getAll();
-        
+
         if (!categoriesResponse || !Array.isArray(categoriesResponse)) {
           console.error("Invalid categories response");
           return;
@@ -25,20 +29,17 @@ const CategoryProductsSection = ({ parentSlug, title, onCategoryClick, selectedC
 
         // Find parent category
         const parentCategory = categoriesResponse.find(
-          (cat) => cat.slug === parentSlug && cat.level === 1
+          (cat) => cat.slug === parentSlug && cat.level === 1,
         );
 
         if (!parentCategory) {
-          console.log(`Parent category ${parentSlug} not found`);
           return;
         }
 
         // Get Level 2 subcategories
         const subcategories = categoriesResponse.filter(
-          (cat) => cat.level === 2 && cat.parent?._id === parentCategory._id
+          (cat) => cat.level === 2 && cat.parent?._id === parentCategory._id,
         );
-
-        console.log(`Found ${subcategories.length} subcategories for ${parentSlug}`);
 
         // Fetch products for each subcategory
         const groups = await Promise.all(
@@ -56,23 +57,28 @@ const CategoryProductsSection = ({ parentSlug, title, onCategoryClick, selectedC
               }
 
               const response = await productAPI.getAll(params);
-              
+
               return {
                 category: subcat,
                 products: response?.data || [],
               };
             } catch (error) {
-              console.error(`Error fetching products for ${subcat.name}:`, error);
+              console.error(
+                `Error fetching products for ${subcat.name}:`,
+                error,
+              );
               return {
                 category: subcat,
                 products: [],
               };
             }
-          })
+          }),
         );
 
         // Filter out categories with no products
-        const groupsWithProducts = groups.filter((group) => group.products.length > 0);
+        const groupsWithProducts = groups.filter(
+          (group) => group.products.length > 0,
+        );
         setCategoryGroups(groupsWithProducts);
       } catch (error) {
         console.error("Error fetching category products:", error);
@@ -90,7 +96,10 @@ const CategoryProductsSection = ({ parentSlug, title, onCategoryClick, selectedC
         <div className="h-6 bg-white/10 rounded w-48 mb-3 animate-pulse"></div>
         <div className="grid grid-cols-2 gap-3">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-40 bg-white/5 rounded-lg animate-pulse"></div>
+            <div
+              key={i}
+              className="h-40 bg-white/5 rounded-lg animate-pulse"
+            ></div>
           ))}
         </div>
       </div>
@@ -107,12 +116,14 @@ const CategoryProductsSection = ({ parentSlug, title, onCategoryClick, selectedC
       {showTitle && (
         <h2 className="text-white font-bold text-lg mb-4">{title}</h2>
       )}
-      
+
       {categoryGroups.map((group) => (
         <div key={group.category._id} className="mb-6">
           {/* Level 2 Category as Main Section Heading */}
           <div className="flex items-center justify-between mb-3">
-            <h3 className={`text-white font-semibold ${showTitle ? 'text-base' : 'text-lg'}`}>
+            <h3
+              className={`text-white font-semibold ${showTitle ? "text-base" : "text-lg"}`}
+            >
               {group.category.name}
             </h3>
             <button
