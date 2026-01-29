@@ -19,6 +19,7 @@ import SignUp from "./pages/auth/SignUp";
 import ProfileDetailsPage from "./pages/profile/ProfileDetailsPage";
 import AddressPage from "./pages/profile/AddressPage";
 import OrdersPage from "./pages/profile/OrdersPage";
+import OrderDetailPage from "./pages/profile/OrderDetailPage";
 import PaymentPage from "./pages/payment/PaymentPage";
 import PaymentSuccessPage from "./pages/payment/PaymentSuccessPage";
 import PaymentFailurePage from "./pages/payment/PaymentFailurePage";
@@ -97,6 +98,7 @@ function AppContent() {
         <Route path="/profile/details" element={<ProfileDetailsPage />} />
         <Route path="/profile/addresses" element={<AddressPage />} />
         <Route path="/profile/orders" element={<OrdersPage />} />
+        <Route path="/profile/orders/:orderId" element={<OrderDetailPage />} />
         <Route path="/search" element={<SearchPage />} />
         <Route path="/product/:id/:slug" element={<ProductDetailPage />} />
         <Route path="/login" element={<Login />} />
