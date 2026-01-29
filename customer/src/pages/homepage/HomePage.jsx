@@ -136,7 +136,6 @@ const HomePage = ({ onStoreClick, onCategoryClick }) => {
       )}
       {selectedCategory === "Snacks" && (
         <div className="pt-4">
-          <h2 className="text-white text-2xl font-bold mb-4 px-4">Snacks & Drinks</h2>
           <CategoryProductsView 
             categoryName="Snacks" 
             onCategoryClick={onCategoryClick}
@@ -159,7 +158,6 @@ const HomePage = ({ onStoreClick, onCategoryClick }) => {
       )}
       {selectedCategory === "Beauty" && (
         <div className="pt-4">
-          <h2 className="text-white text-2xl font-bold mb-4 px-4">Beauty & Personal Care</h2>
           <CategoryProductsView 
             categoryName="Beauty" 
             onCategoryClick={onCategoryClick}
@@ -182,9 +180,38 @@ const HomePage = ({ onStoreClick, onCategoryClick }) => {
       )}
       {selectedCategory === "Home" && (
         <div className="pt-4">
-          <h2 className="text-white text-2xl font-bold mb-4 px-4">Home & Lifestyle</h2>
           <CategoryProductsView 
             categoryName="Home" 
+            onCategoryClick={onCategoryClick}
+          />
+        </div>
+      )}
+
+      {/* Electronics Section */}
+      {selectedCategory === "Electronics" && (
+        <div className="pt-4">
+          <CategoryProductsView 
+            categoryName="Electronics" 
+            onCategoryClick={onCategoryClick}
+          />
+        </div>
+      )}
+
+      {/* Fashion Section */}
+      {selectedCategory === "Fashion" && (
+        <div className="pt-4">
+          <CategoryProductsView 
+            categoryName="Fashion" 
+            onCategoryClick={onCategoryClick}
+          />
+        </div>
+      )}
+
+      {/* Pharmacy Section */}
+      {selectedCategory === "Pharmacy" && (
+        <div className="pt-4">
+          <CategoryProductsView 
+            categoryName="Pharmacy" 
             onCategoryClick={onCategoryClick}
           />
         </div>
