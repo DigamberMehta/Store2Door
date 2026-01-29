@@ -289,7 +289,7 @@ export const searchProducts = asyncHandler(async (req, res) => {
  */
 export const getStoreProductsWithContext = asyncHandler(async (req, res) => {
   const { storeId } = req.params;
-  const { query = "", category = "", limit = 50 } = req.query;
+  const { query = "", category = "", categoryId = "", limit = 50 } = req.query;
 
   // Fetch all active products from this store
   const allProducts = await Product.find({
@@ -298,7 +298,7 @@ export const getStoreProductsWithContext = asyncHandler(async (req, res) => {
     isAvailable: true,
   })
     .select(
-      "name description shortDescription category subcategory price images tags averageRating totalSold",
+      "name description shortDescription category subcategory categoryId price images tags averageRating totalSold",
     )
     .lean();
 
@@ -309,7 +309,7 @@ export const getStoreProductsWithContext = asyncHandler(async (req, res) => {
         matchingProducts: [],
         categoryProducts: [],
         otherProducts: [],
-        searchContext: { query, category },
+        searchContext: { query, category, categoryId },
       },
     });
   }
@@ -348,9 +348,12 @@ export const getStoreProductsWithContext = asyncHandler(async (req, res) => {
 
       if (bestScore > -5000 || containsQuery) {
         matchingProducts.push({ ...product, matchScore: bestScore });
-      } else if (category && product.category === category) {
+      } else if (categoryId && product.categoryId?.toString() === categoryId) {
         categoryProducts.push(product);
-      } else if (category && product.subcategory === category) {
+      } else if (
+        category &&
+        (product.category === category || product.subcategory === category)
+      ) {
         categoryProducts.push(product);
       } else {
         otherProducts.push(product);
@@ -373,10 +376,32 @@ export const getStoreProductsWithContext = asyncHandler(async (req, res) => {
     matchingProducts = matchingProducts.map(
       ({ matchScore, ...product }) => product,
     );
-  } else if (category) {
+  } else if (categoryId || category) {
     // If only category is provided (no search query)
+
     allProducts.forEach((product) => {
-      if (product.category === category || product.subcategory === category) {
+      // Try matching by categoryId first
+      const matchesCategoryId =
+        categoryId && product.categoryId?.toString() === categoryId;
+
+      // Fuzzy match by name - check if category/subcategory contains the search term or vice versa
+      let matchesCategoryName = false;
+      if (category) {
+        const searchTerm = category.toLowerCase();
+        const productCategory = (product.category || "").toLowerCase();
+        const productSubcategory = (product.subcategory || "").toLowerCase();
+
+        // Check if either contains the other (partial match)
+        matchesCategoryName =
+          productCategory.includes(searchTerm) ||
+          searchTerm.includes(productCategory) ||
+          productSubcategory.includes(searchTerm) ||
+          searchTerm.includes(productSubcategory) ||
+          productCategory === searchTerm ||
+          productSubcategory === searchTerm;
+      }
+
+      if (matchesCategoryId || matchesCategoryName) {
         categoryProducts.push(product);
       } else {
         otherProducts.push(product);
@@ -399,7 +424,7 @@ export const getStoreProductsWithContext = asyncHandler(async (req, res) => {
       0,
       limitNum - matchingProducts.length - categoryProducts.length,
     ),
-    searchContext: { query, category },
+    searchContext: { query, category, categoryId },
     totalMatching: matchingProducts.length,
     totalCategory: categoryProducts.length,
     totalOther: otherProducts.length,

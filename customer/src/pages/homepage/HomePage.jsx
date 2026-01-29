@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import Header from "../../components/Header";
 import {
   GroceryKitchenSection,
@@ -6,17 +7,39 @@ import {
   BeautyPersonalCareSection,
   HomeLifestyleSection,
 } from "./subCategory";
+import { CategoryProductsSection, CategoryProductsView } from "./category";
 import { StoreList } from "./store";
 import { storeAPI, categoryAPI } from "../../services/api";
 import { StoreListShimmer } from "../../components/shimmer";
 import { useUserLocation } from "../../hooks/useUserLocation";
 
 const HomePage = ({ onStoreClick, onCategoryClick }) => {
-  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [selectedCategory, setSelectedCategory] = useState(
+    searchParams.get("category") || "All"
+  );
   const [stores, setStores] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const { latitude, longitude, loading: locationLoading } = useUserLocation();
+
+  // Update URL when category changes
+  useEffect(() => {
+    if (selectedCategory === "All") {
+      searchParams.delete("category");
+    } else {
+      searchParams.set("category", selectedCategory);
+    }
+    setSearchParams(searchParams, { replace: true });
+  }, [selectedCategory]);
+
+  // Read category from URL on mount
+  useEffect(() => {
+    const categoryFromUrl = searchParams.get("category");
+    if (categoryFromUrl) {
+      setSelectedCategory(categoryFromUrl);
+    }
+  }, []);
 
   // Fetch stores and categories on mount
   useEffect(() => {
@@ -76,19 +99,135 @@ const HomePage = ({ onStoreClick, onCategoryClick }) => {
         categories={categories}
       />
 
-      <GroceryKitchenSection onCategoryClick={onCategoryClick} />
-      <SnacksDrinksSection onCategoryClick={onCategoryClick} />
-      <BeautyPersonalCareSection onCategoryClick={onCategoryClick} />
-      <HomeLifestyleSection onCategoryClick={onCategoryClick} />
+      {/* Grocery Section */}
+      {selectedCategory === "All" && (
+        <>
+          <GroceryKitchenSection onCategoryClick={onCategoryClick} />
+          <CategoryProductsSection 
+            parentSlug="grocery" 
+            title="Grocery & Kitchen"
+            selectedCategory={selectedCategory}
+            showTitle={true}
+            onCategoryClick={onCategoryClick}
+          />
+        </>
+      )}
+      {selectedCategory === "Grocery" && (
+        <div className="pt-4">
+          <CategoryProductsView 
+            categoryName="Grocery" 
+            onCategoryClick={onCategoryClick}
+          />
+        </div>
+      )}
 
-      {loading ? (
-        <StoreListShimmer />
-      ) : (
-        <StoreList
-          stores={filteredStores}
-          onStoreClick={onStoreClick}
-          onCategoryClick={onCategoryClick}
-        />
+      {/* Snacks Section */}
+      {selectedCategory === "All" && (
+        <>
+          <SnacksDrinksSection onCategoryClick={onCategoryClick} />
+          <CategoryProductsSection 
+            parentSlug="snacks-drinks" 
+            title="Snacks & Drinks"
+            selectedCategory={selectedCategory}
+            showTitle={true}
+            onCategoryClick={onCategoryClick}
+          />
+        </>
+      )}
+      {selectedCategory === "Snacks" && (
+        <div className="pt-4">
+          <CategoryProductsView 
+            categoryName="Snacks" 
+            onCategoryClick={onCategoryClick}
+          />
+        </div>
+      )}
+
+      {/* Beauty Section */}
+      {selectedCategory === "All" && (
+        <>
+          <BeautyPersonalCareSection onCategoryClick={onCategoryClick} />
+          <CategoryProductsSection 
+            parentSlug="beauty-personal-care" 
+            title="Beauty & Personal Care"
+            selectedCategory={selectedCategory}
+            showTitle={true}
+            onCategoryClick={onCategoryClick}
+          />
+        </>
+      )}
+      {selectedCategory === "Beauty" && (
+        <div className="pt-4">
+          <CategoryProductsView 
+            categoryName="Beauty" 
+            onCategoryClick={onCategoryClick}
+          />
+        </div>
+      )}
+
+      {/* Home Section */}
+      {selectedCategory === "All" && (
+        <>
+          <HomeLifestyleSection onCategoryClick={onCategoryClick} />
+          <CategoryProductsSection 
+            parentSlug="home-lifestyle" 
+            title="Home & Lifestyle"
+            selectedCategory={selectedCategory}
+            showTitle={true}
+            onCategoryClick={onCategoryClick}
+          />
+        </>
+      )}
+      {selectedCategory === "Home" && (
+        <div className="pt-4">
+          <CategoryProductsView 
+            categoryName="Home" 
+            onCategoryClick={onCategoryClick}
+          />
+        </div>
+      )}
+
+      {/* Electronics Section */}
+      {selectedCategory === "Electronics" && (
+        <div className="pt-4">
+          <CategoryProductsView 
+            categoryName="Electronics" 
+            onCategoryClick={onCategoryClick}
+          />
+        </div>
+      )}
+
+      {/* Fashion Section */}
+      {selectedCategory === "Fashion" && (
+        <div className="pt-4">
+          <CategoryProductsView 
+            categoryName="Fashion" 
+            onCategoryClick={onCategoryClick}
+          />
+        </div>
+      )}
+
+      {/* Pharmacy Section */}
+      {selectedCategory === "Pharmacy" && (
+        <div className="pt-4">
+          <CategoryProductsView 
+            categoryName="Pharmacy" 
+            onCategoryClick={onCategoryClick}
+          />
+        </div>
+      )}
+
+      {/* Stores - only show in "All" tab */}
+      {selectedCategory === "All" && (
+        loading ? (
+          <StoreListShimmer />
+        ) : (
+          <StoreList
+            stores={filteredStores}
+            onStoreClick={onStoreClick}
+            onCategoryClick={onCategoryClick}
+          />
+        )
       )}
     </div>
   );
