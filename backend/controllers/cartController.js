@@ -138,27 +138,34 @@ export const addToCart = async (req, res) => {
       });
     }
 
-    // Calculate price
-    let unitPrice = product.price;
+    // Calculate price - use retailPrice (customer-facing price with markup)
+    let unitPrice = product.retailPrice || product.price; // fallback for backward compatibility
     let discountedPrice = null;
 
-    if (product.discount > 0 && product.originalPrice) {
+    if (
+      product.discount > 0 &&
+      (product.originalRetailPrice || product.originalPrice)
+    ) {
       discountedPrice = unitPrice;
     }
 
-    // Add variant price modifier if applicable
+    // Add variant price modifier if applicable (apply markup to modifier)
     if (selectedVariant && selectedVariant.priceModifier) {
-      unitPrice += selectedVariant.priceModifier;
+      const markupMultiplier = 1 + (product.markupPercentage || 20) / 100;
+      const retailPriceModifier =
+        selectedVariant.priceModifier * markupMultiplier;
+      unitPrice += retailPriceModifier;
       if (discountedPrice) {
-        discountedPrice += selectedVariant.priceModifier;
+        discountedPrice += retailPriceModifier;
       }
     }
 
-    // Add customizations cost
+    // Add customizations cost (apply markup to wholesale customization costs)
     let customizationsCost = 0;
     if (customizations && customizations.length > 0) {
+      const markupMultiplier = 1 + (product.markupPercentage || 20) / 100;
       customizationsCost = customizations.reduce(
-        (sum, custom) => sum + (custom.additionalCost || 0),
+        (sum, custom) => sum + (custom.additionalCost || 0) * markupMultiplier,
         0,
       );
       unitPrice += customizationsCost;
@@ -191,6 +198,7 @@ export const addToCart = async (req, res) => {
         specialInstructions,
         isAvailable: product.isAvailable,
         stockQuantity: product.inventory?.quantity || 0,
+        markupPercentage: product.markupPercentage || 20,
       });
 
       await cart.save();
