@@ -59,4 +59,12 @@ export const categoryAPI = {
     const response = await apiClient.get("/categories");
     return response.data;
   },
+
+  /**
+   * Get all categories including subcategories
+   */
+  getAllCategories: async () => {
+    const response = await apiClient.get("/categories/featured");
+    return response.data;
+  },
 };

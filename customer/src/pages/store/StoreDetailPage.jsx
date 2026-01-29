@@ -29,6 +29,13 @@ const StoreDetailPage = () => {
   const highlightProductRef = useRef(null);
   const { latitude, longitude } = useUserLocation();
 
+  // Log search context for debugging
+  useEffect(() => {
+    if (searchContext) {
+      console.log('🔍 StoreDetailPage - Search Context:', searchContext);
+    }
+  }, [searchContext]);
+
   // Fetch cart items
   const fetchCartItems = async () => {
     try {
@@ -95,10 +102,18 @@ const StoreDetailPage = () => {
               },
             );
 
-            // Flatten the prioritized product groups
+            // Flatten the prioritized product groups and preserve order
             if (productsResponse.success && productsResponse.data) {
               const { matchingProducts, categoryProducts, otherProducts } =
                 productsResponse.data;
+              
+              console.log('📦 Products from backend:', {
+                matching: matchingProducts?.length || 0,
+                category: categoryProducts?.length || 0,
+                other: otherProducts?.length || 0
+              });
+              
+              // Maintain order: matching first, then category, then others
               setProducts([
                 ...matchingProducts,
                 ...categoryProducts,
@@ -331,6 +346,18 @@ const StoreDetailPage = () => {
 
   // Group products by subcategory or search context
   const groupedProducts = products.reduce((acc, product, index) => {
+    // When we have category context, group products but maintain order
+    if (searchContext?.category) {
+      const subcategory = product.subcategory || product.category || "Other";
+      
+      // Add index to maintain original order within groups
+      if (!acc[subcategory]) {
+        acc[subcategory] = [];
+      }
+      acc[subcategory].push({ ...product, _orderIndex: index });
+      return acc;
+    }
+    
     // When search context exists with highlighted product, prioritize it
     if (searchContext?.productId && searchContext?.highlightProduct) {
       const isHighlightedProduct =
@@ -398,6 +425,13 @@ const StoreDetailPage = () => {
         acc[section] = [];
       }
       acc[section].push(product);
+    } else if (searchContext?.category) {
+      // When we have only category context (no query), still group normally but sorting will handle priority
+      const subcategory = product.subcategory || product.category || "Other";
+      if (!acc[subcategory]) {
+        acc[subcategory] = [];
+      }
+      acc[subcategory].push(product);
     } else {
       // Normal grouping by subcategory
       const subcategory = product.subcategory || "Other";
@@ -411,6 +445,19 @@ const StoreDetailPage = () => {
 
   // Get subcategories sorted - put search matches first, then the one user came from
   const subcategories = Object.keys(groupedProducts).sort((a, b) => {
+    // When we have category context, sort by the minimum order index (earliest appearance)
+    if (searchContext?.category) {
+      const aMinIndex = Math.min(...groupedProducts[a].map(p => p._orderIndex || 999999));
+      const bMinIndex = Math.min(...groupedProducts[b].map(p => p._orderIndex || 999999));
+      
+      console.log(`📊 Sorting - "${a}" minIndex: ${aMinIndex}, "${b}" minIndex: ${bMinIndex}`);
+      
+      // Lower index = earlier in prioritized list = should appear first
+      if (aMinIndex !== bMinIndex) {
+        return aMinIndex - bMinIndex;
+      }
+    }
+    
     // When search context exists with highlighted product, show it first
     if (searchContext?.productId && searchContext?.highlightProduct) {
       if (a === "Searched Product") return -1;
@@ -432,6 +479,8 @@ const StoreDetailPage = () => {
     }
     return a.localeCompare(b);
   });
+
+  console.log(`📋 Final subcategory order:`, subcategories);
 
   if (loading) {
     return (
