@@ -1,12 +1,16 @@
 import { apiClient } from "./client";
 
 export const authAPI = {
+  register: async (userData) => {
+    return apiClient.post("/auth/register", userData);
+  },
+
   login: async (credentials) => {
-    return apiClient.post("/users/login", credentials);
+    return apiClient.post("/auth/login", credentials);
   },
 
   logout: async () => {
-    return apiClient.post("/users/logout");
+    return apiClient.post("/auth/logout");
   },
 
   refreshToken: async (refreshToken) => {
@@ -26,11 +30,11 @@ export const authAPI = {
   },
 
   forgotPassword: async (email) => {
-    return apiClient.post("/users/forgot-password", { email });
+    return apiClient.post("/auth/forgot-password", { email });
   },
 
   resetPassword: async (resetData) => {
-    return apiClient.put("/users/reset-password", resetData);
+    return apiClient.put("/auth/reset-password", resetData);
   },
 };
 

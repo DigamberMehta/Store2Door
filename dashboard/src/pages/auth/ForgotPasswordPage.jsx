@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { LuMail, LuArrowLeft, LuCircleCheck } from "react-icons/lu";
+import { Mail, ArrowLeft, CircleCheck } from "lucide-react";
 
 const ForgotPasswordPage = () => {
   const navigate = useNavigate();
@@ -34,7 +34,7 @@ const ForgotPasswordPage = () => {
         <div className="w-full max-w-md">
           <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8 text-center">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
-              <LuCircleCheck className="w-8 h-8 text-green-600" />
+              <CircleCheck className="w-8 h-8 text-green-600" />
             </div>
             <h2 className="text-2xl font-bold text-slate-900 mb-2">
               Check Your Email
@@ -63,7 +63,7 @@ const ForgotPasswordPage = () => {
           onClick={() => navigate("/login")}
           className="mb-6 inline-flex items-center gap-2 text-slate-600 hover:text-slate-900 font-medium transition-colors"
         >
-          <LuArrowLeft className="w-4 h-4" />
+          <ArrowLeft className="w-4 h-4" />
           Back to Login
         </button>
 
@@ -93,7 +93,7 @@ const ForgotPasswordPage = () => {
                 Email Address
               </label>
               <div className="relative">
-                <LuMail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                 <input
                   type="email"
                   value={email}
