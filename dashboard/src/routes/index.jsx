@@ -23,7 +23,7 @@ import EditProduct from "../app/store/pages/products/EditProductPage";
 import ProductInventory from "../app/store/pages/products/InventoryPage";
 
 import OrderList from "../app/store/pages/orders/OrdersPage";
-import OrderDetails from "../app/store/pages/orders/OrderDetailPage";
+import OrderDetails from "../app/store/pages/orders/OrderDetailsPage";
 import ActiveOrders from "../app/store/pages/orders/ActiveOrdersPage";
 
 import EarningsOverview from "../app/store/pages/finance/EarningsPage";

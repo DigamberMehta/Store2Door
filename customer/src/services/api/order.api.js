@@ -25,6 +25,11 @@ export const getOrder = async (orderId) => {
 };
 
 /**
+ * Alias for getOrder
+ */
+export const getOrderById = getOrder;
+
+/**
  * Cancel an order
  */
 export const cancelOrder = async (orderId, reason) => {
@@ -46,6 +51,7 @@ export default {
   createOrder,
   getOrders,
   getOrder,
+  getOrderById,
   cancelOrder,
   trackOrder,
 };

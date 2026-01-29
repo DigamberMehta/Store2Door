@@ -255,7 +255,7 @@ export const createPayment = async (req, res) => {
     order.paymentId = payment._id;
     order.paymentStatus = "succeeded";
     order.paymentMethod = "yoco_card";
-    order.status = "confirmed";
+    order.status = "placed"; // Changed from "confirmed" to "placed" - store needs to confirm manually
     await order.save();
 
     // Mark coupon as used if applied
@@ -361,7 +361,7 @@ export const confirmPayment = async (req, res) => {
           const order = await Order.findById(payment.orderId);
           if (order) {
             order.paymentStatus = "succeeded";
-            order.status = "confirmed";
+            order.status = "placed"; // Changed from "confirmed" to "placed" - store needs to confirm manually
             await order.save();
             console.log("Order updated:", order.orderNumber);
           }
@@ -463,7 +463,7 @@ export const handleWebhook = async (req, res) => {
           const order = await Order.findById(payment.orderId);
           if (order) {
             order.paymentStatus = "succeeded";
-            order.status = "confirmed";
+            order.status = "placed"; // Changed from "confirmed" to "placed" - store needs to confirm manually
             await order.save();
 
             // Mark coupon as used

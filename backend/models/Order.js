@@ -33,6 +33,29 @@ const orderItemSchema = new mongoose.Schema({
     required: [true, "Total price is required"],
     min: [0, "Total price cannot be negative"],
   },
+  // Platform markup percentage snapshot (for audit trail)
+  markupPercentage: {
+    type: Number,
+    default: 20,
+    min: 0,
+  },
+  // Product variants/options (e.g., size, weight, package)
+  selectedVariant: {
+    name: {
+      type: String,
+      trim: true,
+      maxlength: 100,
+    },
+    value: {
+      type: String,
+      trim: true,
+      maxlength: 100,
+    },
+    priceModifier: {
+      type: Number,
+      default: 0,
+    },
+  },
   customizations: [
     {
       name: {

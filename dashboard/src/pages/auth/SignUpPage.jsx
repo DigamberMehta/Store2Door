@@ -1,20 +1,22 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { useStoreAuth } from "../../context/StoreAuthContext";
 import {
-  LuMail,
-  LuLock,
-  LuPhone,
-  LuUser,
-  LuShoppingBag,
-  LuArrowLeft,
-  LuArrowRight,
-  LuEye,
-  LuEyeOff,
-  LuBuilding2,
-} from "react-icons/lu";
+  Mail,
+  Lock,
+  Phone,
+  User,
+  ShoppingBag,
+  ArrowLeft,
+  ArrowRight,
+  Eye,
+  EyeOff,
+  Building2,
+} from "lucide-react";
 
 const SignUpPage = () => {
   const navigate = useNavigate();
+  const { login } = useStoreAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -31,46 +33,50 @@ const SignUpPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-
     // Validation
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match");
       return;
     }
-
     if (formData.password.length < 6) {
       setError("Password must be at least 6 characters");
       return;
     }
-
     setLoading(true);
-
     try {
-      const { authAPI, storeAuthData } =
-        await import("../../services/store/api");
+      const { authAPI } = await import("../../services/store/api");
 
-      const response = await authAPI.login({
-        email: formData.email,
-        password: formData.password,
-      });
-
-      // Since backend register endpoint exists, we'll need to create the user
-      // For now, showing registration is only for store_manager role
+      // Register the store manager
       const userData = {
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
         password: formData.password,
-        role: "store_manager", // Force store_manager role
+        role: "store_manager",
+        storeName: formData.storeName,
       };
 
-      // Note: You'll need to add a register method to authAPI
-      // For now, this is a placeholder
-      console.log("Register data:", userData);
+      const response = await authAPI.register(userData);
 
-      setError("Registration functionality needs to be implemented in the API");
+      // After successful registration, log the user in
+      if (response.success) {
+        // Login with the same credentials
+        await login({
+          email: formData.email,
+          password: formData.password,
+        });
+
+        // Navigate after context is updated
+        setTimeout(() => {
+          navigate("/store/dashboard", { replace: true });
+        }, 100);
+      }
     } catch (err) {
-      setError(err.message || "Registration failed. Please try again.");
+      setError(
+        err.response?.data?.message ||
+          err.message ||
+          "Registration failed. Please try again.",
+      );
     } finally {
       setLoading(false);
     }
@@ -84,32 +90,145 @@ const SignUpPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50 flex items-center justify-center p-6">
-      <div className="w-full max-w-lg">
-        {/* Back Button */}
-        <button
-          onClick={() => navigate("/login")}
-          className="mb-8 inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 font-medium transition-colors group"
-        >
-          <LuArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-          Back to Login
-        </button>
-
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl mb-4 shadow-lg shadow-indigo-500/30">
-            <LuShoppingBag className="w-8 h-8 text-white" />
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Create Your Store Account
-          </h1>
-          <p className="text-gray-600">
-            Join thousands of store managers growing their business
-          </p>
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 flex">
+      {/* Left Side - Branding */}
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-green-600 via-emerald-600 to-green-700 p-12 flex-col justify-between relative overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 left-0 w-96 h-96 bg-white rounded-full -translate-x-1/2 -translate-y-1/2 blur-3xl" />
+          <div className="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full translate-x-1/2 translate-y-1/2 blur-3xl" />
         </div>
 
-        {/* Sign Up Card */}
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8">
+        <div className="relative z-10">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+              <ShoppingBag className="w-6 h-6 text-white" />
+            </div>
+            <span className="text-2xl font-bold text-white">Door2Door</span>
+          </div>
+          <h2 className="text-4xl font-bold text-white mb-4 leading-tight">
+            Start Selling
+            <br />
+            Today
+          </h2>
+          <p className="text-indigo-100 text-lg mb-8">
+            Join our platform and reach thousands of customers in your area.
+          </p>
+
+          {/* Benefits List */}
+          <div className="space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg
+                  className="w-4 h-4 text-white"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+              <div>
+                <p className="text-white font-semibold">Fast Setup</p>
+                <p className="text-indigo-100 text-sm">
+                  Get your store online in minutes
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg
+                  className="w-4 h-4 text-white"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+              <div>
+                <p className="text-white font-semibold">No Commission Fees</p>
+                <p className="text-indigo-100 text-sm">
+                  Keep more of what you earn
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg
+                  className="w-4 h-4 text-white"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+              <div>
+                <p className="text-white font-semibold">24/7 Support</p>
+                <p className="text-indigo-100 text-sm">
+                  We're here to help you succeed
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="relative z-10">
+          <p className="text-indigo-100 text-sm">
+            Trusted by over 500+ stores across the region
+          </p>
+        </div>
+      </div>
+
+      {/* Right Side - Sign Up Form */}
+      <div className="flex-1 flex items-center justify-center p-6 sm:p-12 overflow-y-auto">
+        <div className="w-full max-w-lg">
+          {/* Mobile Logo & Back Button */}
+          <div className="lg:hidden">
+            <button
+              onClick={() => navigate("/login")}
+              className="mb-6 inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 font-medium transition-colors group"
+            >
+              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+              Back to Login
+            </button>
+            <div className="flex items-center gap-3 justify-center mb-8">
+              <div className="w-12 h-12 bg-gradient-to-br from-green-600 to-emerald-600 rounded-xl flex items-center justify-center">
+                <ShoppingBag className="w-6 h-6 text-white" />
+              </div>
+              <span className="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                Door2Door
+              </span>
+            </div>
+          </div>
+
+          {/* Desktop Back Button */}
+          <button
+            onClick={() => navigate("/login")}
+            className="hidden lg:inline-flex mb-6 items-center gap-2 text-gray-600 hover:text-gray-900 font-medium transition-colors group"
+          >
+            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+            Back to Login
+          </button>
+
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Create Your Account
+            </h1>
+            <p className="text-gray-600">Start your journey with Door2Door</p>
+          </div>
+
+          {/* Sign Up Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Error Message */}
             {error && (
@@ -135,7 +254,7 @@ const SignUpPage = () => {
                 Full Name
               </label>
               <div className="relative">
-                <LuUser className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   type="text"
                   name="name"
@@ -143,7 +262,7 @@ const SignUpPage = () => {
                   onChange={handleChange}
                   placeholder="John Doe"
                   required
-                  className="w-full bg-white border border-gray-300 rounded-lg py-3 pl-11 pr-4 text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all duration-200"
+                  className="w-full bg-white border border-gray-300 rounded-lg py-3 pl-11 pr-4 text-gray-900 placeholder-gray-400 focus:border-green-500 focus:ring-4 focus:ring-green-500/10 outline-none transition-all duration-200"
                 />
               </div>
             </div>
@@ -154,7 +273,7 @@ const SignUpPage = () => {
                 Email Address
               </label>
               <div className="relative">
-                <LuMail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   type="email"
                   name="email"
@@ -162,7 +281,7 @@ const SignUpPage = () => {
                   onChange={handleChange}
                   placeholder="name@example.com"
                   required
-                  className="w-full bg-white border border-gray-300 rounded-lg py-3 pl-11 pr-4 text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all duration-200"
+                  className="w-full bg-white border border-gray-300 rounded-lg py-3 pl-11 pr-4 text-gray-900 placeholder-gray-400 focus:border-green-500 focus:ring-4 focus:ring-green-500/10 outline-none transition-all duration-200"
                 />
               </div>
             </div>
@@ -173,7 +292,7 @@ const SignUpPage = () => {
                 Phone Number
               </label>
               <div className="relative">
-                <LuPhone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   type="tel"
                   name="phone"
@@ -181,7 +300,7 @@ const SignUpPage = () => {
                   onChange={handleChange}
                   placeholder="+27 00000 00000"
                   required
-                  className="w-full bg-white border border-gray-300 rounded-lg py-3 pl-11 pr-4 text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all duration-200"
+                  className="w-full bg-white border border-gray-300 rounded-lg py-3 pl-11 pr-4 text-gray-900 placeholder-gray-400 focus:border-green-500 focus:ring-4 focus:ring-green-500/10 outline-none transition-all duration-200"
                 />
               </div>
             </div>
@@ -193,14 +312,14 @@ const SignUpPage = () => {
                 <span className="text-gray-400 font-normal">(Optional)</span>
               </label>
               <div className="relative">
-                <LuBuilding2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   type="text"
                   name="storeName"
                   value={formData.storeName}
                   onChange={handleChange}
                   placeholder="My Awesome Store"
-                  className="w-full bg-white border border-gray-300 rounded-lg py-3 pl-11 pr-4 text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all duration-200"
+                  className="w-full bg-white border border-gray-300 rounded-lg py-3 pl-11 pr-4 text-gray-900 placeholder-gray-400 focus:border-green-500 focus:ring-4 focus:ring-green-500/10 outline-none transition-all duration-200"
                 />
               </div>
             </div>
@@ -211,7 +330,7 @@ const SignUpPage = () => {
                 Password
               </label>
               <div className="relative">
-                <LuLock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   type={showPassword ? "text" : "password"}
                   name="password"
@@ -219,7 +338,7 @@ const SignUpPage = () => {
                   onChange={handleChange}
                   placeholder="Create a strong password"
                   required
-                  className="w-full bg-white border border-gray-300 rounded-lg py-3 pl-11 pr-11 text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all duration-200"
+                  className="w-full bg-white border border-gray-300 rounded-lg py-3 pl-11 pr-11 text-gray-900 placeholder-gray-400 focus:border-green-500 focus:ring-4 focus:ring-green-500/10 outline-none transition-all duration-200"
                 />
                 <button
                   type="button"
@@ -227,9 +346,9 @@ const SignUpPage = () => {
                   className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                 >
                   {showPassword ? (
-                    <LuEyeOff className="w-5 h-5" />
+                    <EyeOff className="w-5 h-5" />
                   ) : (
-                    <LuEye className="w-5 h-5" />
+                    <Eye className="w-5 h-5" />
                   )}
                 </button>
               </div>
@@ -244,7 +363,7 @@ const SignUpPage = () => {
                 Confirm Password
               </label>
               <div className="relative">
-                <LuLock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   type={showConfirmPassword ? "text" : "password"}
                   name="confirmPassword"
@@ -252,7 +371,7 @@ const SignUpPage = () => {
                   onChange={handleChange}
                   placeholder="Confirm your password"
                   required
-                  className="w-full bg-white border border-gray-300 rounded-lg py-3 pl-11 pr-11 text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all duration-200"
+                  className="w-full bg-white border border-gray-300 rounded-lg py-3 pl-11 pr-11 text-gray-900 placeholder-gray-400 focus:border-green-500 focus:ring-4 focus:ring-green-500/10 outline-none transition-all duration-200"
                 />
                 <button
                   type="button"
@@ -260,9 +379,9 @@ const SignUpPage = () => {
                   className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                 >
                   {showConfirmPassword ? (
-                    <LuEyeOff className="w-5 h-5" />
+                    <EyeOff className="w-5 h-5" />
                   ) : (
-                    <LuEye className="w-5 h-5" />
+                    <Eye className="w-5 h-5" />
                   )}
                 </button>
               </div>
@@ -272,7 +391,7 @@ const SignUpPage = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold py-3.5 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40 active:scale-[0.98]"
+              className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold py-3.5 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-green-500/30 hover:shadow-xl hover:shadow-green-500/40 active:scale-[0.98]"
             >
               {loading ? (
                 <>
@@ -282,49 +401,50 @@ const SignUpPage = () => {
               ) : (
                 <>
                   <span>Create Account</span>
-                  <LuArrowRight className="w-5 h-5" />
+                  <ArrowRight className="w-5 h-5" />
                 </>
               )}
             </button>
           </form>
 
           {/* Already have account */}
-          <p className="text-center text-gray-600 text-sm mt-6">
-            Already have an account?{" "}
-            <Link
-              to="/login"
-              className="text-indigo-600 hover:text-indigo-700 font-semibold transition-colors"
-            >
-              Sign In
-            </Link>
-          </p>
-        </div>
-
-        {/* Notice */}
-        <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200 rounded-xl p-5 mt-6">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-lg flex items-center justify-center flex-shrink-0">
-              <svg
-                className="w-5 h-5 text-white"
-                fill="currentColor"
-                viewBox="0 0 20 20"
+          <div className="mt-6 text-center">
+            <p className="text-gray-600 text-sm">
+              Already have an account?{" "}
+              <Link
+                to="/login"
+                className="text-green-600 hover:text-green-700 font-semibold transition-colors"
               >
-                <path
-                  fillRule="evenodd"
-                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </div>
-            <div>
-              <p className="text-gray-900 text-sm font-semibold mb-1">
-                Account Verification Required
-              </p>
-              <p className="text-gray-600 text-xs leading-relaxed">
-                Your store account will be reviewed by our team before
-                activation. This typically takes 1-2 business days. You'll
-                receive an email once approved.
-              </p>
+                Sign In
+              </Link>
+            </p>
+          </div>
+
+          {/* Notice */}
+          <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200 rounded-xl p-4 mt-6">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg
+                  className="w-4 h-4 text-white"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+              <div>
+                <p className="text-gray-900 text-sm font-semibold mb-1">
+                  Account Verification Required
+                </p>
+                <p className="text-gray-600 text-xs leading-relaxed">
+                  Your account will be reviewed by our team (1-2 business days).
+                  You'll receive an email once approved.
+                </p>
+              </div>
             </div>
           </div>
         </div>

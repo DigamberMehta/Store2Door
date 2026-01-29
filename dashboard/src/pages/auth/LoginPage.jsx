@@ -1,17 +1,21 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { useStoreAuth } from "../../context/StoreAuthContext";
+import { useAdminAuth } from "../../context/AdminAuthContext";
 import {
-  LuMail,
-  LuLock,
-  LuArrowRight,
-  LuPhone,
-  LuShoppingBag,
-  LuEye,
-  LuEyeOff,
-} from "react-icons/lu";
+  Mail,
+  Lock,
+  ArrowRight,
+  Phone,
+  ShoppingBag,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const { login: storeLogin } = useStoreAuth();
+  const { login: adminLogin } = useAdminAuth();
   const [loginMethod, setLoginMethod] = useState("email");
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -33,30 +37,36 @@ const LoginPage = () => {
           ? { email: formData.email, password: formData.password }
           : { phone: formData.phone, password: formData.password };
 
-      // Import dynamically based on detected role after login
-      const { authAPI, storeAuthData } =
-        await import("../../services/store/api");
-
+      // Import to check user role first
+      const { authAPI } = await import("../../services/store/api");
       const response = await authAPI.login(credentials);
 
       if (response.success) {
         const { user } = response.data;
 
-        // Check user role and redirect accordingly
+        // Use appropriate context based on role
         if (user.role === "admin") {
-          // Switch to admin context
-          const adminAPI = await import("../../services/admin/api");
-          adminAPI.storeAuthData(response.data);
-          navigate("/admin");
+          await adminLogin(credentials);
+          setTimeout(() => {
+            navigate("/admin/dashboard", { replace: true });
+          }, 100);
         } else if (user.role === "store_manager") {
-          storeAuthData(response.data);
-          navigate("/store");
+          await storeLogin(credentials);
+          setTimeout(() => {
+            navigate("/store/dashboard", { replace: true });
+          }, 100);
         } else {
           throw new Error("Invalid user role for dashboard access");
         }
+      } else {
+        setError("Login failed. Please try again.");
       }
     } catch (err) {
-      setError(err.message || "Login failed. Please check your credentials.");
+      setError(
+        err.response?.data?.message ||
+          err.message ||
+          "Login failed. Please check your credentials.",
+      );
     } finally {
       setLoading(false);
     }
@@ -70,27 +80,30 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50 flex">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 flex">
       {/* Left Side - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 p-12 flex-col justify-between relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-green-600 via-emerald-600 to-green-700 p-12 flex-col justify-between relative overflow-hidden">
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-0 left-0 w-96 h-96 bg-white rounded-full -translate-x-1/2 -translate-y-1/2 blur-3xl" />
           <div className="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full translate-x-1/2 translate-y-1/2 blur-3xl" />
         </div>
-        
+
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-8">
             <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
-              <LuShoppingBag className="w-6 h-6 text-white" />
+              <ShoppingBag className="w-6 h-6 text-white" />
             </div>
             <span className="text-2xl font-bold text-white">Door2Door</span>
           </div>
           <h2 className="text-4xl font-bold text-white mb-4 leading-tight">
-            Manage Your<br />Business Better
+            Manage Your
+            <br />
+            Business Better
           </h2>
           <p className="text-indigo-100 text-lg">
-            Access powerful tools to grow your store and track performance in real-time.
+            Access powerful tools to grow your store and track performance in
+            real-time.
           </p>
         </div>
 
@@ -117,10 +130,12 @@ const LoginPage = () => {
         <div className="w-full max-w-md">
           {/* Mobile Logo */}
           <div className="lg:hidden flex items-center gap-3 justify-center mb-8">
-            <div className="w-12 h-12 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center">
-              <LuShoppingBag className="w-6 h-6 text-white" />
+            <div className="w-12 h-12 bg-gradient-to-br from-green-600 to-emerald-600 rounded-xl flex items-center justify-center">
+              <ShoppingBag className="w-6 h-6 text-white" />
             </div>
-            <span className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Door2Door</span>
+            <span className="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+              Door2Door
+            </span>
           </div>
 
           {/* Header */}
@@ -128,9 +143,7 @@ const LoginPage = () => {
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
               Welcome back
             </h1>
-            <p className="text-gray-600">
-              Sign in to access your dashboard
-            </p>
+            <p className="text-gray-600">Sign in to access your dashboard</p>
           </div>
 
           {/* Toggle Login Method */}
@@ -163,8 +176,16 @@ const LoginPage = () => {
             {/* Error Message */}
             {error && (
               <div className="bg-red-50 border border-red-100 text-red-700 px-4 py-3 rounded-lg text-sm flex items-start gap-2 animate-in slide-in-from-top-2 duration-300">
-                <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                <svg
+                  className="w-5 h-5 flex-shrink-0 mt-0.5"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                    clipRule="evenodd"
+                  />
                 </svg>
                 <span>{error}</span>
               </div>
@@ -177,7 +198,7 @@ const LoginPage = () => {
                   Email Address
                 </label>
                 <div className="relative">
-                  <LuMail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
                     type="email"
                     name="email"
@@ -185,7 +206,7 @@ const LoginPage = () => {
                     onChange={handleChange}
                     placeholder="name@example.com"
                     required
-                    className="w-full bg-white border border-gray-300 rounded-lg py-3 pl-11 pr-4 text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all duration-200"
+                    className="w-full bg-white border border-gray-300 rounded-lg py-3 pl-11 pr-4 text-gray-900 placeholder-gray-400 focus:border-green-500 focus:ring-4 focus:ring-green-500/10 outline-none transition-all duration-200"
                   />
                 </div>
               </div>
@@ -195,7 +216,7 @@ const LoginPage = () => {
                   Phone Number
                 </label>
                 <div className="relative">
-                  <LuPhone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
                     type="tel"
                     name="phone"
@@ -203,7 +224,7 @@ const LoginPage = () => {
                     onChange={handleChange}
                     placeholder="+27 00000 00000"
                     required
-                    className="w-full bg-white border border-gray-300 rounded-lg py-3 pl-11 pr-4 text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all duration-200"
+                    className="w-full bg-white border border-gray-300 rounded-lg py-3 pl-11 pr-4 text-gray-900 placeholder-gray-400 focus:border-green-500 focus:ring-4 focus:ring-green-500/10 outline-none transition-all duration-200"
                   />
                 </div>
               </div>
@@ -217,13 +238,13 @@ const LoginPage = () => {
                 </label>
                 <Link
                   to="/forgot-password"
-                  className="text-sm font-medium text-indigo-600 hover:text-indigo-700 transition-colors"
+                  className="text-sm font-medium text-green-600 hover:text-green-700 transition-colors"
                 >
                   Forgot password?
                 </Link>
               </div>
               <div className="relative">
-                <LuLock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   type={showPassword ? "text" : "password"}
                   name="password"
@@ -231,7 +252,7 @@ const LoginPage = () => {
                   onChange={handleChange}
                   placeholder="Enter your password"
                   required
-                  className="w-full bg-white border border-gray-300 rounded-lg py-3 pl-11 pr-11 text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all duration-200"
+                  className="w-full bg-white border border-gray-300 rounded-lg py-3 pl-11 pr-11 text-gray-900 placeholder-gray-400 focus:border-green-500 focus:ring-4 focus:ring-green-500/10 outline-none transition-all duration-200"
                 />
                 <button
                   type="button"
@@ -239,9 +260,9 @@ const LoginPage = () => {
                   className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                 >
                   {showPassword ? (
-                    <LuEyeOff className="w-5 h-5" />
+                    <EyeOff className="w-5 h-5" />
                   ) : (
-                    <LuEye className="w-5 h-5" />
+                    <Eye className="w-5 h-5" />
                   )}
                 </button>
               </div>
@@ -251,7 +272,7 @@ const LoginPage = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold py-3.5 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40 active:scale-[0.98]"
+              className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold py-3.5 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-green-500/30 hover:shadow-xl hover:shadow-green-500/40 active:scale-[0.98]"
             >
               {loading ? (
                 <>
@@ -261,7 +282,7 @@ const LoginPage = () => {
               ) : (
                 <>
                   <span>Sign In</span>
-                  <LuArrowRight className="w-5 h-5" />
+                  <ArrowRight className="w-5 h-5" />
                 </>
               )}
             </button>
@@ -290,15 +311,20 @@ const LoginPage = () => {
           {/* Footer */}
           <p className="text-center text-gray-500 text-xs mt-8">
             By signing in, you agree to our{" "}
-            <a href="#" className="text-indigo-600 hover:text-indigo-700 hover:underline">
+            <a
+              href="#"
+              className="text-green-600 hover:text-green-700 hover:underline"
+            >
               Terms of Service
             </a>{" "}
             and{" "}
-            <a href="#" className="text-indigo-600 hover:text-indigo-700 hover:underline">
+            <a
+              href="#"
+              className="text-green-600 hover:text-green-700 hover:underline"
+            >
               Privacy Policy
             </a>
           </p>
-        </div>
         </div>
       </div>
     </div>

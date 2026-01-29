@@ -116,6 +116,26 @@ const specificationsSchema = new mongoose.Schema({
     },
   ],
 
+  // Key Features - Simple dynamic key-value pairs
+  keyFeatures: [
+    {
+      key: {
+        type: String,
+        required: true,
+        trim: true,
+        maxlength: 100,
+        // e.g., "Battery Life", "Screen Type", "Processor", etc.
+      },
+      value: {
+        type: String,
+        required: true,
+        trim: true,
+        maxlength: 200,
+        // e.g., "Up to 24 hours", "AMOLED Display", "Snapdragon 888"
+      },
+    },
+  ],
+
   // Legacy fixed fields (for backward compatibility)
   color: {
     type: String,
@@ -249,13 +269,34 @@ const productSchema = new mongoose.Schema(
       },
     ],
 
-    // Pricing
-    price: {
+    // Pricing - Two-tier pricing model
+    wholesalePrice: {
       type: Number,
-      required: [true, "Price is required"],
-      min: [0, "Price cannot be negative"],
+      // Optional - can be provided directly or populated from 'price' field for backward compatibility
+      min: [0, "Wholesale price cannot be negative"],
       index: true,
     },
+    retailPrice: {
+      type: Number,
+      // Not required - auto-calculated in pre-save hook from wholesalePrice + markup
+      min: [0, "Retail price cannot be negative"],
+      index: true,
+    },
+    // Legacy field for backward compatibility - maps to wholesalePrice
+    price: {
+      type: Number,
+      min: [0, "Price cannot be negative"],
+    },
+    // Original prices (for sales/discounts)
+    originalWholesalePrice: {
+      type: Number,
+      min: [0, "Original wholesale price cannot be negative"],
+    },
+    originalRetailPrice: {
+      type: Number,
+      min: [0, "Original retail price cannot be negative"],
+    },
+    // Legacy field - kept for backward compatibility
     originalPrice: {
       type: Number,
       min: [0, "Original price cannot be negative"],
@@ -266,17 +307,10 @@ const productSchema = new mongoose.Schema(
       min: [0, "Discount cannot be negative"],
       max: [100, "Discount cannot exceed 100%"],
     },
-    currency: {
-      type: String,
-      default: "USD",
-      uppercase: true,
-      maxlength: 3,
-    },
-    taxRate: {
+    markupPercentage: {
       type: Number,
-      default: 0,
-      min: [0, "Tax rate cannot be negative"],
-      max: [50, "Tax rate cannot exceed 50%"],
+      default: 20,
+      min: [0, "Markup percentage cannot be negative"],
     },
     currency: {
       type: String,
@@ -508,10 +542,58 @@ productSchema.pre("save", function (next) {
       this._id.toString().slice(-6);
   }
 
-  // Calculate discount if original price is set
-  if (this.originalPrice && this.originalPrice > this.price) {
+  // Backward compatibility: if price is set but not wholesalePrice, use price as wholesalePrice
+  if (this.price && !this.wholesalePrice) {
+    this.wholesalePrice = this.price;
+  }
+
+  // Calculate retailPrice from wholesalePrice with markup
+  if (
+    this.wholesalePrice &&
+    (this.isModified("wholesalePrice") || this.isNew)
+  ) {
+    const markupMultiplier = 1 + (this.markupPercentage || 20) / 100;
+    this.retailPrice =
+      Math.round(this.wholesalePrice * markupMultiplier * 100) / 100;
+  }
+
+  // Calculate originalRetailPrice from originalWholesalePrice with markup
+  if (
+    this.originalWholesalePrice &&
+    (this.isModified("originalWholesalePrice") || this.isNew)
+  ) {
+    const markupMultiplier = 1 + (this.markupPercentage || 20) / 100;
+    this.originalRetailPrice =
+      Math.round(this.originalWholesalePrice * markupMultiplier * 100) / 100;
+  }
+
+  // Backward compatibility: if originalPrice is set, treat as originalWholesalePrice
+  if (this.originalPrice && !this.originalWholesalePrice) {
+    this.originalWholesalePrice = this.originalPrice;
+    const markupMultiplier = 1 + (this.markupPercentage || 20) / 100;
+    this.originalRetailPrice =
+      Math.round(this.originalPrice * markupMultiplier * 100) / 100;
+  }
+
+  // Sync price field with wholesalePrice for backward compatibility
+  if (this.wholesalePrice) {
+    this.price = this.wholesalePrice;
+  }
+
+  // Calculate discount based on wholesale prices (for store manager view)
+  if (
+    this.originalWholesalePrice &&
+    this.originalWholesalePrice > this.wholesalePrice
+  ) {
     this.discount = Math.round(
-      ((this.originalPrice - this.price) / this.originalPrice) * 100,
+      ((this.originalWholesalePrice - this.wholesalePrice) /
+        this.originalWholesalePrice) *
+        100,
+    );
+  } else if (this.originalPrice && this.originalPrice > this.wholesalePrice) {
+    // Legacy fallback
+    this.discount = Math.round(
+      ((this.originalPrice - this.wholesalePrice) / this.originalPrice) * 100,
     );
   }
 

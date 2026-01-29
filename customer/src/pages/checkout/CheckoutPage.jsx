@@ -333,7 +333,7 @@ const CheckoutPage = () => {
     calculateDeliveryFee();
   }, [cart, deliverySettings, location.state, userAddresses]);
 
-  const deliveryFee = isFreeDelivery || subtotal > 500 ? 0 : deliveryFeeAmount;
+  const deliveryFee = isFreeDelivery ? 0 : deliveryFeeAmount;
   const total = subtotal + deliveryFee + tip - discount;
 
   const handleShare = () => {
@@ -440,13 +440,13 @@ const CheckoutPage = () => {
 
                           <h3 className="font-medium text-white mb-1 line-clamp-2 text-xs leading-snug">
                             {item.name}
+                            {item.selectedVariant && (
+                              <span className="text-white/60">
+                                {" "}
+                                | {item.selectedVariant.value}
+                              </span>
+                            )}
                           </h3>
-                          {item.selectedVariant && (
-                            <p className="text-[10px] text-white/60 mb-1">
-                              {item.selectedVariant.name}:{" "}
-                              {item.selectedVariant.value}
-                            </p>
-                          )}
                           {item.description && (
                             <p className="text-[10px] text-white/40 line-clamp-1">
                               {item.description}

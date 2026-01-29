@@ -17,7 +17,7 @@ const AdminLayout = () => {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="flex items-center justify-center h-16 border-b border-gray-200">
-            <h1 className="text-xl font-bold text-purple-600">Admin Panel</h1>
+            <h1 className="text-xl font-bold text-green-600">Admin Panel</h1>
           </div>
 
           {/* Navigation */}
@@ -100,7 +100,7 @@ const AdminLayout = () => {
           <div className="p-4 border-t border-gray-200">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-white font-semibold">
+                <div className="w-8 h-8 rounded-full bg-green-600 flex items-center justify-center text-white font-semibold">
                   {user?.name?.[0]?.toUpperCase() || "A"}
                 </div>
                 <div>

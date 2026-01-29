@@ -1,5 +1,10 @@
 import express from "express";
 import { authenticate, authorize } from "../../middleware/auth.js";
+import {
+  createProduct,
+  updateProduct,
+  deleteProduct,
+} from "../../controllers/productController.js";
 
 const router = express.Router();
 
@@ -20,22 +25,13 @@ router.get("/:id", async (req, res) => {
 });
 
 // Create new product
-router.post("/", async (req, res) => {
-  // TODO: Implement create product
-  res.json({ success: true, message: "Create product endpoint" });
-});
+router.post("/", createProduct);
 
 // Update product
-router.put("/:id", async (req, res) => {
-  // TODO: Implement update product
-  res.json({ success: true, message: "Update product endpoint" });
-});
+router.put("/:id", updateProduct);
 
 // Delete product
-router.delete("/:id", async (req, res) => {
-  // TODO: Implement delete product
-  res.json({ success: true, message: "Delete product endpoint" });
-});
+router.delete("/:id", deleteProduct);
 
 // Toggle product active status
 router.patch("/:id/toggle-active", async (req, res) => {

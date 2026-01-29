@@ -4,6 +4,7 @@ import Payment from "../models/Payment.js";
 import Coupon from "../models/Coupon.js";
 import Product from "../models/Product.js";
 import DeliverySettings from "../models/DeliverySettings.js";
+import PlatformSettings from "../models/PlatformSettings.js";
 
 /**
  * Calculate distance between two coordinates (Haversine formula)
@@ -118,10 +119,11 @@ export const createOrder = async (req, res) => {
         (p) => p._id.toString() === item.product.toString(),
       );
 
-      // Get actual price from DB
-      let unitPrice = product.discountedPrice || product.price;
+      // Get actual price from DB - use retailPrice (customer-facing price with markup)
+      let unitPrice =
+        product.discountedPrice || product.retailPrice || product.price;
 
-      // Add variant price modifier if applicable
+      // Add variant price modifier if applicable (apply markup to modifier)
       if (item.selectedVariant) {
         const variant = product.variants?.find(
           (v) =>
@@ -129,8 +131,20 @@ export const createOrder = async (req, res) => {
             v.value === item.selectedVariant.value,
         );
         if (variant) {
-          unitPrice += variant.priceModifier || 0;
+          const markupMultiplier = 1 + (product.markupPercentage || 20) / 100;
+          unitPrice += (variant.priceModifier || 0) * markupMultiplier;
         }
+      }
+
+      // Add customizations cost (apply markup to wholesale customization costs)
+      if (item.customizations && item.customizations.length > 0) {
+        const markupMultiplier = 1 + (product.markupPercentage || 20) / 100;
+        const customizationsCost = item.customizations.reduce(
+          (sum, custom) =>
+            sum + (custom.additionalCost || 0) * markupMultiplier,
+          0,
+        );
+        unitPrice += customizationsCost;
       }
 
       // Round unit price to 2 decimals before calculation
@@ -144,14 +158,9 @@ export const createOrder = async (req, res) => {
         quantity: item.quantity,
         unitPrice: unitPrice,
         totalPrice: totalPrice,
-        customizations: item.selectedVariant
-          ? [
-              {
-                name: item.selectedVariant.name,
-                value: item.selectedVariant.value,
-              },
-            ]
-          : [],
+        markupPercentage: product.markupPercentage || 20,
+        selectedVariant: item.selectedVariant || null,
+        customizations: item.customizations || [],
       };
     });
 
@@ -265,8 +274,8 @@ export const createOrder = async (req, res) => {
       };
     }
 
-    // Apply free delivery
-    if (isFreeDelivery || calculatedSubtotal > 500) {
+    // Apply free delivery (if coupon provides it)
+    if (isFreeDelivery) {
       calculatedDeliveryFee = 0;
     }
 

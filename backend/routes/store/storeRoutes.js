@@ -1,5 +1,6 @@
 import express from "express";
 import { authenticate, authorize } from "../../middleware/auth.js";
+import { getStoreDashboardStats } from "../../controllers/dashboardController.js";
 
 const router = express.Router();
 
@@ -32,9 +33,6 @@ router.put("/delivery-settings", async (req, res) => {
 });
 
 // Get store statistics
-router.get("/stats", async (req, res) => {
-  // TODO: Implement get stats
-  res.json({ success: true, message: "Get store stats endpoint" });
-});
+router.get("/stats", getStoreDashboardStats);
 
 export default router;

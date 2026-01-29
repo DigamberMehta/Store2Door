@@ -11,7 +11,7 @@ import {
 
 const router = express.Router();
 
-// Public routes
+// Public routes - retailPrice from DB includes markup for customers
 router.get("/search", searchProducts);
 router.get("/store/:storeId/context", getStoreProductsWithContext);
 router.get("/featured", getFeaturedProducts);

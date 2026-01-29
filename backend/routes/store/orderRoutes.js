@@ -1,5 +1,11 @@
 import express from "express";
 import { authenticate, authorize } from "../../middleware/auth.js";
+import {
+  getStoreOrders,
+  getOrderDetails,
+  updateOrderStatus,
+  getOrderStats,
+} from "../../controllers/store/storeOrderController.js";
 
 const router = express.Router();
 
@@ -7,34 +13,16 @@ const router = express.Router();
 router.use(authenticate);
 router.use(authorize("store_manager"));
 
-// Get store orders
-router.get("/", async (req, res) => {
-  // TODO: Implement get store orders
-  res.json({ success: true, message: "Get store orders endpoint" });
-});
-
-// Get active orders
-router.get("/active", async (req, res) => {
-  // TODO: Implement get active orders
-  res.json({ success: true, message: "Get active orders endpoint" });
-});
-
 // Get order statistics
-router.get("/stats", async (req, res) => {
-  // TODO: Implement get order stats
-  res.json({ success: true, message: "Get order stats endpoint" });
-});
+router.get("/stats", getOrderStats);
+
+// Get store orders (with filters)
+router.get("/", getStoreOrders);
 
 // Get order by ID
-router.get("/:id", async (req, res) => {
-  // TODO: Implement get order by ID
-  res.json({ success: true, message: "Get order by ID endpoint" });
-});
+router.get("/:orderId", getOrderDetails);
 
 // Update order status
-router.patch("/:id/status", async (req, res) => {
-  // TODO: Implement update order status
-  res.json({ success: true, message: "Update order status endpoint" });
-});
+router.patch("/:orderId/status", updateOrderStatus);
 
 export default router;

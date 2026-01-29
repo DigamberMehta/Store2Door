@@ -260,11 +260,18 @@ const StoreDetailPage = () => {
   const handleAddToCart = async (product, e) => {
     e.stopPropagation();
 
+    // If product has variants, navigate to product detail page to select variant
+    if (product.variants && product.variants.length > 0) {
+      navigate(`/product/${product._id}/${product.slug || "product"}`);
+      return;
+    }
+
     try {
       await cartAPI.addToCart({
         productId: product._id || product.id,
         storeId: store._id || store.id,
         quantity: 1,
+        selectedVariant: null,
       });
 
       // Trigger cart update

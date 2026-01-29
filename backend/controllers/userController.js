@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import User from "../models/User.js";
+import Store from "../models/Store.js";
 import { asyncHandler } from "../middleware/validation.js";
 
 /**
@@ -25,7 +26,14 @@ const generateRefreshToken = () => {
  * @access  Public
  */
 export const registerUser = asyncHandler(async (req, res) => {
-  const { name, email, phone, password, role = "customer" } = req.body;
+  const {
+    name,
+    email,
+    phone,
+    password,
+    role = "customer",
+    storeName,
+  } = req.body;
 
   // Check if user already exists
   const existingUser = await User.findOne({
@@ -47,6 +55,58 @@ export const registerUser = asyncHandler(async (req, res) => {
     password,
     role,
   });
+
+  // If role is store_manager, automatically create a store
+  if (role === "store_manager") {
+    try {
+      await Store.create({
+        name: storeName || `${name}'s Store`,
+        description: "Fresh and delicious food at your doorstep.",
+        managerId: user._id,
+        email: email,
+        contactInfo: {
+          phone: phone,
+          email: email,
+        },
+        address: {
+          street: "To be updated",
+          city: "To be updated",
+          state: "To be updated",
+          province: "To be updated",
+          zipCode: "000000",
+          postalCode: "000000",
+          country: "India",
+          latitude: 0,
+          longitude: 0,
+        },
+        businessType: ["restaurant"],
+        businessLicense: `PENDING-${Date.now()}`,
+        taxId: `PENDING-${Date.now()}`,
+        commissionRate: 10,
+        deliverySettings: {
+          deliveryRadius: 5,
+          minimumOrder: 0,
+          deliveryFee: 0,
+          averagePreparationTime: 30,
+        },
+        isActive: false, // Wait for admin approval or profile completion
+        isApproved: false,
+      });
+      console.log(`✅ Store created for user: ${user._id}`);
+    } catch (storeError) {
+      console.error(
+        "Error creating store during registration:",
+        storeError.message,
+      );
+      if (storeError.errors) {
+        Object.keys(storeError.errors).forEach((key) => {
+          console.error(`  - ${key}: ${storeError.errors[key].message}`);
+        });
+      }
+      // We don't fail user registration if store creation fails,
+      // but in production you might want to handle this more strictly
+    }
+  }
 
   // Generate token
   const token = generateToken(user._id);
