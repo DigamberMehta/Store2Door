@@ -1,4 +1,4 @@
-import { Heart, Star } from "lucide-react";
+import { Heart, Star, Info } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import cartAPI from "../../services/api/cart.api";
@@ -131,7 +131,7 @@ const RecommendedProducts = () => {
     toast("Kept your current cart items", {
       duration: 2000,
       position: "top-center",
-      icon: "ℹ️",
+      icon: <Info className="w-4 h-4 text-blue-400" />,
       style: {
         background: "#1a1a1a",
         color: "#fff",

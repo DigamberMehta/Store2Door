@@ -113,7 +113,7 @@ const HomePage = ({ onStoreClick, onCategoryClick }) => {
         </>
       )}
       {selectedCategory === "Grocery" && (
-        <div className="pt-4">
+        <div className="pt-1">
           <CategoryProductsView 
             categoryName="Grocery" 
             onCategoryClick={onCategoryClick}
@@ -135,7 +135,7 @@ const HomePage = ({ onStoreClick, onCategoryClick }) => {
         </>
       )}
       {selectedCategory === "Snacks" && (
-        <div className="pt-4">
+        <div className="pt-1">
           <CategoryProductsView 
             categoryName="Snacks" 
             onCategoryClick={onCategoryClick}
@@ -157,7 +157,7 @@ const HomePage = ({ onStoreClick, onCategoryClick }) => {
         </>
       )}
       {selectedCategory === "Beauty" && (
-        <div className="pt-4">
+        <div className="pt-1">
           <CategoryProductsView 
             categoryName="Beauty" 
             onCategoryClick={onCategoryClick}
@@ -179,7 +179,7 @@ const HomePage = ({ onStoreClick, onCategoryClick }) => {
         </>
       )}
       {selectedCategory === "Home" && (
-        <div className="pt-4">
+        <div className="pt-1">
           <CategoryProductsView 
             categoryName="Home" 
             onCategoryClick={onCategoryClick}
@@ -189,7 +189,7 @@ const HomePage = ({ onStoreClick, onCategoryClick }) => {
 
       {/* Electronics Section */}
       {selectedCategory === "Electronics" && (
-        <div className="pt-4">
+        <div className="pt-1">
           <CategoryProductsView 
             categoryName="Electronics" 
             onCategoryClick={onCategoryClick}
@@ -199,7 +199,7 @@ const HomePage = ({ onStoreClick, onCategoryClick }) => {
 
       {/* Fashion Section */}
       {selectedCategory === "Fashion" && (
-        <div className="pt-4">
+        <div className="pt-1">
           <CategoryProductsView 
             categoryName="Fashion" 
             onCategoryClick={onCategoryClick}
@@ -209,7 +209,7 @@ const HomePage = ({ onStoreClick, onCategoryClick }) => {
 
       {/* Pharmacy Section */}
       {selectedCategory === "Pharmacy" && (
-        <div className="pt-4">
+        <div className="pt-1">
           <CategoryProductsView 
             categoryName="Pharmacy" 
             onCategoryClick={onCategoryClick}

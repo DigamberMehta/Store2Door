@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { categoryAPI, productAPI, storeAPI } from "../../../services/api";
 import { useUserLocation } from "../../../hooks/useUserLocation";
-import StoreCard from "../store/StoreCard";
 
 const CategoryProductsView = ({ categoryName, onCategoryClick }) => {
   const [groupedStores, setGroupedStores] = useState([]);
@@ -124,13 +123,13 @@ const CategoryProductsView = ({ categoryName, onCategoryClick }) => {
 
   if (loading) {
     return (
-      <div className="px-4 py-6">
+      <div className="px-2 py-3">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="mb-8">
-            <div className="h-6 w-32 bg-white/10 rounded mb-4 animate-pulse"></div>
-            <div className="grid grid-cols-2 gap-4">
-              {[1, 2, 3, 4].map((j) => (
-                <div key={j} className="bg-white/5 rounded-lg h-64 animate-pulse"></div>
+          <div key={i} className="mb-4">
+            <div className="h-4 w-20 bg-white/10 rounded mb-2 animate-pulse"></div>
+            <div className="grid grid-cols-3 gap-1.5">
+              {[1, 2, 3].map((j) => (
+                <div key={j} className="bg-white/5 rounded-lg h-28 animate-pulse"></div>
               ))}
             </div>
           </div>
@@ -148,32 +147,31 @@ const CategoryProductsView = ({ categoryName, onCategoryClick }) => {
   }
 
   return (
-    <div className="py-6">
+    <div className="py-2">
       {groupedStores.map((group) => (
-        <div key={group.category._id} className="mb-8">
+        <div key={group.category._id} className="mb-5">
           {/* Level 2 Category Heading */}
-          <div className="px-4 mb-4 flex items-center justify-between">
-            <h3 className="text-white text-xl font-semibold flex items-center gap-2">
-              <span>{group.category.icon || '📦'}</span>
+          <div className="px-2 mb-2 flex items-center justify-between">
+            <h3 className="text-white text-sm font-semibold flex items-center gap-1">
               <span>{group.category.name}</span>
             </h3>
             {group.hasMore && (
               <button 
                 onClick={() => onCategoryClick?.(group.category)}
-                className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+                className="text-[10px] text-blue-400 hover:text-blue-300 transition-colors font-medium"
               >
-                View All →
+                View All
               </button>
             )}
           </div>
 
           {/* Stores Grid */}
-          <div className="px-4">
-            <div className="grid grid-cols-2 gap-3">
+          <div className="px-2">
+            <div className="grid grid-cols-3 gap-1.5">
               {group.stores.map((store) => (
                 <div
                   key={store._id}
-                  className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden cursor-pointer transition-all duration-200 hover:bg-white/10 hover:border-white/20"
+                  className="bg-white/5 backdrop-blur-sm rounded-lg border border-white/10 overflow-hidden cursor-pointer transition-all duration-200 hover:bg-white/10 hover:border-white/20"
                   onClick={() => {
                     const storeName = store.slug || store.name.toLowerCase().replace(/\s+/g, '-');
                     navigate(`/store/${storeName}`, {
@@ -201,11 +199,11 @@ const CategoryProductsView = ({ categoryName, onCategoryClick }) => {
                   </div>
                   
                   {/* Store Details */}
-                  <div className="p-3">
-                    <h4 className="text-white font-semibold text-sm mb-1 truncate">
+                  <div className="p-1">
+                    <h4 className="text-white font-medium text-[10px] leading-tight mb-0.5 line-clamp-1">
                       {store.name}
                     </h4>
-                    <p className="text-white/60 text-xs truncate">
+                    <p className="text-white/40 text-[8px] truncate">
                       {store.address?.city || store.location || "Near You"}
                     </p>
                   </div>

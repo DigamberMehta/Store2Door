@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Loader2 } from "lucide-react";
+import { Loader2, Info } from "lucide-react";
 import toast from "react-hot-toast";
 import productAPI from "../../services/api/product.api";
 import cartAPI from "../../services/api/cart.api";
@@ -114,7 +114,7 @@ const ProductDetailPage = () => {
     toast("Kept your current cart items", {
       duration: 2000,
       position: "top-center",
-      icon: "ℹ️",
+      icon: <Info className="w-4 h-4 text-blue-400" />,
       style: {
         background: "#1a1a1a",
         color: "#fff",

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, TrendingUp, Clock, X, Loader2 } from 'lucide-react';
+import { Search, TrendingUp, Clock, X, Loader2, Store, Star } from 'lucide-react';
 import { suggestionsAPI } from '../services/api';
 
 const SuggestionsDropdown = ({ 
@@ -226,15 +226,16 @@ const SuggestionsDropdown = ({
                             className="w-10 h-10 rounded-lg object-cover border border-white/5"
                           />
                         ) : (
-                          <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center text-lg">
-                            🏪
+                          <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center">
+                            <Store className="w-5 h-5 text-zinc-400" />
                           </div>
                         )}
                         <div className="flex-1 text-left">
                           <div className="font-medium text-sm text-white">{item.name}</div>
                           {item.rating && (
-                            <div className="text-xs text-amber-500">
-                              ⭐ {item.rating.toFixed(1)}
+                            <div className="text-xs text-amber-500 flex items-center gap-1">
+                              <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
+                              {item.rating.toFixed(1)}
                             </div>
                           )}
                         </div>

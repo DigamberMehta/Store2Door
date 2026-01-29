@@ -6,7 +6,7 @@ import {
   HiOutlineMicrophone,
 } from "react-icons/hi";
 import { motion, AnimatePresence } from "framer-motion";
-import { Minus, Plus } from "lucide-react";
+import { Minus, Plus, Info } from "lucide-react";
 import toast from "react-hot-toast";
 import { StoreList } from "../homepage/store";
 import { suggestionsAPI } from "../../services/api";
@@ -590,7 +590,7 @@ const SearchPage = () => {
           toast("Kept your current cart items", {
             duration: 2000,
             position: "top-center",
-            icon: "ℹ️",
+            icon: <Info className="w-4 h-4 text-blue-400" />,
             style: {
               background: "#1a1a1a",
               color: "#fff",

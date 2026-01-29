@@ -202,7 +202,7 @@ const PaymentPage = () => {
           {paymentMethod === "yoco_card" && (
             <div className="mt-4 p-3 bg-white/5 border border-white/10 rounded-lg">
               <p className="text-xs text-white/60 text-center">
-                🔒 Your payment is secured by Yoco. We never store your card
+                Your payment is secured by Yoco. We never store your card
                 details.
               </p>
             </div>
