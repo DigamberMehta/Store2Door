@@ -289,7 +289,7 @@ export const searchProducts = asyncHandler(async (req, res) => {
  */
 export const getStoreProductsWithContext = asyncHandler(async (req, res) => {
   const { storeId } = req.params;
-  const { query = "", category = "", limit = 50 } = req.query;
+  const { query = "", category = "", categoryId = "", limit = 50 } = req.query;
 
   // Fetch all active products from this store
   const allProducts = await Product.find({
@@ -297,7 +297,7 @@ export const getStoreProductsWithContext = asyncHandler(async (req, res) => {
     isActive: true,
     isAvailable: true,
   })
-    .select("name description shortDescription category subcategory price images tags averageRating totalSold")
+    .select("name description shortDescription category subcategory categoryId price images tags averageRating totalSold")
     .lean();
 
   if (!allProducts.length) {
@@ -307,7 +307,7 @@ export const getStoreProductsWithContext = asyncHandler(async (req, res) => {
         matchingProducts: [],
         categoryProducts: [],
         otherProducts: [],
-        searchContext: { query, category },
+        searchContext: { query, category, categoryId },
       },
     });
   }
@@ -341,9 +341,9 @@ export const getStoreProductsWithContext = asyncHandler(async (req, res) => {
 
       if (bestScore > -5000 || containsQuery) {
         matchingProducts.push({ ...product, matchScore: bestScore });
-      } else if (category && product.category === category) {
+      } else if (categoryId && product.categoryId?.toString() === categoryId) {
         categoryProducts.push(product);
-      } else if (category && product.subcategory === category) {
+      } else if (category && (product.category === category || product.subcategory === category)) {
         categoryProducts.push(product);
       } else {
         otherProducts.push(product);
@@ -364,15 +364,24 @@ export const getStoreProductsWithContext = asyncHandler(async (req, res) => {
 
     // Remove matchScore before sending to client
     matchingProducts = matchingProducts.map(({ matchScore, ...product }) => product);
-  } else if (category) {
+  } else if (categoryId || category) {
     // If only category is provided (no search query)
+    console.log('🔍 Filtering by categoryId:', categoryId, 'or category:', category);
+    
     allProducts.forEach(product => {
-      if (product.category === category || product.subcategory === category) {
+      if (categoryId && product.categoryId?.toString() === categoryId) {
+        console.log('✅ Product matches categoryId:', product.name, 'categoryId:', product.categoryId);
+        categoryProducts.push(product);
+      } else if (category && (product.category === category || product.subcategory === category)) {
+        console.log('✅ Product matches category name:', product.name, 'category:', product.category, 'subcategory:', product.subcategory);
         categoryProducts.push(product);
       } else {
+        console.log('❌ Product does NOT match:', product.name, 'categoryId:', product.categoryId, 'category:', product.category);
         otherProducts.push(product);
       }
     });
+    
+    console.log('📊 Result: categoryProducts:', categoryProducts.length, 'otherProducts:', otherProducts.length);
   } else {
     // No search context - return all products as "other"
     otherProducts = allProducts;
