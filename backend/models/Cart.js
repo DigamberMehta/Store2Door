@@ -107,6 +107,12 @@ const cartItemSchema = new mongoose.Schema(
       type: Number,
       min: 0,
     },
+    // Platform markup percentage snapshot (for audit trail)
+    markupPercentage: {
+      type: Number,
+      default: 20,
+      min: 0,
+    },
     // Track when item was added for staleness detection
     addedAt: {
       type: Date,

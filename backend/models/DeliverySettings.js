@@ -17,7 +17,7 @@ const deliverySettingsSchema = new mongoose.Schema(
         },
       },
     ],
-    
+
     // Maximum delivery distance (stores beyond this won't be shown)
     maxDeliveryDistance: {
       type: Number,
@@ -25,14 +25,14 @@ const deliverySettingsSchema = new mongoose.Schema(
       default: 7,
       min: 0,
     },
-    
+
     // Currency symbol
     currency: {
       type: String,
       default: "R",
       trim: true,
     },
-    
+
     // Active status
     isActive: {
       type: Boolean,
@@ -41,7 +41,7 @@ const deliverySettingsSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // Ensure only one active settings document exists
@@ -49,12 +49,15 @@ deliverySettingsSchema.pre("save", async function (next) {
   if (this.isActive) {
     await this.constructor.updateMany(
       { _id: { $ne: this._id } },
-      { isActive: false }
+      { isActive: false },
     );
   }
   next();
 });
 
-const DeliverySettings = mongoose.model("DeliverySettings", deliverySettingsSchema);
+const DeliverySettings = mongoose.model(
+  "DeliverySettings",
+  deliverySettingsSchema,
+);
 
 export default DeliverySettings;

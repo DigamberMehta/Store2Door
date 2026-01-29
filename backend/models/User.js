@@ -1,17 +1,17 @@
-import mongoose from 'mongoose';
-import bcrypt from 'bcryptjs';
+import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
 
 const userSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: [true, 'Name is required'],
+      required: [true, "Name is required"],
       trim: true,
       maxlength: 100,
     },
     email: {
       type: String,
-      required: [true, 'Email is required'],
+      required: [true, "Email is required"],
       unique: true,
       lowercase: true,
       trim: true,
@@ -19,21 +19,27 @@ const userSchema = new mongoose.Schema(
     },
     phone: {
       type: String,
-      required: [true, 'Phone number is required'],
+      required: [true, "Phone number is required"],
       unique: true,
       trim: true,
       index: true,
     },
     password: {
       type: String,
-      required: [true, 'Password is required'],
+      required: [true, "Password is required"],
       minlength: 6,
       select: false,
     },
     role: {
       type: String,
-      enum: ['customer', 'store_manager', 'delivery_rider', 'admin'],
-      required: [true, 'User role is required'],
+      enum: ["customer", "store_manager", "delivery_rider", "admin"],
+      required: [true, "User role is required"],
+      index: true,
+    },
+    storeId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Store",
+      default: null,
       index: true,
     },
     avatar: {
@@ -72,7 +78,7 @@ const userSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // Compound indexes for scalability
@@ -87,8 +93,8 @@ userSchema.index({ refreshToken: 1 }, { sparse: true });
 userSchema.index({ passwordResetToken: 1 }, { sparse: true });
 
 // Hash password before saving
-userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next();
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
   next();
@@ -114,6 +120,6 @@ userSchema.statics.findActiveUsers = function (query = {}) {
   return this.find({ ...query, isActive: true }).lean();
 };
 
-const User = mongoose.model('User', userSchema);
+const User = mongoose.model("User", userSchema);
 
 export default User;
