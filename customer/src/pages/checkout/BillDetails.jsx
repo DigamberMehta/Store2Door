@@ -13,7 +13,7 @@ const BillDetails = ({
       sum + (item.discountedPrice || item.unitPrice || 0) * item.quantity,
     0,
   );
-  const shouldBeFreeDelivery = isFreeDelivery || itemsTotal > 500; // Free delivery above R500 or via coupon
+  const shouldBeFreeDelivery = isFreeDelivery;
 
   const grandTotal =
     itemsTotal + (shouldBeFreeDelivery ? 0 : deliveryCharge) + tip - discount;

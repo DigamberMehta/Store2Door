@@ -229,7 +229,7 @@ const RecommendedProducts = () => {
               {/* Price */}
               <div className="mt-auto mb-1">
                 <span className="text-white font-bold text-xs">
-                  R{formatPrice(product.price)}
+                  R{formatPrice(product.retailPrice || product.price)}
                 </span>
               </div>
 
