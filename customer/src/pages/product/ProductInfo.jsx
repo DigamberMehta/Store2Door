@@ -122,7 +122,12 @@ const ProductInfo = ({
                       selectedVariant === index ? "text-white" : "text-white/70"
                     }`}
                   >
-                    R{formatPrice(product.price + (variant.priceModifier || 0))}
+                    R
+                    {formatPrice(
+                      (product.retailPrice || product.price) +
+                        (variant.priceModifier || 0) *
+                          (1 + (product.markupPercentage || 20) / 100),
+                    )}
                   </span>
                 </button>
               ))}
@@ -140,7 +145,56 @@ const ProductInfo = ({
           </p>
         </div>
 
-        {/* Features */}
+        {/* Key Features */}
+        {product.specifications?.keyFeatures &&
+          product.specifications.keyFeatures.length > 0 && (
+            <div className="bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/5">
+              <h2 className="text-white font-semibold text-xs mb-2">
+                Key Features
+              </h2>
+              <div className="space-y-2">
+                {product.specifications.keyFeatures.map((feature, index) => (
+                  <div key={index} className="flex items-start gap-2">
+                    <div className="w-1 h-1 rounded-full bg-green-400 mt-1.5 flex-shrink-0"></div>
+                    <div className="flex-1">
+                      <span className="text-white/80 text-xs font-medium">
+                        {feature.key}:{" "}
+                      </span>
+                      <span className="text-white/60 text-xs">
+                        {feature.value}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+        {/* Product Details / Specifications */}
+        {product.specifications?.customSpecs &&
+          product.specifications.customSpecs.length > 0 && (
+            <div className="bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/5">
+              <h2 className="text-white font-semibold text-xs mb-2">
+                Product Details
+              </h2>
+              <div className="space-y-2">
+                {product.specifications.customSpecs.map((spec, index) => (
+                  <div
+                    key={index}
+                    className="flex items-start justify-between gap-3 py-1"
+                  >
+                    <span className="text-white/50 text-xs">{spec.name}</span>
+                    <span className="text-white/80 text-xs font-medium text-right">
+                      {spec.value}
+                      {spec.unit ? ` ${spec.unit}` : ""}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+        {/* Tags */}
         {product.tags && product.tags.length > 0 && (
           <div className="bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/5">
             <h2 className="text-white font-semibold text-xs mb-2">Tags</h2>
@@ -158,55 +212,59 @@ const ProductInfo = ({
         )}
 
         {/* Nutrition Info */}
-        {product.nutrition && (
-          <div className="bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/5">
-            <h2 className="text-white font-semibold text-xs mb-2">
-              Nutrition Information
-            </h2>
-            <div className="grid grid-cols-2 gap-2">
-              {product.nutrition.calories && (
-                <div className="bg-white/5 rounded-lg p-2 border border-white/5">
-                  <p className="text-white/40 text-[10px] uppercase tracking-wider mb-0.5">
-                    Calories
-                  </p>
-                  <p className="text-white font-bold text-xs">
-                    {product.nutrition.calories}
-                  </p>
-                </div>
-              )}
-              {product.nutrition.protein && (
-                <div className="bg-white/5 rounded-lg p-2 border border-white/5">
-                  <p className="text-white/40 text-[10px] uppercase tracking-wider mb-0.5">
-                    Protein
-                  </p>
-                  <p className="text-white font-bold text-xs">
-                    {product.nutrition.protein}g
-                  </p>
-                </div>
-              )}
-              {product.nutrition.carbohydrates && (
-                <div className="bg-white/5 rounded-lg p-2 border border-white/5">
-                  <p className="text-white/40 text-[10px] uppercase tracking-wider mb-0.5">
-                    Carbs
-                  </p>
-                  <p className="text-white font-bold text-xs">
-                    {product.nutrition.carbohydrates}g
-                  </p>
-                </div>
-              )}
-              {product.nutrition.fat && (
-                <div className="bg-white/5 rounded-lg p-2 border border-white/5">
-                  <p className="text-white/40 text-[10px] uppercase tracking-wider mb-0.5">
-                    Fat
-                  </p>
-                  <p className="text-white font-bold text-xs">
-                    {product.nutrition.fat}g
-                  </p>
-                </div>
-              )}
+        {product.nutrition &&
+          (product.nutrition.calories != null ||
+            product.nutrition.protein != null ||
+            product.nutrition.carbohydrates != null ||
+            product.nutrition.fat != null) && (
+            <div className="bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/5">
+              <h2 className="text-white font-semibold text-xs mb-2">
+                Nutrition Information
+              </h2>
+              <div className="grid grid-cols-2 gap-2">
+                {product.nutrition.calories != null && (
+                  <div className="bg-white/5 rounded-lg p-2 border border-white/5">
+                    <p className="text-white/40 text-[10px] uppercase tracking-wider mb-0.5">
+                      Calories
+                    </p>
+                    <p className="text-white font-bold text-xs">
+                      {product.nutrition.calories}
+                    </p>
+                  </div>
+                )}
+                {product.nutrition.protein != null && (
+                  <div className="bg-white/5 rounded-lg p-2 border border-white/5">
+                    <p className="text-white/40 text-[10px] uppercase tracking-wider mb-0.5">
+                      Protein
+                    </p>
+                    <p className="text-white font-bold text-xs">
+                      {product.nutrition.protein}g
+                    </p>
+                  </div>
+                )}
+                {product.nutrition.carbohydrates != null && (
+                  <div className="bg-white/5 rounded-lg p-2 border border-white/5">
+                    <p className="text-white/40 text-[10px] uppercase tracking-wider mb-0.5">
+                      Carbs
+                    </p>
+                    <p className="text-white font-bold text-xs">
+                      {product.nutrition.carbohydrates}g
+                    </p>
+                  </div>
+                )}
+                {product.nutrition.fat != null && (
+                  <div className="bg-white/5 rounded-lg p-2 border border-white/5">
+                    <p className="text-white/40 text-[10px] uppercase tracking-wider mb-0.5">
+                      Fat
+                    </p>
+                    <p className="text-white font-bold text-xs">
+                      {product.nutrition.fat}g
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          )}
       </div>
     </>
   );

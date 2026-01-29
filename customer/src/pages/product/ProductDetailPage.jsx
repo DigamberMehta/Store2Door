@@ -195,13 +195,19 @@ const ProductDetailPage = () => {
   }
 
   const currentVariant = product.variants?.[selectedVariant];
+  const basePrice = product.retailPrice || product.price;
+  const markupMultiplier = 1 + (product.markupPercentage || 20) / 100;
   const currentPrice = currentVariant
-    ? product.price + (currentVariant.priceModifier || 0)
-    : product.price;
+    ? basePrice + (currentVariant.priceModifier || 0) * markupMultiplier
+    : basePrice;
+  // Use originalRetailPrice (which includes markup) for customer display
+  const originalRetailPrice =
+    product.originalRetailPrice || product.originalPrice;
   const originalPrice =
-    currentVariant && product.originalPrice
-      ? product.originalPrice + (currentVariant.priceModifier || 0)
-      : product.originalPrice;
+    currentVariant && originalRetailPrice
+      ? originalRetailPrice +
+        (currentVariant.priceModifier || 0) * markupMultiplier
+      : originalRetailPrice;
 
   const handleQuantityChange = (type) => {
     if (type === "increment") {
