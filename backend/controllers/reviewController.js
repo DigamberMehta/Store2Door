@@ -51,12 +51,7 @@ export const getProductReviews = async (req, res) => {
     const { productId } = req.params;
     const { page = 1, limit = 10, sortBy = "createdAt" } = req.query;
 
-    console.log("🔍 Fetching reviews for productId:", productId);
-
     const reviews = await Review.getReviewsByProduct(productId, page, limit, sortBy);
-
-    console.log("📊 Found reviews:", reviews.length);
-    console.log("📋 Reviews data:", JSON.stringify(reviews, null, 2));
 
     res.status(200).json({
       success: true,

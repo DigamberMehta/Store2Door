@@ -15,7 +15,6 @@ const RatingsReviews = ({ product, avgRating, totalReviews }) => {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    console.log("🔄 useEffect triggered, product._id:", product?._id);
     fetchReviews();
     fetchStats();
   }, [product?._id]);
@@ -24,7 +23,6 @@ const RatingsReviews = ({ product, avgRating, totalReviews }) => {
     if (!product?._id) return;
     try {
       const response = await reviewAPI.getStats("product", product._id);
-      console.log("📊 Stats response:", response);
       if (response.success && response.data) {
         setStats(response.data);
       }
@@ -35,30 +33,21 @@ const RatingsReviews = ({ product, avgRating, totalReviews }) => {
 
   const fetchReviews = async () => {
     if (!product?._id) {
-      console.log("⚠️ No product ID, skipping fetch");
       return;
     }
     try {
       setLoading(true);
-      console.log("🚀 Fetching reviews for product:", product._id);
       const response = await reviewAPI.getProductReviews(product._id);
-      console.log("📦 Full response:", response);
-      console.log("📦 Response data:", response.data);
       if (response.success && response.data) {
         const reviewsData = Array.isArray(response.data) 
           ? response.data 
           : response.data?.reviews || [];
-        console.log("✅ Setting reviews:", reviewsData);
-        console.log("✅ Reviews count:", reviewsData.length);
         setReviews(reviewsData);
-      } else {
-        console.log("❌ Response not successful");
       }
     } catch (err) {
       console.error("❌ Error fetching reviews:", err);
     } finally {
       setLoading(false);
-      console.log("🏁 Fetch complete, reviews state:", reviews);
     }
   };
 
@@ -92,8 +81,6 @@ const RatingsReviews = ({ product, avgRating, totalReviews }) => {
       }
       
       const response = await reviewAPI.create(reviewData);
-
-      console.log("✅ Review created:", response.data);
 
       // Reset form
       setRating(0);
@@ -291,20 +278,13 @@ const RatingsReviews = ({ product, avgRating, totalReviews }) => {
 
       {/* Reviews List */}
       <div className="space-y-3">
-        {(() => {
-          console.log("🎨 Rendering reviews, loading:", loading, "reviews.length:", reviews.length);
-          console.log("🎨 Reviews array:", reviews);
-          return null;
-        })()}
         {loading ? (
           <div className="text-center py-4">
             <div className="animate-spin w-5 h-5 border-2 border-[rgb(49,134,22)] border-t-transparent rounded-full mx-auto mb-2"></div>
             <p className="text-white/40 text-[10px]">Loading reviews...</p>
           </div>
         ) : reviews.length > 0 ? (
-          reviews.map((review) => {
-            console.log("🎨 Rendering review:", review._id, review.comment);
-            return (
+          reviews.map((review) => (
             <div
               key={review._id}
               className="bg-white/5 rounded-lg p-3 border border-white/5"

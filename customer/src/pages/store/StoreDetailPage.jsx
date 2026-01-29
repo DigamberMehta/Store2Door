@@ -30,13 +30,6 @@ const StoreDetailPage = () => {
   const highlightProductRef = useRef(null);
   const { latitude, longitude } = useUserLocation();
 
-  // Log search context for debugging
-  useEffect(() => {
-    if (searchContext) {
-      console.log('🔍 StoreDetailPage - Search Context:', searchContext);
-    }
-  }, [searchContext]);
-
   // Fetch cart items
   const fetchCartItems = async () => {
     try {
@@ -94,11 +87,6 @@ const StoreDetailPage = () => {
 
           // Use context-aware endpoint if we have search context
           if (searchContext?.query || searchContext?.category || searchContext?.categoryId || searchContext?.categoryName) {
-            console.log('📡 Calling getByStoreWithContext with:', {
-              categoryId: searchContext.categoryId,
-              categoryName: searchContext.categoryName
-            });
-            
             productsResponse = await productAPI.getByStoreWithContext(
               storeData._id || storeData.id,
               {
@@ -113,27 +101,6 @@ const StoreDetailPage = () => {
             if (productsResponse.success && productsResponse.data) {
               const { matchingProducts, categoryProducts, otherProducts } =
                 productsResponse.data;
-              
-              console.log('📦 Products from backend:', {
-                matching: matchingProducts?.length || 0,
-                category: categoryProducts?.length || 0,
-                other: otherProducts?.length || 0
-              });
-              
-              // Log first few products to see their categories
-              console.log('📦 Category products details:', categoryProducts?.map(p => ({
-                name: p.name,
-                category: p.category,
-                subcategory: p.subcategory,
-                categoryId: p.categoryId
-              })));
-              
-              console.log('📦 Other products details:', otherProducts?.map(p => ({
-                name: p.name,
-                category: p.category,
-                subcategory: p.subcategory,
-                categoryId: p.categoryId
-              })));
               
               // Maintain order: matching first, then category, then others
               setProducts([
@@ -506,8 +473,6 @@ const StoreDetailPage = () => {
     }
     return a.localeCompare(b);
   });
-
-  console.log(`📋 Final subcategory order:`, subcategories);
 
   if (loading) {
     return (
