@@ -366,22 +366,35 @@ export const getStoreProductsWithContext = asyncHandler(async (req, res) => {
     matchingProducts = matchingProducts.map(({ matchScore, ...product }) => product);
   } else if (categoryId || category) {
     // If only category is provided (no search query)
-    console.log('🔍 Filtering by categoryId:', categoryId, 'or category:', category);
     
     allProducts.forEach(product => {
-      if (categoryId && product.categoryId?.toString() === categoryId) {
-        console.log('✅ Product matches categoryId:', product.name, 'categoryId:', product.categoryId);
-        categoryProducts.push(product);
-      } else if (category && (product.category === category || product.subcategory === category)) {
-        console.log('✅ Product matches category name:', product.name, 'category:', product.category, 'subcategory:', product.subcategory);
+      // Try matching by categoryId first
+      const matchesCategoryId = categoryId && product.categoryId?.toString() === categoryId;
+      
+      // Fuzzy match by name - check if category/subcategory contains the search term or vice versa
+      let matchesCategoryName = false;
+      if (category) {
+        const searchTerm = category.toLowerCase();
+        const productCategory = (product.category || '').toLowerCase();
+        const productSubcategory = (product.subcategory || '').toLowerCase();
+        
+        // Check if either contains the other (partial match)
+        matchesCategoryName = 
+          productCategory.includes(searchTerm) || 
+          searchTerm.includes(productCategory) ||
+          productSubcategory.includes(searchTerm) || 
+          searchTerm.includes(productSubcategory) ||
+          productCategory === searchTerm ||
+          productSubcategory === searchTerm;
+      }
+      
+      if (matchesCategoryId || matchesCategoryName) {
         categoryProducts.push(product);
       } else {
-        console.log('❌ Product does NOT match:', product.name, 'categoryId:', product.categoryId, 'category:', product.category);
         otherProducts.push(product);
       }
     });
     
-    console.log('📊 Result: categoryProducts:', categoryProducts.length, 'otherProducts:', otherProducts.length);
   } else {
     // No search context - return all products as "other"
     otherProducts = allProducts;
