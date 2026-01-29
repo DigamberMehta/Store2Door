@@ -92,12 +92,19 @@ const StoreDetailPage = () => {
           let productsResponse;
 
           // Use context-aware endpoint if we have search context
-          if (searchContext?.query || searchContext?.category) {
+          if (searchContext?.query || searchContext?.category || searchContext?.categoryId) {
+            console.log('📡 Calling getByStoreWithContext with:', {
+              category: searchContext.category,
+              categoryId: searchContext.categoryId,
+              categoryName: searchContext.categoryName
+            });
+            
             productsResponse = await productAPI.getByStoreWithContext(
               storeData._id || storeData.id,
               {
                 query: searchContext.query || "",
                 category: searchContext.category || "",
+                categoryId: searchContext.categoryId || "",
                 limit: 50,
               },
             );
@@ -112,6 +119,13 @@ const StoreDetailPage = () => {
                 category: categoryProducts?.length || 0,
                 other: otherProducts?.length || 0
               });
+              
+              // Log first few products to see their categories
+              console.log('📦 Category products sample:', categoryProducts?.slice(0, 3).map(p => ({
+                name: p.name,
+                category: p.category,
+                subcategory: p.subcategory
+              })));
               
               // Maintain order: matching first, then category, then others
               setProducts([
@@ -347,7 +361,7 @@ const StoreDetailPage = () => {
   // Group products by subcategory or search context
   const groupedProducts = products.reduce((acc, product, index) => {
     // When we have category context, group products but maintain order
-    if (searchContext?.category) {
+    if (searchContext?.categoryId || searchContext?.category) {
       const subcategory = product.subcategory || product.category || "Other";
       
       // Add index to maintain original order within groups
@@ -446,7 +460,7 @@ const StoreDetailPage = () => {
   // Get subcategories sorted - put search matches first, then the one user came from
   const subcategories = Object.keys(groupedProducts).sort((a, b) => {
     // When we have category context, sort by the minimum order index (earliest appearance)
-    if (searchContext?.category) {
+    if (searchContext?.categoryId || searchContext?.category) {
       const aMinIndex = Math.min(...groupedProducts[a].map(p => p._orderIndex || 999999));
       const bMinIndex = Math.min(...groupedProducts[b].map(p => p._orderIndex || 999999));
       
