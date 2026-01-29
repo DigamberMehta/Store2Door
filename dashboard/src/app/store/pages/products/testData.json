@@ -1,0 +1,197 @@
+{
+  "electronics": {
+    "name": "Samsung Galaxy S24 Ultra",
+    "description": "Premium flagship smartphone with advanced AI features, stunning display, and professional-grade camera system. Perfect for power users and content creators.",
+    "shortDescription": "Flagship smartphone with AI features",
+    "price": "21999",
+    "wholesalePrice": "21999",
+    "originalPrice": "24999",
+    "originalWholesalePrice": "24999",
+    "category": "",
+    "categoryId": "",
+    "subcategory": "",
+    "tags": "smartphone, samsung, android, 5g, flagship",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=500",
+        "alt": "Samsung Galaxy S24 Ultra",
+        "isPrimary": true
+      }
+    ],
+    "inventory": {
+      "quantity": "50",
+      "lowStockThreshold": "10",
+      "sku": "SAM-S24U-256",
+      "barcode": "8801234567890"
+    },
+    "specifications": {
+      "brand": "Samsung",
+      "model": "Galaxy S24 Ultra",
+      "color": "Titanium Black",
+      "weight": "234",
+      "warranty": "1 year manufacturer warranty"
+    },
+    "isFragile": true,
+    "preparationTime": "30",
+    "isFeatured": true,
+    "keyFeatures": [
+      { "key": "Display", "value": "6.8\" Dynamic AMOLED 2X" },
+      { "key": "Processor", "value": "Snapdragon 8 Gen 3" },
+      { "key": "RAM", "value": "12GB" },
+      { "key": "Storage", "value": "256GB" }
+    ],
+    "customSpecs": [
+      { "name": "Screen Size", "value": "6.8", "unit": "inches" },
+      { "name": "Battery", "value": "5000", "unit": "mAh" },
+      { "name": "Camera", "value": "200MP + 50MP + 12MP + 10MP", "unit": "" }
+    ],
+    "variants": [
+      {
+        "name": "Storage",
+        "value": "256GB",
+        "priceModifier": 0,
+        "isDefault": true
+      },
+      {
+        "name": "Storage",
+        "value": "512GB",
+        "priceModifier": 3000,
+        "isDefault": false
+      },
+      {
+        "name": "Storage",
+        "value": "1TB",
+        "priceModifier": 6000,
+        "isDefault": false
+      }
+    ]
+  },
+  "groceries": {
+    "name": "Organic Free Range Eggs - Large",
+    "description": "Farm-fresh organic eggs from free-range chickens. Rich in protein and omega-3 fatty acids. Perfect for breakfast, baking, and cooking.",
+    "shortDescription": "Farm-fresh organic free-range eggs",
+    "price": "65",
+    "wholesalePrice": "65",
+    "originalPrice": "75",
+    "originalWholesalePrice": "75",
+    "category": "",
+    "categoryId": "",
+    "subcategory": "",
+    "tags": "eggs, organic, free-range, protein, breakfast",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=500",
+        "alt": "Organic Eggs",
+        "isPrimary": true
+      }
+    ],
+    "inventory": {
+      "quantity": "200",
+      "lowStockThreshold": "20",
+      "sku": "EGG-ORG-L12",
+      "barcode": "6001234567890"
+    },
+    "specifications": {
+      "brand": "Farm Fresh",
+      "size": "Large",
+      "weight": "700"
+    },
+    "isOrganic": true,
+    "isFragile": true,
+    "preparationTime": "5",
+    "nutrition": {
+      "calories": "70",
+      "protein": "6",
+      "carbohydrates": "0.6",
+      "fat": "5",
+      "sugar": "0.4",
+      "servingSize": "1 egg (50g)",
+      "servingsPerContainer": "12"
+    },
+    "keyFeatures": [
+      { "key": "Type", "value": "Free Range Organic" },
+      { "key": "Size", "value": "Large" },
+      { "key": "Quantity", "value": "12 eggs" }
+    ],
+    "variants": [
+      {
+        "name": "Pack Size",
+        "value": "6 eggs",
+        "priceModifier": -30,
+        "isDefault": false
+      },
+      {
+        "name": "Pack Size",
+        "value": "12 eggs",
+        "priceModifier": 0,
+        "isDefault": true
+      },
+      {
+        "name": "Pack Size",
+        "value": "18 eggs",
+        "priceModifier": 35,
+        "isDefault": false
+      }
+    ]
+  },
+  "clothing": {
+    "name": "Premium Cotton T-Shirt - Unisex",
+    "description": "Comfortable premium quality cotton t-shirt. Soft, breathable fabric perfect for everyday wear. Available in multiple colors and sizes.",
+    "shortDescription": "Premium cotton unisex t-shirt",
+    "price": "199",
+    "wholesalePrice": "199",
+    "originalPrice": "299",
+    "originalWholesalePrice": "299",
+    "category": "",
+    "categoryId": "",
+    "subcategory": "",
+    "tags": "t-shirt, cotton, unisex, casual, clothing",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500",
+        "alt": "Cotton T-Shirt",
+        "isPrimary": true
+      }
+    ],
+    "inventory": {
+      "quantity": "150",
+      "lowStockThreshold": "15",
+      "sku": "TSH-COT-UNI-M",
+      "barcode": "6009876543210"
+    },
+    "specifications": {
+      "brand": "StyleCo",
+      "material": "100% Cotton",
+      "color": "Navy Blue",
+      "size": "Medium"
+    },
+    "preparationTime": "10",
+    "isOnSale": true,
+    "keyFeatures": [
+      { "key": "Material", "value": "100% Premium Cotton" },
+      { "key": "Fit", "value": "Regular Fit" },
+      { "key": "Care", "value": "Machine Washable" }
+    ],
+    "variants": [
+      {
+        "name": "Size",
+        "value": "Small",
+        "priceModifier": 0,
+        "isDefault": false
+      },
+      {
+        "name": "Size",
+        "value": "Medium",
+        "priceModifier": 0,
+        "isDefault": true
+      },
+      {
+        "name": "Size",
+        "value": "Large",
+        "priceModifier": 0,
+        "isDefault": false
+      },
+      { "name": "Size", "value": "XL", "priceModifier": 20, "isDefault": false }
+    ]
+  }
+}
