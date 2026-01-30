@@ -19,6 +19,8 @@ export const initializeSocket = (httpServer) => {
         "http://localhost:5176",
         "https://door2door-one.vercel.app",
         "https://door2door-dashboard.vercel.app",
+        "https://store2doordelivery.co.za",
+        "https://www.store2doordelivery.co.za",
         process.env.FRONTEND_URL,
       ].filter(Boolean),
       credentials: true,

@@ -43,6 +43,8 @@ app.use(
       "http://localhost:5176", // Admin/Store app (future)
       "https://door2door-one.vercel.app", // Production customer app
       "https://door2door-dashboard.vercel.app", // Production dashboard
+      "https://store2doordelivery.co.za", // Production domain
+      "https://www.store2doordelivery.co.za", // Production domain with www
       process.env.FRONTEND_URL,
     ].filter(Boolean),
     credentials: true,
