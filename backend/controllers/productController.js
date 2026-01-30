@@ -675,3 +675,175 @@ export const deleteProduct = asyncHandler(async (req, res) => {
     message: "Product deleted successfully",
   });
 });
+
+/**
+ * @desc Get all products for a specific store (Store Manager)
+ * @route GET /api/managers/products
+ * @access Private (Store Manager)
+ */
+export const getStoreProducts = asyncHandler(async (req, res) => {
+  const storeId = req.user.storeId;
+
+  if (!storeId) {
+    return res.status(400).json({
+      success: false,
+      message: "Store ID not found for this user",
+    });
+  }
+
+  const {
+    page = 1,
+    limit = 20,
+    search,
+    category,
+    sortBy = "createdAt",
+    order = "desc",
+  } = req.query;
+
+  const skip = (parseInt(page) - 1) * parseInt(limit);
+  const query = { storeId };
+
+  if (search) {
+    query.$or = [
+      { name: new RegExp(search, "i") },
+      { description: new RegExp(search, "i") },
+    ];
+  }
+
+  if (category) {
+    query.categoryId = category;
+  }
+
+  const sortOptions = {};
+  sortOptions[sortBy] = order === "asc" ? 1 : -1;
+
+  const [products, total] = await Promise.all([
+    Product.find(query)
+      .select("-__v")
+      .sort(sortOptions)
+      .skip(skip)
+      .limit(parseInt(limit)),
+    Product.countDocuments(query),
+  ]);
+
+  res.status(200).json({
+    success: true,
+    data: products,
+    pagination: {
+      total,
+      page: parseInt(page),
+      limit: parseInt(limit),
+      pages: Math.ceil(total / parseInt(limit)),
+    },
+  });
+});
+
+/**
+ * @desc Get a specific product by ID for store manager
+ * @route GET /api/managers/products/:id
+ * @access Private (Store Manager)
+ */
+export const getStoreProductById = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const storeId = req.user.storeId;
+
+  const product = await Product.findById(id);
+
+  if (!product) {
+    return res.status(404).json({
+      success: false,
+      message: "Product not found",
+    });
+  }
+
+  if (product.storeId.toString() !== storeId.toString()) {
+    return res.status(403).json({
+      success: false,
+      message: "Not authorized to view this product",
+    });
+  }
+
+  res.status(200).json({
+    success: true,
+    data: product,
+  });
+});
+
+/**
+ * @desc Toggle product active status (Store Manager)
+ * @route PATCH /api/managers/products/:id/toggle-active
+ * @access Private (Store Manager)
+ */
+export const toggleProductActive = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const storeId = req.user.storeId;
+
+  const product = await Product.findById(id);
+
+  if (!product) {
+    return res.status(404).json({
+      success: false,
+      message: "Product not found",
+    });
+  }
+
+  if (product.storeId.toString() !== storeId.toString()) {
+    return res.status(403).json({
+      success: false,
+      message: "Not authorized to update this product",
+    });
+  }
+
+  product.isActive = !product.isActive;
+  await product.save();
+
+  res.status(200).json({
+    success: true,
+    message: `Product ${product.isActive ? "activated" : "deactivated"} successfully`,
+    data: product,
+  });
+});
+
+/**
+ * @desc Update product stock (Store Manager)
+ * @route PATCH /api/managers/products/:id/stock
+ * @access Private (Store Manager)
+ */
+export const updateProductStock = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { stockQuantity } = req.body;
+  const storeId = req.user.storeId;
+
+  if (stockQuantity === undefined || stockQuantity < 0) {
+    return res.status(400).json({
+      success: false,
+      message: "Valid stock quantity is required",
+    });
+  }
+
+  const product = await Product.findById(id);
+
+  if (!product) {
+    return res.status(404).json({
+      success: false,
+      message: "Product not found",
+    });
+  }
+
+  if (product.storeId.toString() !== storeId.toString()) {
+    return res.status(403).json({
+      success: false,
+      message: "Not authorized to update this product",
+    });
+  }
+
+  product.stockQuantity = stockQuantity;
+  product.isAvailable = stockQuantity > 0;
+  await product.save();
+
+  res.status(200).json({
+    success: true,
+    message: "Stock updated successfully",
+    data: product,
+  });
+});
