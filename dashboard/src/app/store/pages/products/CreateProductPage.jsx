@@ -40,7 +40,7 @@ const CreateProductPage = () => {
     currency: "ZAR",
 
     // Images (at least 1 required)
-    images: [{ url: "", alt: "", isPrimary: true }],
+    images: [{ url: "", alt: "", isPrimary: true, file: null, preview: null }],
 
     // REQUIRED Inventory
     inventory: {
@@ -159,9 +159,11 @@ const CreateProductPage = () => {
   const fetchCategories = async () => {
     try {
       const response = await axios.get("http://localhost:3000/api/categories");
-      setCategories(response.data.data || []);
+      const categoriesData = response.data.data || [];
+      setCategories(categoriesData);
     } catch (error) {
       console.error("Error fetching categories:", error);
+      alert("Failed to load categories. Please check console for details.");
     }
   };
 
@@ -218,14 +220,32 @@ const CreateProductPage = () => {
     setFormData((prev) => ({ ...prev, images: newImages }));
   };
 
+  const handleImageFileChange = (index, file) => {
+    if (!file) return;
+
+    const newImages = [...formData.images];
+    const preview = URL.createObjectURL(file);
+    newImages[index] = {
+      ...newImages[index],
+      file: file,
+      preview: preview,
+      url: "", // Clear URL when file is selected
+    };
+    setFormData((prev) => ({ ...prev, images: newImages }));
+  };
+
   const addImage = () => {
     setFormData((prev) => ({
       ...prev,
-      images: [...prev.images, { url: "", alt: "", isPrimary: false }],
+      images: [...prev.images, { url: "", alt: "", isPrimary: false, file: null, preview: null }],
     }));
   };
 
   const removeImage = (index) => {
+    // Clean up preview URL to avoid memory leaks
+    if (formData.images[index].preview) {
+      URL.revokeObjectURL(formData.images[index].preview);
+    }
     const newImages = formData.images.filter((_, i) => i !== index);
     setFormData((prev) => ({ ...prev, images: newImages }));
   };
@@ -235,14 +255,37 @@ const CreateProductPage = () => {
     setLoading(true);
 
     try {
+      // Create FormData for file upload
+      const formDataToSend = new FormData();
+
+      // Add all image files
+      const imageMetadata = [];
+      formData.images.forEach((image, index) => {
+        if (image.file) {
+          formDataToSend.append("images", image.file);
+          imageMetadata.push({
+            alt: image.alt || "",
+            isPrimary: index === 0,
+          });
+        } else if (image.url) {
+          // For existing URLs (if any)
+          imageMetadata.push({
+            url: image.url,
+            alt: image.alt || "",
+            isPrimary: index === 0,
+          });
+        }
+      });
+
+      // Prepare product data
       const productData = {
         ...formData,
         tags: formData.tags
           .split(",")
           .map((tag) => tag.trim())
           .filter(Boolean),
-        wholesalePrice: parseFloat(formData.price), // Store manager's price (before markup)
-        price: parseFloat(formData.price), // Backward compatibility
+        wholesalePrice: parseFloat(formData.price),
+        price: parseFloat(formData.price),
         originalPrice: formData.originalPrice
           ? parseFloat(formData.originalPrice)
           : undefined,
@@ -278,15 +321,21 @@ const CreateProductPage = () => {
           }
           return acc;
         }, {}),
-        images: formData.images.filter((img) => img.url),
+        imageMetadata: imageMetadata,
       };
+
+      // Append product data as JSON
+      formDataToSend.append("productData", JSON.stringify(productData));
 
       const token = localStorage.getItem("storeAuthToken");
       const response = await axios.post(
         "http://localhost:3000/api/managers/products",
-        productData,
+        formDataToSend,
         {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
         },
       );
 
@@ -419,6 +468,7 @@ const CreateProductPage = () => {
           <ProductImagesSection
             images={formData.images}
             handleImageChange={handleImageChange}
+            handleImageFileChange={handleImageFileChange}
             addImage={addImage}
             removeImage={removeImage}
           />
