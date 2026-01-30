@@ -10,7 +10,7 @@ export const productAPI = {
    * @param {Object} params - Query parameters
    */
   getMyProducts: async (params = {}) => {
-    return apiClient.get("/products/my", { params });
+    return apiClient.get("/products", { params });
   },
 
   /**
