@@ -15,7 +15,6 @@ const RatingsReviews = ({ product, avgRating, totalReviews }) => {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    console.log("🔄 useEffect triggered, product._id:", product?._id);
     fetchReviews();
     fetchStats();
   }, [product?._id]);
@@ -24,7 +23,6 @@ const RatingsReviews = ({ product, avgRating, totalReviews }) => {
     if (!product?._id) return;
     try {
       const response = await reviewAPI.getStats("product", product._id);
-      console.log("📊 Stats response:", response);
       if (response.success && response.data) {
         setStats(response.data);
       }

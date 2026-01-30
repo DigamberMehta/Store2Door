@@ -72,8 +72,10 @@ const ProductCard = ({
         {/* Price & Add/Quantity Button */}
         <div className="mt-auto">
           <div className="flex items-center justify-between mb-1.5">
-            <div className="text-white font-bold text-xs">
-              R{formatPrice(product.retailPrice || product.price)}
+            <div>
+              <div className="text-white font-bold text-xs">
+                R{formatPrice(product.retailPrice || product.price)}
+              </div>
             </div>
             {product.variants && product.variants.length > 0 && (
               <span className="text-[8px] text-green-400 font-medium">
