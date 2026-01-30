@@ -8,3 +8,4 @@ export {
   isAuthenticated,
 } from "./driverAuth.api";
 export { driverProfileAPI } from "./driverProfile.api";
+export { ordersAPI } from "./orders.api";
