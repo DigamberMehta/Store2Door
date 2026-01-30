@@ -131,8 +131,18 @@ const OrderTrackingPage = () => {
         "[OrderTracking] Order state updated, current status:",
         order.status,
       );
+
+      // Redirect to delivered page when order is delivered
+      if (order.status === "delivered") {
+        setTimeout(() => {
+          navigate(`/orders/${orderId}/delivered`, {
+            state: { order },
+            replace: true,
+          });
+        }, 2000); // Give 2 seconds to see the final status update
+      }
     }
-  }, [order?.status]);
+  }, [order?.status, orderId, navigate, order]);
 
   // Initialize map
   useEffect(() => {

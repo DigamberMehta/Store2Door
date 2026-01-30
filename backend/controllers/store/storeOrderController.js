@@ -160,6 +160,17 @@ export const updateOrderStatus = async (req, res) => {
       });
     }
 
+    // Store can cancel order until it's picked up by driver
+    if (status === "cancelled") {
+      // Allow cancellation only if order hasn't been picked up yet
+      if (order.status === "picked_up" || order.status === "delivered") {
+        return res.status(400).json({
+          success: false,
+          message: "Cannot cancel order after it has been picked up",
+        });
+      }
+    }
+
     // Update status
     order.status = status;
 

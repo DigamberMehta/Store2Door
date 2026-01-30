@@ -22,6 +22,7 @@ import AddressPage from "./pages/profile/AddressPage";
 import OrdersPage from "./pages/profile/OrdersPage";
 import OrderDetailPage from "./pages/profile/OrderDetailPage";
 import OrderTrackingPage from "./pages/orders/OrderTrackingPage";
+import OrderDeliveredPage from "./pages/orders/OrderDeliveredPage";
 import PaymentPage from "./pages/payment/PaymentPage";
 import PaymentSuccessPage from "./pages/payment/PaymentSuccessPage";
 import PaymentFailurePage from "./pages/payment/PaymentFailurePage";
@@ -163,6 +164,22 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <OrderTrackingPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/orders/:orderId/delivered"
+          element={
+            <ProtectedRoute>
+              <OrderDeliveredPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile/orders/:orderId/delivered"
+          element={
+            <ProtectedRoute>
+              <OrderDeliveredPage />
             </ProtectedRoute>
           }
         />
