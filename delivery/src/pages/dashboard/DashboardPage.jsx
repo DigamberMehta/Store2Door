@@ -11,7 +11,7 @@ const DashboardPage = () => {
       <HeroSection />
       <StatusToggle />
       <EarningCard />
-      <NotificationCard count={4} />
+      <NotificationCard />
       <RecentTransactions />
       <BottomNavigation />
     </div>
