@@ -94,7 +94,9 @@ const CreateProductPage = () => {
       protein: "",
       carbohydrates: "",
       fat: "",
+      fiber: "",
       sugar: "",
+      sodium: "",
       servingSize: "",
       servingsPerContainer: "",
     },
@@ -413,36 +415,6 @@ const CreateProductPage = () => {
               Fill in the product details below. Fields marked with{" "}
               <span className="text-red-500">*</span> are required.
             </p>
-          </div>
-
-          {/* Test Data Buttons */}
-          <div className="flex flex-col gap-2">
-            <p className="text-xs text-gray-500 font-medium text-right">
-              Quick Fill Test Data:
-            </p>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => fillTestData("electronics")}
-                className="px-3 py-1.5 text-xs font-medium bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
-              >
-                📱 Electronics
-              </button>
-              <button
-                type="button"
-                onClick={() => fillTestData("groceries")}
-                className="px-3 py-1.5 text-xs font-medium bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors"
-              >
-                🥚 Groceries
-              </button>
-              <button
-                type="button"
-                onClick={() => fillTestData("clothing")}
-                className="px-3 py-1.5 text-xs font-medium bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors"
-              >
-                👕 Clothing
-              </button>
-            </div>
           </div>
         </div>
       </div>
