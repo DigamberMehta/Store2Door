@@ -3,6 +3,7 @@ import { RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
 import OrderFilters from "./components/OrderFilters";
 import OrderCard from "./components/OrderCard";
 import OrdersStats from "./components/OrdersStats";
+import socketService from "../../../../services/socket";
 import {
   getOrders,
   getOrderStats,
@@ -20,6 +21,65 @@ const OrdersPage = () => {
   useEffect(() => {
     fetchData();
     fetchStats();
+
+    // Set up socket connection
+    const userStr = localStorage.getItem("user");
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        const userId = user._id || user.id;
+        const storeId = user.storeId;
+
+        console.log("[OrdersPage] Connecting socket for user:", userId, "store:", storeId);
+        socketService.connect(userId, "store");
+
+        // Listen for new orders
+        socketService.onNewOrder((data) => {
+          console.log("[OrdersPage] New order received:", data);
+
+          // Only add if order is for this store
+          if (data.storeId === storeId || data.order?.storeId?._id === storeId) {
+            setOrders((prevOrders) => [data.order, ...prevOrders]);
+            fetchStats(); // Refresh stats
+            
+            // Show notification
+            if (Notification.permission === "granted") {
+              new Notification("New Order!", {
+                body: `Order ${data.order.orderNumber} received`,
+                icon: "/logo.png",
+              });
+            }
+          }
+        });
+
+        // Listen for order status changes
+        socketService.onOrderStatusChanged((data) => {
+          console.log("[OrdersPage] Order status changed:", data);
+          
+          setOrders((prevOrders) =>
+            prevOrders.map((order) =>
+              order._id === data.orderId
+                ? { ...order, status: data.status, trackingInfo: data.trackingData }
+                : order
+            )
+          );
+          fetchStats(); // Refresh stats
+        });
+      } catch (err) {
+        console.error("[OrdersPage] Error parsing user or setting up socket:", err);
+      }
+    }
+
+    // Request notification permission
+    if (Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+
+    // Cleanup
+    return () => {
+      socketService.offNewOrder();
+      socketService.offOrderStatusChanged();
+    };
   }, []);
 
   const fetchData = async (page = 1) => {

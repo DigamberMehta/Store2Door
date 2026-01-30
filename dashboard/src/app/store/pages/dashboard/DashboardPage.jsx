@@ -7,6 +7,7 @@ import EarningsOverview from "../../components/dashboard/EarningsOverview";
 import SalesChart from "../../components/dashboard/SalesChart";
 import RecentReviews from "../../components/dashboard/RecentReviews";
 import QuickActions from "../../components/dashboard/QuickActions";
+import socketService from "../../../../services/socket";
 import { getDashboardStats } from "../../../../services/store/api/dashboardApi";
 
 const DashboardPage = () => {
@@ -37,6 +38,66 @@ const DashboardPage = () => {
 
   useEffect(() => {
     fetchDashboardData();
+
+    // Set up socket connection
+    const userStr = localStorage.getItem("user");
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        const userId = user._id || user.id;
+        const storeId = user.storeId;
+
+        console.log(
+          "[DashboardPage] Connecting socket for user:",
+          userId,
+          "store:",
+          storeId,
+        );
+        socketService.connect(userId, "store");
+
+        // Listen for new orders to refresh dashboard
+        socketService.onNewOrder((data) => {
+          console.log(
+            "[DashboardPage] New order received, refreshing dashboard",
+          );
+
+          // Only refresh if order is for this store
+          if (
+            data.storeId === storeId ||
+            data.order?.storeId?._id === storeId
+          ) {
+            fetchDashboardData();
+
+            // Show notification
+            if (Notification.permission === "granted") {
+              new Notification("New Order!", {
+                body: `Order ${data.order.orderNumber} received`,
+                icon: "/logo.png",
+              });
+            }
+          }
+        });
+
+        // Listen for order status changes to update dashboard
+        socketService.onOrderStatusChanged((data) => {
+          console.log("[DashboardPage] Order status changed, refreshing stats");
+          fetchDashboardData();
+        });
+      } catch (err) {
+        console.error("[DashboardPage] Error setting up socket:", err);
+      }
+    }
+
+    // Request notification permission
+    if (Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+
+    // Cleanup
+    return () => {
+      socketService.offNewOrder();
+      socketService.offOrderStatusChanged();
+    };
   }, []);
 
   const fetchDashboardData = async () => {
