@@ -1,4 +1,4 @@
-import { Home, Wallet, User } from "lucide-react";
+import { Home, Wallet, User, Package } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 const BottomNavigation = () => {
@@ -6,23 +6,32 @@ const BottomNavigation = () => {
   const location = useLocation();
 
   const navItems = [
-    { 
-      icon: Home, 
-      label: "Home", 
+    {
+      icon: Home,
+      label: "Home",
       path: "/",
-      isActive: (path) => path === "/" || path === "/deliveries" || path === "/order-detail"
+      isActive: (path) => path === "/",
     },
-    { 
-      icon: Wallet, 
-      label: "Wallet", 
+    {
+      icon: Package,
+      label: "History",
+      path: "/deliveries/history",
+      isActive: (path) => path.startsWith("/deliveries/history"),
+    },
+    {
+      icon: Wallet,
+      label: "Wallet",
       path: "/wallet",
-      isActive: (path) => path.startsWith("/wallet") || path === "/withdrawals" || path === "/activities"
+      isActive: (path) =>
+        path.startsWith("/wallet") ||
+        path === "/withdrawals" ||
+        path === "/activities",
     },
-    { 
-      icon: User, 
-      label: "Profile", 
+    {
+      icon: User,
+      label: "Profile",
       path: "/profile",
-      isActive: (path) => path.startsWith("/profile")
+      isActive: (path) => path.startsWith("/profile"),
     },
   ];
 
@@ -40,10 +49,16 @@ const BottomNavigation = () => {
                   ? "text-blue-300 scale-105"
                   : "text-zinc-600 active:text-zinc-400"
               }`}
-              style={{ WebkitTapHighlightColor: 'transparent' }}
+              style={{ WebkitTapHighlightColor: "transparent" }}
             >
-              <item.icon className={`w-4.5 h-4.5 transition-transform ${isActive ? "stroke-[2.5px]" : "stroke-[2px]"}`} />
-              <span className={`text-[9px] font-bold tracking-tight uppercase ${isActive ? "opacity-100" : "opacity-60"}`}>{item.label}</span>
+              <item.icon
+                className={`w-4.5 h-4.5 transition-transform ${isActive ? "stroke-[2.5px]" : "stroke-[2px]"}`}
+              />
+              <span
+                className={`text-[9px] font-bold tracking-tight uppercase ${isActive ? "opacity-100" : "opacity-60"}`}
+              >
+                {item.label}
+              </span>
             </button>
           );
         })}

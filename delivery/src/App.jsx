@@ -1,7 +1,9 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import DashboardPage from "./pages/dashboard/DashboardPage";
 import DeliveriesPage from "./pages/delivery/DeliveriesPage";
+import DeliveriesHistoryPage from "./pages/delivery/DeliveriesHistoryPage";
 import OrderDetailPage from "./pages/orders/OrderDetailPage";
+import TrackingPage from "./pages/tracking/TrackingPage";
 import WalletPage from "./pages/earnings/WalletPage";
 import WithdrawalsPage from "./pages/earnings/WithdrawalsPage";
 import ActivitiesPage from "./pages/earnings/ActivitiesPage";
@@ -40,10 +42,26 @@ function App() {
           }
         />
         <Route
-          path="/order-detail"
+          path="/deliveries/history"
+          element={
+            <ProtectedRoute>
+              <DeliveriesHistoryPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/order-detail/:id"
           element={
             <ProtectedRoute>
               <OrderDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/tracking/:orderId"
+          element={
+            <ProtectedRoute>
+              <TrackingPage />
             </ProtectedRoute>
           }
         />
