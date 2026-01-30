@@ -506,12 +506,6 @@ const deliveryRiderProfileSchema = new mongoose.Schema(
     },
 
     // Current Status
-    status: {
-      type: String,
-      enum: ["offline", "online", "busy", "unavailable"],
-      default: "offline",
-      index: true,
-    },
     isAvailable: {
       type: Boolean,
       default: false,
@@ -655,7 +649,7 @@ const deliveryRiderProfileSchema = new mongoose.Schema(
 
 // Indexes for performance
 deliveryRiderProfileSchema.index({ userId: 1, isActive: 1 });
-deliveryRiderProfileSchema.index({ status: 1, isAvailable: 1 });
+deliveryRiderProfileSchema.index({ isAvailable: 1 });
 deliveryRiderProfileSchema.index({ isVerified: 1, isActive: 1 });
 deliveryRiderProfileSchema.index({
   "stats.averageRating": -1,
@@ -669,8 +663,8 @@ deliveryRiderProfileSchema.index({ currentLocation: "2dsphere" });
 
 // Pre-save middleware
 deliveryRiderProfileSchema.pre("save", function (next) {
-  // Update last active time when status changes
-  if (this.isModified("status") && this.status !== "offline") {
+  // Update last active time when isAvailable changes to true
+  if (this.isModified("isAvailable") && this.isAvailable === true) {
     this.lastActiveAt = new Date();
   }
 
@@ -718,20 +712,12 @@ deliveryRiderProfileSchema.methods.updateLocation = function (
 };
 
 deliveryRiderProfileSchema.methods.setOnline = function () {
-  this.status = "online";
   this.isAvailable = true;
   this.lastActiveAt = new Date();
   return this.save();
 };
 
 deliveryRiderProfileSchema.methods.setOffline = function () {
-  this.status = "offline";
-  this.isAvailable = false;
-  return this.save();
-};
-
-deliveryRiderProfileSchema.methods.setBusy = function () {
-  this.status = "busy";
   this.isAvailable = false;
   return this.save();
 };
@@ -802,7 +788,6 @@ deliveryRiderProfileSchema.methods.suspend = function (reason, suspendedBy) {
   this.suspensionReason = reason;
   this.suspendedAt = new Date();
   this.suspendedBy = suspendedBy;
-  this.status = "offline";
   this.isAvailable = false;
   return this.save();
 };

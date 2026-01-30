@@ -1,4 +1,5 @@
 import DeliveryRiderProfile from "../models/DeliveryRiderProfile.js";
+import Order from "../models/Order.js";
 import { asyncHandler } from "../middleware/validation.js";
 import {
   uploadToCloudinary,
@@ -766,5 +767,218 @@ export const toggleOnlineStatus = asyncHandler(async (req, res) => {
     data: {
       isAvailable: profile.isAvailable,
     },
+  });
+});
+
+/**
+ * @desc    Get driver's available orders for pickup
+ * @route   GET /api/driver-profile/available-orders
+ * @access  Private (Delivery Rider)
+ */
+export const getAvailableOrders = asyncHandler(async (req, res) => {
+  // Get orders that are ready for pickup and not yet assigned to a driver
+  const orders = await Order.find({
+    status: { $in: ["confirmed", "ready_for_pickup"] },
+    riderId: null, // Not yet assigned to a driver
+  })
+    .populate("storeId", "name address location phone")
+    .populate("customerId", "name phone")
+    .sort({ createdAt: -1 })
+    .limit(20);
+
+  res.json({
+    success: true,
+    data: {
+      orders,
+      count: orders.length,
+    },
+  });
+});
+
+/**
+ * @desc    Get driver's assigned/active orders
+ * @route   GET /api/driver-profile/my-orders
+ * @access  Private (Delivery Rider)
+ */
+export const getDriverOrders = asyncHandler(async (req, res) => {
+  const { status } = req.query;
+
+  const query = { riderId: req.user.id };
+
+  if (status) {
+    query.status = status;
+  } else {
+    // Get active orders by default
+    query.status = { $in: ["picked_up", "on_the_way", "ready_for_pickup"] };
+  }
+
+  const orders = await Order.find(query)
+    .populate("storeId", "name address location phone")
+    .populate("customerId", "name phone")
+    .sort({ createdAt: -1 });
+
+  res.json({
+    success: true,
+    data: {
+      orders,
+      count: orders.length,
+    },
+  });
+});
+
+/**
+ * @desc    Get driver's earnings (today, this week, total)
+ * @route   GET /api/driver-profile/earnings
+ * @access  Private (Delivery Rider)
+ */
+export const getDriverEarnings = asyncHandler(async (req, res) => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const thisWeekStart = new Date();
+  thisWeekStart.setDate(today.getDate() - today.getDay());
+  thisWeekStart.setHours(0, 0, 0, 0);
+
+  const thisMonthStart = new Date();
+  thisMonthStart.setDate(1);
+  thisMonthStart.setHours(0, 0, 0, 0);
+
+  // Get today's earnings
+  const todayOrders = await Order.find({
+    riderId: req.user.id,
+    status: "delivered",
+    actualDeliveryTime: { $gte: today },
+  });
+
+  const todayEarnings = todayOrders.reduce((sum, order) => {
+    // Driver gets delivery fee + tip
+    return sum + (order.deliveryFee || 0) + (order.tip || 0);
+  }, 0);
+
+  const todayTips = todayOrders.reduce(
+    (sum, order) => sum + (order.tip || 0),
+    0,
+  );
+
+  // Get this week's earnings
+  const weekOrders = await Order.find({
+    riderId: req.user.id,
+    status: "delivered",
+    actualDeliveryTime: { $gte: thisWeekStart },
+  });
+
+  const weekEarnings = weekOrders.reduce((sum, order) => {
+    return sum + (order.deliveryFee || 0) + (order.tip || 0);
+  }, 0);
+
+  // Get this month's earnings
+  const monthOrders = await Order.find({
+    riderId: req.user.id,
+    status: "delivered",
+    actualDeliveryTime: { $gte: thisMonthStart },
+  });
+
+  const monthEarnings = monthOrders.reduce((sum, order) => {
+    return sum + (order.deliveryFee || 0) + (order.tip || 0);
+  }, 0);
+
+  // Get profile for total earnings
+  const profile = await DeliveryRiderProfile.findOne({ userId: req.user.id });
+
+  res.json({
+    success: true,
+    data: {
+      totalEarnings: profile?.stats?.totalEarnings || 0,
+      totalTips: profile?.stats?.totalTips || 0,
+      totalDeliveryFees:
+        (profile?.stats?.totalEarnings || 0) - (profile?.stats?.totalTips || 0),
+      todayEarnings,
+      weeklyEarnings: weekEarnings,
+      monthlyEarnings: monthEarnings,
+      totalWithdrawn: 0, // TODO: Implement withdrawals tracking
+      today: {
+        earnings: todayEarnings,
+        tips: todayTips,
+        deliveries: todayOrders.length,
+      },
+      week: {
+        earnings: weekEarnings,
+        deliveries: weekOrders.length,
+      },
+      month: {
+        earnings: monthEarnings,
+        deliveries: monthOrders.length,
+      },
+      total: {
+        earnings: profile?.stats?.totalEarnings || 0,
+        tips: profile?.stats?.totalTips || 0,
+        deliveries: profile?.stats?.completedDeliveries || 0,
+      },
+    },
+  });
+});
+
+/**
+ * @desc    Get driver's recent transactions
+ * @route   GET /api/driver-profile/transactions
+ * @access  Private (Delivery Rider)
+ */
+export const getDriverTransactions = asyncHandler(async (req, res) => {
+  const { limit = 10 } = req.query;
+
+  const orders = await Order.find({
+    riderId: req.user.id,
+    status: "delivered",
+  })
+    .populate("storeId", "name")
+    .sort({ actualDeliveryTime: -1 })
+    .limit(parseInt(limit));
+
+  const transactions = orders.map((order) => ({
+    _id: order._id,
+    type: "earning",
+    amount: (order.deliveryFee || 0) + (order.tip || 0),
+    description: `Delivery - ${order.orderNumber}`,
+    note: `Delivery from ${order.storeId?.name || "Store"}`,
+    status: "Success",
+    createdAt: order.actualDeliveryTime || order.updatedAt,
+    orderNumber: order.orderNumber,
+    storeName: order.storeId?.name,
+    deliveryFee: order.deliveryFee || 0,
+    tip: order.tip || 0,
+    items: order.items?.length || 0,
+  }));
+
+  res.json({
+    success: true,
+    data: transactions,
+  });
+});
+
+/**
+ * @desc    Get order details for driver
+ * @route   GET /api/driver-profile/orders/:orderId
+ * @access  Private (Delivery Rider)
+ */
+export const getDriverOrderDetail = asyncHandler(async (req, res) => {
+  const { orderId } = req.params;
+
+  // Drivers can view any order (needed for accepting orders)
+  const order = await Order.findById(orderId)
+    .populate("items.productId")
+    .populate("storeId")
+    .populate("customerId", "name phone")
+    .populate("riderId", "name phone");
+
+  if (!order) {
+    return res.status(404).json({
+      success: false,
+      message: "Order not found",
+    });
+  }
+
+  res.json({
+    success: true,
+    data: order,
   });
 });

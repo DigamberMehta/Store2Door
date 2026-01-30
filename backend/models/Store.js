@@ -160,6 +160,13 @@ const storeStatsSchema = new mongoose.Schema({
     type: Number,
     default: 0,
     min: 0,
+    // Total value of orders (includes platform markup)
+  },
+  storeEarnings: {
+    type: Number,
+    default: 0,
+    min: 0,
+    // Amount store receives (base product prices without markup)
   },
   averageRating: {
     type: Number,

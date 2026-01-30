@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import Order from "../../models/Order.js";
+import { emitToOrder, broadcastToDrivers } from "../../config/socket.js";
 
 // Get all orders for store manager
 export const getStoreOrders = async (req, res) => {
@@ -162,12 +163,7 @@ export const updateOrderStatus = async (req, res) => {
     // Update status
     order.status = status;
 
-    // Add to tracking history
-    order.trackingHistory.push({
-      status,
-      updatedAt: new Date(),
-      notes: notes || `Order ${status}`,
-    });
+    // Note: trackingHistory is automatically updated by pre-save middleware in Order model
 
     // Handle cancellation
     if (status === "cancelled") {
@@ -177,6 +173,32 @@ export const updateOrderStatus = async (req, res) => {
     }
 
     await order.save();
+
+    // Emit socket event for real-time update
+    console.log(
+      `[Store Controller] Emitting status change for order ${orderId}: ${status}`,
+    );
+    emitToOrder(orderId, "order:status-changed", {
+      orderId,
+      status,
+      trackingHistory: order.trackingHistory,
+      timestamp: new Date().toISOString(),
+    });
+
+    // If order is now available for drivers (confirmed, preparing, ready_for_pickup), broadcast to all drivers
+    if (["confirmed", "preparing", "ready_for_pickup"].includes(status)) {
+      console.log(
+        `[Store Controller] Broadcasting new available order to all drivers`,
+      );
+      broadcastToDrivers("order:new-available", {
+        orderId,
+        status,
+        storeId: order.storeId,
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    console.log(`[Store Controller] Socket event emitted successfully`);
 
     res.json({
       success: true,

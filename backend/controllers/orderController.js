@@ -5,6 +5,10 @@ import Coupon from "../models/Coupon.js";
 import Product from "../models/Product.js";
 import DeliverySettings from "../models/DeliverySettings.js";
 import PlatformSettings from "../models/PlatformSettings.js";
+import DeliveryRiderProfile from "../models/DeliveryRiderProfile.js";
+import Store from "../models/Store.js";
+import PlatformFinancials from "../models/PlatformFinancials.js";
+import { emitToOrder, getIO } from "../config/socket.js";
 
 /**
  * Calculate distance between two coordinates (Haversine formula)
@@ -302,6 +306,24 @@ export const createOrder = async (req, res) => {
     // Generate unique order number
     const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
 
+    // Transform deliveryAddress to extract coordinates from GeoJSON format
+    const transformedDeliveryAddress = {
+      street: deliveryAddress.street,
+      city: deliveryAddress.city,
+      province: deliveryAddress.province,
+      postalCode: deliveryAddress.postalCode,
+      country: deliveryAddress.country || "US",
+      latitude:
+        deliveryAddress.location?.coordinates?.[1] ||
+        deliveryAddress.latitude ||
+        0,
+      longitude:
+        deliveryAddress.location?.coordinates?.[0] ||
+        deliveryAddress.longitude ||
+        0,
+      instructions: deliveryAddress.instructions || "",
+    };
+
     // Create order with BACKEND-CALCULATED values only
     // Order starts as 'pending' until payment is verified
     const order = new Order({
@@ -314,7 +336,7 @@ export const createOrder = async (req, res) => {
       tip: roundedTip,
       discount: calculatedDiscount,
       total: calculatedTotal,
-      deliveryAddress,
+      deliveryAddress: transformedDeliveryAddress,
       appliedCoupon: appliedCouponData,
       paymentMethod: paymentMethod || "yoco_card",
       paymentId,
@@ -371,6 +393,27 @@ export const createOrder = async (req, res) => {
         },
       },
     );
+
+    // Emit socket event to notify store of new order
+    try {
+      const io = getIO();
+      const populatedOrder = await Order.findById(order._id)
+        .populate("customerId", "name email phone")
+        .populate("items.productId", "name images price")
+        .populate("storeId", "name location");
+
+      io.emit("order:new-for-store", {
+        storeId: storeId.toString(),
+        order: populatedOrder,
+      });
+
+      console.log(
+        `[Socket] New order ${order.orderNumber} emitted to store ${storeId}`,
+      );
+    } catch (socketError) {
+      console.error("Error emitting new order event:", socketError);
+      // Don't fail the order creation if socket fails
+    }
 
     res.status(201).json({
       success: true,
@@ -438,10 +481,8 @@ export const getOrder = async (req, res) => {
     const userId = req.user.id;
 
     const order = await Order.findOne({ _id: orderId, customerId: userId })
-      .populate("items.productId")
-      .populate("storeId")
-      .populate("paymentId")
-      .populate("riderId");
+      .populate("storeId", "name address")
+      .populate("riderId", "name phone");
 
     if (!order) {
       return res.status(404).json({
@@ -452,7 +493,7 @@ export const getOrder = async (req, res) => {
 
     res.json({
       success: true,
-      order,
+      data: order,
     });
   } catch (error) {
     console.error("Get order error:", error);
@@ -573,6 +614,66 @@ export const trackOrder = async (req, res) => {
 };
 
 /**
+ * Accept order (Driver assigns themselves to the order)
+ * @route POST /api/orders/:orderId/accept
+ */
+export const acceptOrder = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const userId = req.user.id;
+
+    const order = await Order.findById(orderId)
+      .populate("storeId", "name address")
+      .populate("customerId", "name email");
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    // Check if order is available for pickup
+    if (order.status !== "ready_for_pickup" && order.status !== "confirmed") {
+      return res.status(400).json({
+        success: false,
+        message: "Order is not available for pickup",
+      });
+    }
+
+    // Check if order is already assigned
+    if (order.riderId) {
+      return res.status(400).json({
+        success: false,
+        message: "Order is already assigned to another driver",
+      });
+    }
+
+    // Assign driver to order (but don't mark as picked up yet)
+    order.riderId = userId;
+    order.status = "assigned"; // Driver accepted, heading to store
+    // status will change to "picked_up" when driver marks it as picked up
+    // Note: trackingHistory is automatically updated by pre-save middleware
+
+    await order.save();
+
+    res.json({
+      success: true,
+      message:
+        "Order accepted successfully. Please go to the store to pick it up.",
+      data: order,
+    });
+  } catch (error) {
+    console.error("Accept order error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to accept order",
+      error: error.message,
+    });
+  }
+};
+
+/**
  * Update order status (Admin/Rider only)
  * @route PATCH /api/orders/:orderId/status
  */
@@ -599,9 +700,115 @@ export const updateOrderStatus = async (req, res) => {
       order.pickedUpAt = new Date();
     } else if (status === "delivered") {
       order.deliveredAt = new Date();
+
+      // Credit driver with delivery fee + tip
+      if (order.riderId) {
+        try {
+          const driverProfile = await DeliveryRiderProfile.findOne({
+            userId: order.riderId,
+          });
+          if (driverProfile) {
+            const earnings = (order.deliveryFee || 0) + (order.tip || 0);
+
+            // Update driver earnings
+            driverProfile.stats.totalEarnings += earnings;
+            driverProfile.stats.totalTips += order.tip || 0;
+            driverProfile.stats.completedDeliveries += 1;
+
+            await driverProfile.save();
+
+            console.log(
+              `[Order Delivered] Credited driver ${order.riderId} with R${earnings.toFixed(2)} (Fee: R${order.deliveryFee}, Tip: R${order.tip || 0})`,
+            );
+          } else {
+            console.warn(
+              `[Order Delivered] Driver profile not found for riderId: ${order.riderId}`,
+            );
+          }
+        } catch (driverError) {
+          console.error(
+            "[Order Delivered] Error crediting driver:",
+            driverError,
+          );
+          // Don't fail the order update if driver credit fails
+        }
+      }
+
+      // Credit store with product earnings
+      if (order.storeId) {
+        try {
+          const store = await Store.findById(order.storeId);
+          if (store) {
+            // Calculate store earnings and platform commission from order items
+            let storeEarnings = 0;
+            let platformCommission = 0;
+
+            order.items.forEach((item) => {
+              // Store gets the base price (unitPrice * quantity)
+              const baseAmount = item.unitPrice * item.quantity;
+              storeEarnings += baseAmount;
+
+              // Platform gets the markup (unitPrice * markupPercentage/100 * quantity)
+              const markup =
+                ((item.unitPrice * (item.markupPercentage || 20)) / 100) *
+                item.quantity;
+              platformCommission += markup;
+            });
+
+            // Update store stats (only store-related data)
+            store.stats.storeEarnings =
+              (store.stats.storeEarnings || 0) + storeEarnings;
+            store.stats.totalRevenue =
+              (store.stats.totalRevenue || 0) + order.subtotal;
+
+            await store.save();
+
+            // Update platform financials
+            try {
+              await PlatformFinancials.recordOrderDelivery({
+                subtotal: order.subtotal,
+                platformCommission,
+                storeEarnings,
+                deliveryFee: order.deliveryFee || 0,
+                tip: order.tip || 0,
+                discount: order.discount || 0,
+              });
+
+              console.log(
+                `[Order Delivered] Store credited: R${storeEarnings.toFixed(2)} | Platform commission: R${platformCommission.toFixed(2)} | Driver: R${((order.deliveryFee || 0) + (order.tip || 0)).toFixed(2)}`,
+              );
+            } catch (financialsError) {
+              console.error(
+                "[Order Delivered] Error updating platform financials:",
+                financialsError,
+              );
+              // Don't fail the order update if financials update fails
+            }
+          } else {
+            console.warn(
+              `[Order Delivered] Store not found for storeId: ${order.storeId}`,
+            );
+          }
+        } catch (storeError) {
+          console.error("[Order Delivered] Error crediting store:", storeError);
+          // Don't fail the order update if store credit fails
+        }
+      }
     } else if (status === "cancelled") {
       order.cancelledAt = new Date();
+
+      // Record cancellation in platform financials
+      try {
+        await PlatformFinancials.recordOrderCancellation();
+      } catch (financialsError) {
+        console.error(
+          "[Order Cancelled] Error updating platform financials:",
+          financialsError,
+        );
+      }
     }
+
+    // Note: trackingHistory is automatically updated by pre-save middleware in Order model
 
     if (notes) {
       order.notes = notes;
@@ -609,10 +816,18 @@ export const updateOrderStatus = async (req, res) => {
 
     await order.save();
 
+    // Emit socket event for real-time update
+    emitToOrder(orderId, "order:status-changed", {
+      orderId,
+      status,
+      trackingHistory: order.trackingHistory,
+      timestamp: new Date().toISOString(),
+    });
+
     res.json({
       success: true,
       message: "Order status updated successfully",
-      order,
+      data: order,
     });
   } catch (error) {
     console.error("Update order status error:", error);

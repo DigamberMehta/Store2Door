@@ -1,4 +1,5 @@
 import express from "express";
+import { createServer } from "http";
 import cors from "cors";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
@@ -14,6 +15,7 @@ import suggestionsRoutes from "./routes/suggestions.js";
 import couponRoutes from "./routes/couponRoutes.js";
 import deliverySettingsRoutes from "./routes/deliverySettingsRoutes.js";
 import platformSettingsRoutes from "./routes/platformSettingsRoutes.js";
+import platformFinancialsRoutes from "./routes/platformFinancialsRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
@@ -21,11 +23,13 @@ import adminRoutes from "./routes/admin/index.js";
 import storeManagerRoutes from "./routes/store/index.js";
 import { errorHandler, notFound } from "./middleware/validation.js";
 import { connectRedis } from "./config/redis.js";
+import { initializeSocket } from "./config/socket.js";
 
 // Load environment variables
 dotenv.config();
 
 const app = express();
+const httpServer = createServer(app);
 const PORT = process.env.PORT || 3000;
 
 // CORS configuration
@@ -34,7 +38,8 @@ app.use(
     origin: [
       "http://localhost:5173", // Frontend customer app
       "http://localhost:5174", // Delivery rider app
-      "http://localhost:5175", // Admin/Store app (future)
+      "http://localhost:5175",
+      "http://localhost:5176", // Admin/Store app (future)
       "https://door2door-one.vercel.app", // Production customer app
       "https://door2door-dashboard.vercel.app", // Production dashboard
       process.env.FRONTEND_URL,
@@ -94,6 +99,7 @@ app.use("/api/suggestions", suggestionsRoutes);
 app.use("/api/coupons", couponRoutes);
 app.use("/api/delivery-settings", deliverySettingsRoutes);
 app.use("/api/platform-settings", platformSettingsRoutes);
+app.use("/api/platform-financials", platformFinancialsRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/reviews", reviewRoutes);
@@ -132,13 +138,18 @@ const startServer = async () => {
     // Initialize Redis (optional)
     await connectRedis();
 
-    app.listen(PORT, () => {
+    // Initialize Socket.IO
+    initializeSocket(httpServer);
+    console.log("Socket.IO initialized");
+
+    httpServer.listen(PORT, () => {
       console.log(`
  Door2Door API Server Running
  Port: ${PORT}
  Environment: ${process.env.NODE_ENV || "development"}
  API Docs: http://localhost:${PORT}/api
  Health Check: http://localhost:${PORT}/api/health
+ WebSocket: Enabled
       `);
     });
   } catch (error) {

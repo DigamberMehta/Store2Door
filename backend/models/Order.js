@@ -143,6 +143,7 @@ const trackingInfoSchema = new mongoose.Schema({
       "confirmed",
       "preparing",
       "ready_for_pickup",
+      "assigned",
       "picked_up",
       "on_the_way",
       "delivered",
@@ -314,6 +315,7 @@ const orderSchema = new mongoose.Schema(
         "confirmed",
         "preparing",
         "ready_for_pickup",
+        "assigned", // Driver accepted, heading to store
         "picked_up",
         "on_the_way",
         "delivered",
@@ -323,6 +325,13 @@ const orderSchema = new mongoose.Schema(
       index: true,
     },
     trackingHistory: [trackingInfoSchema],
+
+    // Driver's current location (for real-time tracking)
+    driverLocation: {
+      latitude: Number,
+      longitude: Number,
+      updatedAt: Date,
+    },
 
     // Payment reference
     paymentId: {
@@ -417,11 +426,15 @@ orderSchema.pre("save", function (next) {
 
   // Update tracking history when status changes
   if (this.isModified("status")) {
-    this.trackingHistory.push({
-      status: this.status,
-      updatedAt: new Date(),
-      notes: `Order status updated to ${this.status}`,
-    });
+    // Only add if this status is not already the last entry (prevent duplicates)
+    const lastEntry = this.trackingHistory[this.trackingHistory.length - 1];
+    if (!lastEntry || lastEntry.status !== this.status) {
+      this.trackingHistory.push({
+        status: this.status,
+        updatedAt: new Date(),
+        notes: `Order status updated to ${this.status}`,
+      });
+    }
   }
 
   next();

@@ -1,4 +1,4 @@
-import express from 'express';
+import express from "express";
 import {
   getDriverProfile,
   updateDriverProfile,
@@ -14,9 +14,14 @@ import {
   getBankAccount,
   updateBankAccount,
   toggleOnlineStatus,
-} from '../controllers/driverProfileController.js';
-import { authenticate, authorize } from '../middleware/auth.js';
-import { uploadSingle } from '../middleware/upload.js';
+  getAvailableOrders,
+  getDriverOrders,
+  getDriverEarnings,
+  getDriverTransactions,
+  getDriverOrderDetail,
+} from "../controllers/driverProfileController.js";
+import { authenticate, authorize } from "../middleware/auth.js";
+import { uploadSingle } from "../middleware/upload.js";
 
 const router = express.Router();
 
@@ -24,35 +29,52 @@ const router = express.Router();
 router.use(authenticate);
 
 // Driver profile routes
-router.get('/', getDriverProfile);
-router.put('/', updateDriverProfile);
+router.get("/", getDriverProfile);
+router.put("/", updateDriverProfile);
 
 // Vehicle information routes
-router.put('/vehicle', updateVehicleInfo);
+router.put("/vehicle", updateVehicleInfo);
 
 // Documents routes (Driver)
-router.get('/documents/status', getDocumentsStatus);
-router.put('/documents/:documentType', uploadSingle('file'), uploadDocument);
+router.get("/documents/status", getDocumentsStatus);
+router.put("/documents/:documentType", uploadSingle("file"), uploadDocument);
 
 // Documents admin routes (Admin only)
-router.put('/documents/:documentType/verify', authorize('admin'), verifyDocument);
-router.put('/documents/:documentType/reject', authorize('admin'), rejectDocument);
+router.put(
+  "/documents/:documentType/verify",
+  authorize("admin"),
+  verifyDocument,
+);
+router.put(
+  "/documents/:documentType/reject",
+  authorize("admin"),
+  rejectDocument,
+);
 
 // Availability routes
-router.put('/availability', updateAvailability);
-router.put('/status', toggleOnlineStatus);
+router.put("/availability", updateAvailability);
+router.put("/status", toggleOnlineStatus);
 
 // Location update route
-router.put('/location', updateLocation);
+router.put("/location", updateLocation);
 
 // Work areas route
-router.put('/work-areas', updateWorkAreas);
+router.put("/work-areas", updateWorkAreas);
 
 // Statistics route
-router.get('/stats', getDriverStats);
+router.get("/stats", getDriverStats);
 
 // Bank account routes
-router.get('/bank-account', getBankAccount);
-router.put('/bank-account', updateBankAccount);
+router.get("/bank-account", getBankAccount);
+router.put("/bank-account", updateBankAccount);
+
+// Order routes
+router.get("/available-orders", getAvailableOrders);
+router.get("/my-orders", getDriverOrders);
+router.get("/orders/:orderId", getDriverOrderDetail);
+
+// Earnings and transactions
+router.get("/earnings", getDriverEarnings);
+router.get("/transactions", getDriverTransactions);
 
 export default router;
