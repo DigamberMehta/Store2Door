@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 
-const FormActions = ({ loading }) => {
+const FormActions = ({ loading, isEdit = false }) => {
   const navigate = useNavigate();
 
   return (
@@ -19,7 +19,7 @@ const FormActions = ({ loading }) => {
           disabled={loading}
           className="px-6 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 disabled:from-gray-400 disabled:to-gray-400 font-medium shadow-lg shadow-green-500/30"
         >
-          {loading ? "Creating..." : "Create Product"}
+          {loading ? (isEdit ? "Updating..." : "Creating...") : (isEdit ? "Update Product" : "Create Product")}
         </button>
       </div>
     </div>
@@ -27,3 +27,4 @@ const FormActions = ({ loading }) => {
 };
 
 export default FormActions;
+

@@ -3,26 +3,23 @@ const DietaryAttributesSection = ({ formData, handleInputChange }) => {
     {
       name: "isVegetarian",
       label: "Vegetarian",
-      icon: "🥬",
       desc: "No meat or fish",
     },
-    { name: "isVegan", label: "Vegan", icon: "🌱", desc: "No animal products" },
+    { name: "isVegan", label: "Vegan", desc: "No animal products" },
     {
       name: "isGlutenFree",
       label: "Gluten Free",
-      icon: "🌾",
       desc: "No gluten",
     },
     {
       name: "isOrganic",
       label: "Organic",
-      icon: "🍃",
       desc: "Certified organic",
     },
-    { name: "isHalal", label: "Halal", icon: "☪️", desc: "Halal certified" },
-    { name: "isKosher", label: "Kosher", icon: "✡️", desc: "Kosher certified" },
-    { name: "isDairyFree", label: "Dairy Free", icon: "🥛", desc: "No dairy" },
-    { name: "isNutFree", label: "Nut Free", icon: "🥜", desc: "No nuts" },
+    { name: "isHalal", label: "Halal", desc: "Halal certified" },
+    { name: "isKosher", label: "Kosher", desc: "Kosher certified" },
+    { name: "isDairyFree", label: "Dairy Free", desc: "No dairy" },
+    { name: "isNutFree", label: "Nut Free", desc: "No nuts" },
   ];
 
   return (
@@ -54,7 +51,6 @@ const DietaryAttributesSection = ({ formData, handleInputChange }) => {
             />
             <div className="flex-1">
               <div className="flex items-center gap-2">
-                <span className="text-base">{attr.icon}</span>
                 <span className="text-sm font-semibold text-gray-900">
                   {attr.label}
                 </span>

@@ -106,7 +106,23 @@ const NutritionSection = ({ nutrition, handleNestedChange }) => {
             <h3 className="text-sm font-semibold text-gray-700 mb-3">
               Additional Details (Optional)
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1 text-gray-700">
+                  Fiber (g)
+                </label>
+                <input
+                  type="number"
+                  value={nutrition.fiber}
+                  onChange={(e) =>
+                    handleNestedChange("nutrition", "fiber", e.target.value)
+                  }
+                  min="0"
+                  step="0.1"
+                  placeholder="e.g., 3.0"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                />
+              </div>
               <div>
                 <label className="block text-sm font-medium mb-1 text-gray-700">
                   Sugar (g)
@@ -120,6 +136,22 @@ const NutritionSection = ({ nutrition, handleNestedChange }) => {
                   min="0"
                   step="0.1"
                   placeholder="e.g., 5.0"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1 text-gray-700">
+                  Sodium (mg)
+                </label>
+                <input
+                  type="number"
+                  value={nutrition.sodium}
+                  onChange={(e) =>
+                    handleNestedChange("nutrition", "sodium", e.target.value)
+                  }
+                  min="0"
+                  step="0.1"
+                  placeholder="e.g., 150"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 />
               </div>
@@ -141,6 +173,12 @@ const NutritionSection = ({ nutrition, handleNestedChange }) => {
                   placeholder="e.g., 1 cup (240ml)"
                 />
               </div>
+            </div>
+          </div>
+
+          {/* Serving info */}
+          <div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1 text-gray-700">
                   Servings Per Container
