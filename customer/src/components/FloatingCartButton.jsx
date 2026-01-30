@@ -3,15 +3,23 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import cartAPI from "../services/api/cart.api";
 import { formatPrice } from "../utils/formatPrice";
+import { useAuth } from "../context/AuthContext";
 
 const FloatingCartButton = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { isAuthenticated } = useAuth();
   const [cart, setCart] = useState(null);
   const [isVisible, setIsVisible] = useState(false);
   const [animate, setAnimate] = useState(false);
 
   const fetchCart = async () => {
+    // Don't fetch cart if user is not authenticated
+    if (!isAuthenticated) {
+      setIsVisible(false);
+      return;
+    }
+
     try {
       const response = await cartAPI.getCart();
       const cartData = response?.data || response; // Handle both response formats
@@ -47,7 +55,7 @@ const FloatingCartButton = () => {
     return () => {
       window.removeEventListener("cartUpdated", handleCartUpdate);
     };
-  }, []);
+  }, [isAuthenticated]);
 
   const itemCount = cart?.items?.length || 0;
   const totalItems =

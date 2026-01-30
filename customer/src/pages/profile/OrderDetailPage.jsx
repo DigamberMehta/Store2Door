@@ -326,7 +326,7 @@ const OrderDetailPage = () => {
         {/* Track Order Button */}
         {order.status !== "delivered" && order.status !== "cancelled" && (
           <button
-            onClick={() => navigate(`/profile/orders/${order._id}/track`)}
+            onClick={() => navigate(`/orders/${order._id}/track`)}
             className="w-full px-4 py-3 bg-[rgb(49,134,22)] text-white text-sm font-medium rounded-xl active:bg-[rgb(49,134,22)]/80 transition-all"
           >
             Track Order

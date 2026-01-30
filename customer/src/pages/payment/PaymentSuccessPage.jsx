@@ -141,7 +141,7 @@ const PaymentSuccessPage = () => {
             <div className="space-y-3">
               <button
                 onClick={() =>
-                  navigate(`/orders/${orderId || payment?.orderId?._id}`)
+                  navigate(`/orders/${orderId || payment?.orderId?._id}/track`)
                 }
                 className="w-full bg-[rgb(49,134,22)] hover:bg-[rgb(42,118,19)] text-white py-4 rounded-xl font-bold text-sm tracking-wide transition-all transform active:scale-[0.98] shadow-lg shadow-[rgb(49,134,22)]/25 flex items-center justify-center gap-2 group"
               >

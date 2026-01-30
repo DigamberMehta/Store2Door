@@ -242,7 +242,7 @@ const OrdersPage = () => {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      navigate(`/profile/orders/${order._id}/track`);
+                      navigate(`/orders/${order._id}/track`);
                     }}
                     className="w-full px-4 py-2 bg-[rgb(49,134,22)] text-white text-xs font-medium rounded-lg active:bg-[rgb(49,134,22)]/80 transition-all"
                   >

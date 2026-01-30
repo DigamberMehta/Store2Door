@@ -34,6 +34,12 @@ const StoreDetailPage = () => {
 
   // Fetch cart items
   const fetchCartItems = async () => {
+    // Don't fetch cart if user is not authenticated
+    if (!isAuthenticated) {
+      setCartItems(new Map());
+      return;
+    }
+
     try {
       const response = await cartAPI.getCart();
       const cart = response?.data || response;
@@ -59,7 +65,7 @@ const StoreDetailPage = () => {
     return () => {
       window.removeEventListener("cartUpdated", handleCartUpdate);
     };
-  }, []);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     const fetchStoreData = async () => {

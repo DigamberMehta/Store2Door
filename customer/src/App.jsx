@@ -21,6 +21,7 @@ import ProfileDetailsPage from "./pages/profile/ProfileDetailsPage";
 import AddressPage from "./pages/profile/AddressPage";
 import OrdersPage from "./pages/profile/OrdersPage";
 import OrderDetailPage from "./pages/profile/OrderDetailPage";
+import OrderTrackingPage from "./pages/orders/OrderTrackingPage";
 import PaymentPage from "./pages/payment/PaymentPage";
 import PaymentSuccessPage from "./pages/payment/PaymentSuccessPage";
 import PaymentFailurePage from "./pages/payment/PaymentFailurePage";
@@ -91,11 +92,32 @@ function AppContent() {
           path="/stores"
           element={<FilterPage onStoreClick={handleStoreClick} />}
         />
-        <Route path="/checkout" element={<CheckoutPage />} />
-        <Route path="/payment" element={<PaymentPage />} />
+        <Route
+          path="/checkout"
+          element={
+            <ProtectedRoute>
+              <CheckoutPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/payment"
+          element={
+            <ProtectedRoute>
+              <PaymentPage />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/payment/success" element={<PaymentSuccessPage />} />
         <Route path="/payment/failure" element={<PaymentFailurePage />} />
-        <Route path="/profile" element={<ProfilePage />} />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <ProfilePage />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/profile/details"
           element={
@@ -125,6 +147,22 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <OrderDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/orders/:orderId/track"
+          element={
+            <ProtectedRoute>
+              <OrderTrackingPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile/orders/:orderId/track"
+          element={
+            <ProtectedRoute>
+              <OrderTrackingPage />
             </ProtectedRoute>
           }
         />
