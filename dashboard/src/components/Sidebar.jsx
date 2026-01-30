@@ -2,6 +2,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Package,
+  PackagePlus,
   ShoppingCart,
   DollarSign,
   Star,
@@ -17,7 +18,8 @@ const Sidebar = ({ user, onLogout, type = "store" }) => {
 
   const storeNavItems = [
     { path: "/store/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-    { path: "/store/products", icon: Package, label: "Products" },
+    { path: "/store/products", icon: Package, label: "View Product" },
+    { path: "/store/products/add", icon: PackagePlus, label: "Add Product" },
     { path: "/store/orders", icon: ShoppingCart, label: "Orders" },
     { path: "/store/finance", icon: DollarSign, label: "Finance" },
     { path: "/store/reviews", icon: Star, label: "Reviews" },
