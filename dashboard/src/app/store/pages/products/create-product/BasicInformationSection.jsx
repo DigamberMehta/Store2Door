@@ -74,7 +74,7 @@ const BasicInformationSection = ({
             <option value="">Select Category</option>
             {categories.map((cat) => (
               <option key={cat._id} value={cat._id}>
-                {cat.icon} {cat.name}
+                {cat.name}
               </option>
             ))}
           </select>

@@ -57,17 +57,9 @@ class SuggestionsService {
       // Only show corrections if there are NO results (not just low results)
       const hasNoResults = suggestions.length === 0;
 
-      console.log(
-        `🔍 Query: "${query}" | Results: ${suggestions.length} | HasNoResults: ${hasNoResults}`,
-      );
-
       let corrections = [];
       if (includeCorrections && hasNoResults) {
         corrections = await this.getSpellingCorrections(query, 3, userLat, userLon);
-        console.log(
-          `💡 Generated ${corrections.length} spelling corrections:`,
-          corrections.map((c) => c.suggestion),
-        );
       }
 
       // Group suggestions by type
@@ -76,9 +68,6 @@ class SuggestionsService {
       // Add corrections if any
       if (corrections.length > 0) {
         grouped.corrections = corrections;
-        console.log(`✅ Added corrections to response:`, grouped.corrections);
-      } else {
-        console.log(`❌ No corrections to add`);
       }
 
       // Cache the results
@@ -116,10 +105,6 @@ class SuggestionsService {
       const AUTOCOMPLETE_THRESHOLD = 3;
 
       if (autocompleteResults.length < AUTOCOMPLETE_THRESHOLD) {
-        console.log(
-          `⚠️ Autocomplete returned ${autocompleteResults.length} results for "${query}". Triggering fuzzy fallback...`,
-        );
-
         // Run aggressive fuzzy search
         const fuzzyResults = await this.aggressiveFuzzySearch(query, {
           type,
@@ -247,8 +232,6 @@ class SuggestionsService {
         const deliverySettings = await DeliverySettings.findOne();
         const maxDistance = deliverySettings?.maxDeliveryDistance || 7;
 
-        console.log(`🛍️ Product search - Found ${products.length} products, userLat: ${userLat}, userLon: ${userLon}, maxDistance: ${maxDistance}km`);
-
         // Calculate distances for products based on their store location and filter by max distance
         const productsWithDistance = products.map(p => {
           const productData = {
@@ -276,9 +259,6 @@ class SuggestionsService {
               Math.sin(dLon/2) * Math.sin(dLon/2);
             const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
             productData.distance = Math.round(c * R * 10) / 10; // Round to 1 decimal
-            console.log(`  📦 ${p.name} (${p.storeName}): ${productData.distance}km`);
-          } else {
-            console.log(`  ⚠️ ${p.name}: No distance calculated (missing store coords)`);
           }
 
           return productData;
@@ -288,14 +268,9 @@ class SuggestionsService {
         const filteredProducts = userLat && userLon
           ? productsWithDistance.filter(p => {
               const included = !p.distance || p.distance <= maxDistance;
-              if (!included && p.distance) {
-                console.log(`  ❌ ${p.name} (${p.storeName}): Filtered out (${p.distance}km > ${maxDistance}km)`);
-              }
               return included;
             })
           : productsWithDistance;
-
-        console.log(`✅ Returning ${filteredProducts.length} products within ${maxDistance}km`);
 
         // Sort by distance if available, otherwise keep search score order
         const sortedProducts = userLat && userLon 
@@ -364,8 +339,6 @@ class SuggestionsService {
         const deliverySettings = await DeliverySettings.findOne();
         const maxDistance = deliverySettings?.maxDeliveryDistance || 7;
 
-        console.log(`📍 User location: (${userLat}, ${userLon}) | Max distance: ${maxDistance}km`);
-
         // Calculate distances if user location provided
         const storesWithDistance = stores.map(s => {
           const storeData = {
@@ -390,9 +363,6 @@ class SuggestionsService {
               Math.sin(dLon/2) * Math.sin(dLon/2);
             const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
             storeData.distance = Math.round(c * R * 10) / 10; // Round to 1 decimal
-            console.log(`  📏 ${s.name}: ${storeData.distance}km (Store: ${s.address.latitude}, ${s.address.longitude})`);
-          } else {
-            console.log(`  ⚠️ ${s.name}: No distance calculated (missing coords)`);
           }
 
           return storeData;
@@ -402,14 +372,9 @@ class SuggestionsService {
         const filteredStores = userLat && userLon
           ? storesWithDistance.filter(s => {
               const included = !s.distance || s.distance <= maxDistance;
-              if (!included && s.distance) {
-                console.log(`  ❌ ${s.name}: Filtered out (${s.distance}km > ${maxDistance}km)`);
-              }
               return included;
             })
           : storesWithDistance;
-
-        console.log(`✅ Returning ${filteredStores.length} stores within ${maxDistance}km`);
 
         // Sort by distance if available, otherwise keep search score order
         const sortedStores = userLat && userLon 
@@ -572,8 +537,6 @@ class SuggestionsService {
         const deliverySettings = await DeliverySettings.findOne();
         const maxDistance = deliverySettings?.maxDeliveryDistance || 7;
 
-        console.log(`🔍 Fuzzy product search - Found ${sortedProducts.length} products, userLat: ${userLat}, userLon: ${userLon}, maxDistance: ${maxDistance}km`);
-
         // Calculate distances and filter by max distance
         const productsWithDistance = sortedProducts.map(p => {
           const productData = {
@@ -601,9 +564,6 @@ class SuggestionsService {
               Math.sin(dLon/2) * Math.sin(dLon/2);
             const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
             productData.distance = Math.round(c * R * 10) / 10; // Round to 1 decimal
-            console.log(`  📦 Fuzzy: ${p.name} (${p.storeId.name}): ${productData.distance}km`);
-          } else {
-            console.log(`  ⚠️ Fuzzy: ${p.name}: No coords for store`);
           }
 
           return productData;
@@ -613,14 +573,10 @@ class SuggestionsService {
         const filteredProducts = userLat && userLon
           ? productsWithDistance.filter(p => {
               const pass = !p.distance || p.distance <= maxDistance;
-              if (!pass && p.distance) {
-                console.log(`  ❌ Fuzzy filtered: ${p.name} (${p.storeName}) - ${p.distance}km > ${maxDistance}km`);
-              }
               return pass;
             })
           : productsWithDistance;
 
-        console.log(`✅ Fuzzy search returning ${filteredProducts.length} products after filtering`);
         results.push(...filteredProducts);
       }
 
@@ -705,8 +661,6 @@ class SuggestionsService {
         const deliverySettings = await DeliverySettings.findOne();
         const maxDistance = deliverySettings?.maxDeliveryDistance || 7;
 
-        console.log(`🔍 Fuzzy search - Found ${sortedStores.length} stores, userLat: ${userLat}, userLon: ${userLon}, maxDistance: ${maxDistance}km`);
-
         // Calculate distances and filter by max distance
         const storesWithDistance = sortedStores.map(s => {
           const storeData = {
@@ -732,9 +686,6 @@ class SuggestionsService {
               Math.sin(dLon/2) * Math.sin(dLon/2);
             const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
             storeData.distance = Math.round(c * R * 10) / 10; // Round to 1 decimal
-            console.log(`  📏 Fuzzy: ${s.name}: ${storeData.distance}km (Store: ${s.address.latitude}, ${s.address.longitude})`);
-          } else {
-            console.log(`  ⚠️ Fuzzy: ${s.name}: No coords - address:`, !!s.address, 'lat:', s.address?.latitude, 'lon:', s.address?.longitude);
           }
 
           return storeData;
@@ -744,14 +695,10 @@ class SuggestionsService {
         const filteredStores = userLat && userLon
           ? storesWithDistance.filter(s => {
               const pass = !s.distance || s.distance <= maxDistance;
-              if (!pass && s.distance) {
-                console.log(`  ❌ Fuzzy filtered: ${s.name} (${s.distance}km > ${maxDistance}km)`);
-              }
               return pass;
             })
           : storesWithDistance;
 
-        console.log(`✅ Fuzzy search returning ${filteredStores.length} stores after filtering`);
         results.push(...filteredStores);
       }
 
@@ -823,8 +770,6 @@ class SuggestionsService {
    * Build and cache the spelling dictionary
    */
   static async buildSpellingDictionary() {
-    console.log("🔄 Building spelling dictionary...");
-
     const [products, categories] = await Promise.all([
       Product.find({ isActive: true })
         .sort({ popularity: -1 })
@@ -848,17 +793,12 @@ class SuggestionsService {
     });
 
     const terms = Array.from(dictionary);
-    console.log(
-      `✅ Dictionary built: ${products.length} products, ${categories.length} categories, ${terms.length} total terms`,
-    );
 
     return terms;
   }
 
   static async getSpellingCorrections(query, limit = 3, userLat = null, userLon = null) {
     try {
-      console.log(`🔤 Getting spelling corrections for: "${query}"`);
-
       // Check if dictionary needs refresh (every hour)
       const now = Date.now();
       if (
@@ -867,30 +807,16 @@ class SuggestionsService {
       ) {
         SPELLING_DICTIONARY = await this.buildSpellingDictionary();
         DICTIONARY_CACHE_TIME = now;
-        console.log(
-          `📦 Dictionary cached until ${new Date(DICTIONARY_CACHE_TIME + DICTIONARY_TTL).toLocaleTimeString()}`,
-        );
-      } else {
-        console.log(
-          `♻️ Using cached dictionary (${SPELLING_DICTIONARY.length} terms)`,
-        );
       }
 
       // Use cached dictionary
       const terms = SPELLING_DICTIONARY;
-
-      console.log(`🎯 Total dictionary terms: ${terms.length}`);
 
       // Find closest matches using fuzzy search with stricter threshold
       const matches = fuzzysort.go(query, terms, {
         threshold: -1000, // Much stricter - only show close matches
         limit: limit * 3, // Get more candidates to filter
       });
-
-      console.log(
-        `🎲 Fuzzy matches found: ${matches.length}`,
-        matches.map((m) => `${m.target} (${m.score})`),
-      );
 
       // Filter out suggestions that are too different from query
       const relevantMatches = matches.filter(match => {
@@ -905,17 +831,10 @@ class SuggestionsService {
         return startsWithSame && isSimilarLength;
       });
 
-      console.log(
-        `🎯 Relevant matches after filtering: ${relevantMatches.length}`,
-        relevantMatches.map((m) => m.target),
-      );
-
       // If user location provided, filter corrections by distance
       if (userLat && userLon) {
         const deliverySettings = await DeliverySettings.findOne();
         const maxDistance = deliverySettings?.maxDeliveryDistance || 7;
-
-        console.log(`🔍 Filtering corrections by ${maxDistance}km radius...`);
 
         const validCorrections = [];
 
@@ -933,9 +852,6 @@ class SuggestionsService {
               suggestion: match.target,
               score: match.score,
             });
-            console.log(`  ✅ "${match.target}" - has nearby results`);
-          } else {
-            console.log(`  ❌ "${match.target}" - no results within ${maxDistance}km`);
           }
 
           // Stop when we have enough valid corrections
@@ -1205,7 +1121,6 @@ class SuggestionsService {
   static async clearCache(pattern = "suggestions:*") {
     try {
       await cacheHelpers.delPattern(pattern);
-      console.log(`✅ Cleared cache with pattern: ${pattern}`);
     } catch (error) {
       console.error("Error clearing cache:", error);
     }

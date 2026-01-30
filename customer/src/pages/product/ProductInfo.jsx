@@ -80,16 +80,6 @@ const ProductInfo = ({
             <span className="text-2xl font-black text-white">
               R{currentPrice}
             </span>
-            {originalPrice && originalPrice > currentPrice && (
-              <>
-                <span className="text-sm text-white/40 line-through font-medium">
-                  R{originalPrice}
-                </span>
-                <span className="bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border border-green-500/30">
-                  {Math.round((1 - currentPrice / originalPrice) * 100)}% OFF
-                </span>
-              </>
-            )}
           </div>
         </div>
 

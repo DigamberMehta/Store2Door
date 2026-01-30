@@ -3,6 +3,7 @@ import Category from "../models/Category.js";
 import { asyncHandler } from "../middleware/validation.js";
 import { expandQueryWithSynonyms } from "../config/synonyms.js";
 import fuzzysort from "fuzzysort";
+import { uploadToCloudinary } from "../config/cloudinary.js";
 
 /**
  * @desc Get all products with filters
@@ -451,15 +452,57 @@ export const createProduct = asyncHandler(async (req, res) => {
     });
   }
 
+  // Parse productData from form if it exists (multipart/form-data)
+  let productInfo = req.body;
+  if (req.body.productData) {
+    try {
+      productInfo = JSON.parse(req.body.productData);
+    } catch (error) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid product data format",
+      });
+    }
+  }
+
   // Validate category exists
-  if (req.body.categoryId) {
-    const category = await Category.findById(req.body.categoryId);
+  if (productInfo.categoryId) {
+    const category = await Category.findById(productInfo.categoryId);
     if (!category) {
       return res.status(400).json({
         success: false,
         message: "Invalid category ID",
       });
     }
+  }
+
+  // Handle image uploads
+  let images = [];
+  if (req.files && req.files.length > 0) {
+    // Upload images to Cloudinary
+    const uploadPromises = req.files.map((file, index) => 
+      uploadToCloudinary(file.path, "products", "image")
+    );
+    
+    const uploadResults = await Promise.all(uploadPromises);
+    
+    // Get image metadata if provided
+    const imageMetadata = productInfo.imageMetadata || [];
+    
+    images = uploadResults.map((result, index) => ({
+      url: result.url,
+      alt: imageMetadata[index]?.alt || `Product image ${index + 1}`,
+      isPrimary: index === 0, // First image is primary
+    }));
+  } else if (productInfo.imageMetadata && productInfo.imageMetadata.length > 0) {
+    // Use provided URLs if no files uploaded
+    images = productInfo.imageMetadata
+      .filter(img => img.url)
+      .map((img, index) => ({
+        url: img.url,
+        alt: img.alt || `Product image ${index + 1}`,
+        isPrimary: index === 0,
+      }));
   }
 
   // Get platform markup settings
@@ -470,19 +513,23 @@ export const createProduct = asyncHandler(async (req, res) => {
 
   // Add storeId and prepare pricing
   const productData = {
-    ...req.body,
+    ...productInfo,
     storeId,
     markupPercentage,
+    images: images.length > 0 ? images : undefined,
   };
 
+  // Remove imageMetadata as it's no longer needed
+  delete productData.imageMetadata;
+
   // Handle both 'price' and 'wholesalePrice' for backward compatibility
-  if (req.body.price && !req.body.wholesalePrice) {
-    productData.wholesalePrice = req.body.price;
+  if (productInfo.price && !productInfo.wholesalePrice) {
+    productData.wholesalePrice = productInfo.price;
   }
 
   // Handle originalPrice → originalWholesalePrice for backward compatibility
-  if (req.body.originalPrice && !req.body.originalWholesalePrice) {
-    productData.originalWholesalePrice = req.body.originalPrice;
+  if (productInfo.originalPrice && !productInfo.originalWholesalePrice) {
+    productData.originalWholesalePrice = productInfo.originalPrice;
   }
 
   // Calculate retailPrice and originalRetailPrice (also done in pre-save hook)
