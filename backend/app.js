@@ -19,6 +19,7 @@ import orderRoutes from "./routes/orderRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
 import adminRoutes from "./routes/admin/index.js";
 import storeManagerRoutes from "./routes/store/index.js";
+import uploadRoutes from "./routes/uploadRoutes.js";
 import { errorHandler, notFound } from "./middleware/validation.js";
 import { connectRedis } from "./config/redis.js";
 
@@ -95,6 +96,7 @@ app.use("/api/platform-settings", platformSettingsRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/reviews", reviewRoutes);
+app.use("/api/upload", uploadRoutes);
 // Routes
 app.use("/api/users", userRoutes);
 app.use("/api/customer-profile", customerProfileRoutes);
