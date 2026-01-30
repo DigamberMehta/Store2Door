@@ -10,14 +10,14 @@ export const reviewAPI = {
    * @param {Object} params - Query parameters
    */
   getMyReviews: async (params = {}) => {
-    return apiClient.get("/reviews/store/my", { params });
+    return apiClient.get("/reviews", { params });
   },
 
   /**
    * Get review statistics
    */
   getStats: async () => {
-    return apiClient.get("/reviews/store/my/stats");
+    return apiClient.get("/reviews/stats");
   },
 
   /**
