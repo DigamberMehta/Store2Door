@@ -24,7 +24,6 @@ import ProductInventory from "../app/store/pages/products/InventoryPage";
 
 import OrderList from "../app/store/pages/orders/OrdersPage";
 import OrderDetails from "../app/store/pages/orders/OrderDetailsPage";
-import ActiveOrders from "../app/store/pages/orders/ActiveOrdersPage";
 
 import FinancePage from "../app/store/pages/finance/FinancePage";
 import EarningsOverview from "../app/store/pages/finance/EarningsPage";
@@ -155,10 +154,6 @@ export const router = createBrowserRouter([
       {
         path: "orders/:id",
         element: <OrderDetails />,
-      },
-      {
-        path: "orders/active",
-        element: <ActiveOrders />,
       },
       {
         path: "finance",
