@@ -33,6 +33,27 @@ class SocketService {
       // Send join event with user info
       this.socket.emit("join", { userId, role });
       console.log("Sent join event:", { userId, role });
+
+      // Send current availability status to server (for drivers)
+      if (role === "driver") {
+        try {
+          const driverStr = localStorage.getItem("driver");
+          if (driverStr) {
+            const driver = JSON.parse(driverStr);
+            const isAvailable = driver.isAvailable || false;
+
+            this.socket.emit("driver:availability-update", {
+              driverId: userId,
+              isAvailable: isAvailable,
+            });
+            console.log(
+              `[Socket] Sent initial availability status: ${isAvailable}`,
+            );
+          }
+        } catch (error) {
+          console.error("[Socket] Error sending initial availability:", error);
+        }
+      }
     });
 
     this.socket.on("disconnect", () => {
