@@ -16,7 +16,7 @@ import { useUserLocation } from "../../hooks/useUserLocation";
 const HomePage = ({ onStoreClick, onCategoryClick }) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedCategory, setSelectedCategory] = useState(
-    searchParams.get("category") || "All"
+    searchParams.get("category") || "All",
   );
   const [stores, setStores] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -97,14 +97,15 @@ const HomePage = ({ onStoreClick, onCategoryClick }) => {
         selectedCategory={selectedCategory}
         setSelectedCategory={setSelectedCategory}
         categories={categories}
+        loading={loading}
       />
 
       {/* Grocery Section */}
       {selectedCategory === "All" && (
         <>
           <GroceryKitchenSection onCategoryClick={onCategoryClick} />
-          <CategoryProductsSection 
-            parentSlug="grocery" 
+          <CategoryProductsSection
+            parentSlug="grocery"
             title="Grocery & Kitchen"
             selectedCategory={selectedCategory}
             showTitle={true}
@@ -114,8 +115,8 @@ const HomePage = ({ onStoreClick, onCategoryClick }) => {
       )}
       {selectedCategory === "Grocery" && (
         <div className="pt-1">
-          <CategoryProductsView 
-            categoryName="Grocery" 
+          <CategoryProductsView
+            categoryName="Grocery"
             onCategoryClick={onCategoryClick}
           />
         </div>
@@ -125,8 +126,8 @@ const HomePage = ({ onStoreClick, onCategoryClick }) => {
       {selectedCategory === "All" && (
         <>
           <SnacksDrinksSection onCategoryClick={onCategoryClick} />
-          <CategoryProductsSection 
-            parentSlug="snacks-drinks" 
+          <CategoryProductsSection
+            parentSlug="snacks-drinks"
             title="Snacks & Drinks"
             selectedCategory={selectedCategory}
             showTitle={true}
@@ -136,8 +137,8 @@ const HomePage = ({ onStoreClick, onCategoryClick }) => {
       )}
       {selectedCategory === "Snacks" && (
         <div className="pt-1">
-          <CategoryProductsView 
-            categoryName="Snacks" 
+          <CategoryProductsView
+            categoryName="Snacks"
             onCategoryClick={onCategoryClick}
           />
         </div>
@@ -147,8 +148,8 @@ const HomePage = ({ onStoreClick, onCategoryClick }) => {
       {selectedCategory === "All" && (
         <>
           <BeautyPersonalCareSection onCategoryClick={onCategoryClick} />
-          <CategoryProductsSection 
-            parentSlug="beauty-personal-care" 
+          <CategoryProductsSection
+            parentSlug="beauty-personal-care"
             title="Beauty & Personal Care"
             selectedCategory={selectedCategory}
             showTitle={true}
@@ -158,8 +159,8 @@ const HomePage = ({ onStoreClick, onCategoryClick }) => {
       )}
       {selectedCategory === "Beauty" && (
         <div className="pt-1">
-          <CategoryProductsView 
-            categoryName="Beauty" 
+          <CategoryProductsView
+            categoryName="Beauty"
             onCategoryClick={onCategoryClick}
           />
         </div>
@@ -169,8 +170,8 @@ const HomePage = ({ onStoreClick, onCategoryClick }) => {
       {selectedCategory === "All" && (
         <>
           <HomeLifestyleSection onCategoryClick={onCategoryClick} />
-          <CategoryProductsSection 
-            parentSlug="home-lifestyle" 
+          <CategoryProductsSection
+            parentSlug="home-lifestyle"
             title="Home & Lifestyle"
             selectedCategory={selectedCategory}
             showTitle={true}
@@ -180,8 +181,8 @@ const HomePage = ({ onStoreClick, onCategoryClick }) => {
       )}
       {selectedCategory === "Home" && (
         <div className="pt-1">
-          <CategoryProductsView 
-            categoryName="Home" 
+          <CategoryProductsView
+            categoryName="Home"
             onCategoryClick={onCategoryClick}
           />
         </div>
@@ -190,8 +191,8 @@ const HomePage = ({ onStoreClick, onCategoryClick }) => {
       {/* Electronics Section */}
       {selectedCategory === "Electronics" && (
         <div className="pt-1">
-          <CategoryProductsView 
-            categoryName="Electronics" 
+          <CategoryProductsView
+            categoryName="Electronics"
             onCategoryClick={onCategoryClick}
           />
         </div>
@@ -200,8 +201,8 @@ const HomePage = ({ onStoreClick, onCategoryClick }) => {
       {/* Fashion Section */}
       {selectedCategory === "Fashion" && (
         <div className="pt-1">
-          <CategoryProductsView 
-            categoryName="Fashion" 
+          <CategoryProductsView
+            categoryName="Fashion"
             onCategoryClick={onCategoryClick}
           />
         </div>
@@ -210,16 +211,16 @@ const HomePage = ({ onStoreClick, onCategoryClick }) => {
       {/* Pharmacy Section */}
       {selectedCategory === "Pharmacy" && (
         <div className="pt-1">
-          <CategoryProductsView 
-            categoryName="Pharmacy" 
+          <CategoryProductsView
+            categoryName="Pharmacy"
             onCategoryClick={onCategoryClick}
           />
         </div>
       )}
 
       {/* Stores - only show in "All" tab */}
-      {selectedCategory === "All" && (
-        loading ? (
+      {selectedCategory === "All" &&
+        (loading ? (
           <StoreListShimmer />
         ) : (
           <StoreList
@@ -227,8 +228,7 @@ const HomePage = ({ onStoreClick, onCategoryClick }) => {
             onStoreClick={onStoreClick}
             onCategoryClick={onCategoryClick}
           />
-        )
-      )}
+        ))}
     </div>
   );
 };

@@ -7,3 +7,4 @@ export { default as ProductCardShimmer } from "./ProductCardShimmer";
 export { default as ProductGridShimmer } from "./ProductGridShimmer";
 export { default as CartItemShimmer } from "./CartItemShimmer";
 export { default as CheckoutPageShimmer } from "./CheckoutPageShimmer";
+export { default as CategoryFilterShimmer } from "./CategoryFilterShimmer";

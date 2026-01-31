@@ -9,9 +9,15 @@ import {
   HiChevronDown,
 } from "react-icons/hi";
 import { CategoryFilter } from "../pages/homepage/category";
+import { CategoryFilterShimmer } from "./shimmer";
 import { customerProfileAPI } from "../services/api";
 
-const Header = ({ selectedCategory, setSelectedCategory, categories = [] }) => {
+const Header = ({
+  selectedCategory,
+  setSelectedCategory,
+  categories = [],
+  loading = false,
+}) => {
   const navigate = useNavigate();
   const [addressData, setAddressData] = useState({
     label: null,
@@ -99,11 +105,15 @@ const Header = ({ selectedCategory, setSelectedCategory, categories = [] }) => {
         </div>
       </div>
 
-      <CategoryFilter
-        selectedCategory={selectedCategory}
-        setSelectedCategory={setSelectedCategory}
-        categories={categories}
-      />
+      {loading ? (
+        <CategoryFilterShimmer />
+      ) : (
+        <CategoryFilter
+          selectedCategory={selectedCategory}
+          setSelectedCategory={setSelectedCategory}
+          categories={categories}
+        />
+      )}
     </header>
   );
 };
