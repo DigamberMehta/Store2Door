@@ -134,8 +134,8 @@ const EditProductPage = () => {
           currency: product.currency || "ZAR",
           images:
             product.images?.length > 0
-              ? product.images
-              : [{ url: "", alt: "", isPrimary: true }],
+              ? product.images.map(img => ({ ...img, file: null, preview: null }))
+              : [{ url: "", alt: "", isPrimary: true, file: null, preview: null }],
           inventory: {
             quantity: product.inventory?.quantity || "",
             lowStockThreshold: product.inventory?.lowStockThreshold || "10",
@@ -262,14 +262,35 @@ const EditProductPage = () => {
     setFormData((prev) => ({ ...prev, images: newImages }));
   };
 
+  const handleImageFileChange = (index, file) => {
+    if (!file) return;
+
+    const newImages = [...formData.images];
+    const preview = URL.createObjectURL(file);
+    newImages[index] = {
+      ...newImages[index],
+      file: file,
+      preview: preview,
+      url: "", // Clear URL when file is selected
+    };
+    setFormData((prev) => ({ ...prev, images: newImages }));
+  };
+
   const addImage = () => {
     setFormData((prev) => ({
       ...prev,
-      images: [...prev.images, { url: "", alt: "", isPrimary: false }],
+      images: [
+        ...prev.images,
+        { url: "", alt: "", isPrimary: false, file: null, preview: null },
+      ],
     }));
   };
 
   const removeImage = (index) => {
+    // Clean up preview URL to avoid memory leaks
+    if (formData.images[index].preview) {
+      URL.revokeObjectURL(formData.images[index].preview);
+    }
     const newImages = formData.images.filter((_, i) => i !== index);
     // If we removed the primary image, make the first remaining image primary
     if (newImages.length > 0 && formData.images[index].isPrimary) {
@@ -291,18 +312,76 @@ const EditProductPage = () => {
     setLoading(true);
 
     try {
-      // Validate images
-      const validImages = formData.images.filter((img) => img.url);
+      // Validate images (check for either url or preview/file)
+      const validImages = formData.images.filter(
+        (img) => img.url || img.preview || img.file,
+      );
       if (validImages.length === 0) {
         toast.error("Please add at least one product image");
         setLoading(false);
         return;
       }
 
+      // Upload new images first
+      const imagesToUpload = formData.images.filter((img) => img.file);
+      let uploadedImages = [];
+
+      if (imagesToUpload.length > 0) {
+        const uploadFormData = new FormData();
+        imagesToUpload.forEach((img) => {
+          uploadFormData.append("images", img.file);
+        });
+
+        try {
+          const token = localStorage.getItem("storeAuthToken");
+          const uploadResponse = await axios.post(
+            "http://localhost:3000/api/managers/upload/product-images",
+            uploadFormData,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "multipart/form-data",
+              },
+            },
+          );
+
+          if (uploadResponse.data.success) {
+            uploadedImages = uploadResponse.data.data;
+          }
+        } catch (uploadError) {
+          console.error("Upload error:", uploadError);
+          toast.error("Failed to upload new images");
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Merge existing images with newly uploaded ones
+      let uploadIndex = 0;
+      const finalImages = formData.images
+        .filter((img) => img.url || img.file)
+        .map((img) => {
+          if (img.file) {
+            // Replace with uploaded image data
+            const uploadedImg = uploadedImages[uploadIndex++];
+            return {
+              url: uploadedImg.url,
+              alt: img.alt || uploadedImg.alt,
+              isPrimary: img.isPrimary,
+            };
+          }
+          // Keep existing image
+          return {
+            url: img.url,
+            alt: img.alt,
+            isPrimary: img.isPrimary,
+          };
+        });
+
       // Ensure at least one image is marked as primary
-      const hasPrimary = validImages.some((img) => img.isPrimary);
-      if (!hasPrimary && validImages.length > 0) {
-        validImages[0].isPrimary = true;
+      const hasPrimary = finalImages.some((img) => img.isPrimary);
+      if (!hasPrimary && finalImages.length > 0) {
+        finalImages[0].isPrimary = true;
       }
 
       const productData = {
@@ -348,7 +427,7 @@ const EditProductPage = () => {
           }
           return acc;
         }, {}),
-        images: validImages,
+        images: finalImages,
       };
 
       const token = localStorage.getItem("storeAuthToken");
@@ -466,6 +545,7 @@ const EditProductPage = () => {
           <ProductImagesSection
             images={formData.images}
             handleImageChange={handleImageChange}
+            handleImageFileChange={handleImageFileChange}
             addImage={addImage}
             removeImage={removeImage}
             setPrimaryImage={setPrimaryImage}
