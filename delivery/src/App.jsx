@@ -9,7 +9,6 @@ import WithdrawalsPage from "./pages/earnings/WithdrawalsPage";
 import ActivitiesPage from "./pages/earnings/ActivitiesPage";
 import ProfilePage from "./pages/profile/ProfilePage";
 import DocumentsPage from "./pages/profile/document/DocumentsPage";
-import PreferredAreasPage from "./pages/profile/work/PreferredAreasPage";
 import PersonalDetailsPage from "./pages/profile/personal/PersonalDetailsPage";
 import BankAccountPage from "./pages/profile/bank/BankAccountPage";
 import VehicleDetailsPage from "./pages/profile/vehicle/VehicleDetailsPage";
@@ -102,14 +101,6 @@ function App() {
           element={
             <ProtectedRoute>
               <DocumentsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/profile/areas"
-          element={
-            <ProtectedRoute>
-              <PreferredAreasPage />
             </ProtectedRoute>
           }
         />

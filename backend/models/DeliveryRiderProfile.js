@@ -549,51 +549,6 @@ const deliveryRiderProfileSchema = new mongoose.Schema(
     // Performance and Statistics
     stats: deliveryStatsSchema,
 
-    // Preferences
-    preferences: {
-      maxDeliveriesPerDay: {
-        type: Number,
-        default: 20,
-        min: 1,
-        max: 50,
-      },
-      preferredVehicleType: {
-        type: String,
-        enum: [
-          "bicycle",
-          "motorcycle",
-          "scooter",
-          "car",
-          "van",
-          "truck",
-          "electric_bike",
-          "walking",
-        ],
-      },
-      acceptCashPayments: {
-        type: Boolean,
-        default: true,
-      },
-      autoAcceptOrders: {
-        type: Boolean,
-        default: false,
-      },
-      notificationPreferences: {
-        sms: {
-          type: Boolean,
-          default: true,
-        },
-        email: {
-          type: Boolean,
-          default: true,
-        },
-        push: {
-          type: Boolean,
-          default: true,
-        },
-      },
-    },
-
     // Account Status
     isVerified: {
       type: Boolean,
