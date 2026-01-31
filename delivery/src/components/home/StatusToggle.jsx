@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { driverProfileAPI } from "../../services/api";
+import socketService from "../../services/socket";
 import toast from "react-hot-toast";
 
 const StatusToggle = () => {
@@ -33,6 +34,21 @@ const StatusToggle = () => {
 
     try {
       await driverProfileAPI.toggleOnlineStatus(newStatus);
+      
+      // Notify socket server about availability change
+      const driverStr = localStorage.getItem("driver");
+      if (driverStr) {
+        const driver = JSON.parse(driverStr);
+        const driverId = driver._id || driver.id;
+        
+        if (socketService.socket && socketService.isConnected) {
+          socketService.socket.emit("driver:availability-update", {
+            driverId,
+            isAvailable: newStatus,
+          });
+          console.log(`Sent availability update to socket: ${newStatus}`);
+        }
+      }
     } catch (error) {
       // Revert to previous state on error
       setIsOnline(previousStatus);
