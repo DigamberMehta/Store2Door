@@ -13,17 +13,14 @@ import {
   LuPhone,
 } from "react-icons/lu";
 import BottomNavigation from "../../components/home/BottomNavigation";
-import ShiftModal from "./work/ShiftModal";
 import PhotoUploadModal from "./document/PhotoUploadModal";
 import BasicDetails from "./personal/BasicDetails";
-import WorkPreferences from "./work/WorkPreferences";
+
 import { formatDateOnly } from "../../utils/date";
 
 const ProfilePage = () => {
   const navigate = useNavigate();
-  const [showShiftModal, setShowShiftModal] = useState(false);
   const [showPhotoUploadModal, setShowPhotoUploadModal] = useState(false);
-  const [selectedShifts, setSelectedShifts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
@@ -41,20 +38,6 @@ const ProfilePage = () => {
       setLoading(true);
       const response = await driverProfileAPI.getProfile();
       setProfileData(response.data);
-
-      // Set work schedule - simple array of shift time strings
-      if (
-        response.data.profile?.workSchedule &&
-        Array.isArray(response.data.profile.workSchedule)
-      ) {
-        // Ensure all items are strings
-        const validShifts = response.data.profile.workSchedule.filter(
-          (shift) => typeof shift === "string",
-        );
-        setSelectedShifts(validShifts);
-      } else {
-        setSelectedShifts([]);
-      }
     } catch (error) {
       console.error("Error fetching profile:", error);
       toast.error("Failed to load profile data");
@@ -69,23 +52,6 @@ const ProfilePage = () => {
 
       setBankData(response.data.bankDetails);
     } catch (error) {}
-  };
-
-  const handleUpdateShifts = async () => {
-    try {
-      setUpdating(true);
-      await driverProfileAPI.updateAvailability({
-        workSchedule: selectedShifts,
-      });
-      toast.success("Work shifts updated successfully!");
-      setShowShiftModal(false);
-      await fetchProfileData();
-    } catch (error) {
-      console.error("Error updating shifts:", error);
-      toast.error(error.response?.data?.message || "Failed to update shifts");
-    } finally {
-      setUpdating(false);
-    }
   };
 
   const handlePhotoUpload = async (event) => {
@@ -213,35 +179,6 @@ const ProfilePage = () => {
       }
     : null;
 
-  const shifts = [
-    "06:00 AM - 07:00 AM",
-    "07:00 AM - 08:00 AM",
-    "08:00 AM - 09:00 AM",
-    "09:00 AM - 10:00 AM",
-    "10:00 AM - 11:00 AM",
-    "11:00 AM - 12:00 PM",
-    "12:00 PM - 01:00 PM",
-    "01:00 PM - 02:00 PM",
-    "02:00 PM - 03:00 PM",
-    "03:00 PM - 04:00 PM",
-    "04:00 PM - 05:00 PM",
-    "05:00 PM - 06:00 PM",
-    "06:00 PM - 07:00 PM",
-    "07:00 PM - 08:00 PM",
-    "08:00 PM - 09:00 PM",
-    "09:00 PM - 10:00 PM",
-    "10:00 PM - 11:00 PM",
-    "11:00 PM - 12:00 AM",
-  ];
-
-  const handleShiftToggle = (shift) => {
-    if (selectedShifts.includes(shift)) {
-      setSelectedShifts(selectedShifts.filter((s) => s !== shift));
-    } else {
-      setSelectedShifts([...selectedShifts, shift]);
-    }
-  };
-
   if (loading) {
     return (
       <div className="bg-black min-h-screen text-white flex items-center justify-center">
@@ -267,7 +204,7 @@ const ProfilePage = () => {
   }
 
   return (
-    <div className="bg-black min-h-screen text-white pb-32">
+    <div className="bg-black min-h-screen text-white pb-24">
       <Toaster
         position="top-center"
         toastOptions={{
@@ -280,16 +217,6 @@ const ProfilePage = () => {
       />
 
       {/* Modals */}
-      <ShiftModal
-        show={showShiftModal}
-        onClose={() => setShowShiftModal(false)}
-        shifts={shifts}
-        selectedShifts={selectedShifts}
-        onShiftToggle={handleShiftToggle}
-        onUpdate={handleUpdateShifts}
-        updating={updating}
-      />
-
       <PhotoUploadModal
         show={showPhotoUploadModal}
         onClose={() => setShowPhotoUploadModal(false)}
@@ -297,52 +224,61 @@ const ProfilePage = () => {
         uploading={uploadingPhoto}
       />
 
-      {/* Header Profile Section */}
-      <div className="bg-gradient-to-b from-blue-300/10 to-transparent pt-10 pb-6 px-4 text-center">
-        <div className="relative inline-block mb-3">
-          <div className="w-20 h-20 bg-zinc-800 rounded-full border-2 border-blue-400/30 flex items-center justify-center overflow-hidden mx-auto">
-            {user.avatar ? (
-              <img
-                src={user.avatar}
-                alt="Profile"
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <LuUser className="w-10 h-10 text-zinc-600" />
-            )}
+      {/* Header Profile Section - Compact for mobile */}
+      <div className="bg-gradient-to-b from-blue-500/10 to-transparent pt-6 pb-4 px-4">
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <div className="w-16 h-16 bg-zinc-800 rounded-full border-2 border-blue-400/30 flex items-center justify-center overflow-hidden">
+              {user.avatar ? (
+                <img
+                  src={user.avatar}
+                  alt="Profile"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <LuUser className="w-8 h-8 text-zinc-600" />
+              )}
+            </div>
+            <button
+              onClick={() => setShowPhotoUploadModal(true)}
+              className="absolute -bottom-1 -right-1 bg-blue-500 p-1 rounded-full border-2 border-black active:scale-90 transition-transform"
+            >
+              <LuCamera className="w-3 h-3 text-white" />
+            </button>
           </div>
-          <button
-            onClick={() => setShowPhotoUploadModal(true)}
-            className="absolute bottom-0 right-0 bg-blue-500 p-1.5 rounded-full border-2 border-black active:scale-90 transition-transform"
-          >
-            <LuCamera className="w-3.5 h-3.5 text-white" />
-          </button>
+          <div className="flex-1">
+            <p className="text-lg font-bold truncate">{user.name}</p>
+            <p className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold">
+              Driver Profile
+            </p>
+          </div>
         </div>
-        <p className="text-2xl font-bold">{user.name}</p>
       </div>
 
-      <div className="px-3 space-y-4">
+      <div className="px-3 space-y-3">
         {/* Document Verification Section */}
         <div>
-          <h3 className="text-xs font-bold text-zinc-500 mb-2 px-1">
+          <h3 className="text-[10px] font-bold text-zinc-500 mb-1.5 px-1 uppercase tracking-wider">
             Compliance & Documents
           </h3>
           <button
             onClick={() => navigate("/profile/documents")}
-            className="w-full bg-white/5 border border-white/5 rounded-2xl p-4 flex items-center justify-between active:scale-[0.98] transition-all"
+            className="w-full bg-white/5 border border-white/5 rounded-xl p-3 flex items-center justify-between active:scale-[0.98] transition-all"
           >
-            <div className="flex items-center gap-3">
-              <div className="bg-blue-300/10 p-2.5 rounded-xl">
-                <LuFileText className="w-5 h-5 text-blue-300" />
+            <div className="flex items-center gap-2.5">
+              <div className="bg-blue-500/10 p-2 rounded-lg">
+                <LuFileText className="w-4 h-4 text-blue-400" />
               </div>
               <div className="text-left">
-                <p className="font-bold text-xs">Identity & Vehicle Proof</p>
-                <p className="text-[10px] text-zinc-500 mt-0.5">
-                  Manage and upload your documents
+                <p className="font-bold text-[11px]">
+                  Identity & Vehicle Proof
+                </p>
+                <p className="text-[9px] text-zinc-500 mt-0.5">
+                  Upload documents
                 </p>
               </div>
             </div>
-            <LuChevronRight className="w-4 h-4 text-zinc-600" />
+            <LuChevronRight className="w-3.5 h-3.5 text-zinc-600" />
           </button>
         </div>
 
@@ -351,141 +287,137 @@ const ProfilePage = () => {
 
         {/* Bank Details */}
         <div>
-          <h3 className="text-xs font-bold text-zinc-500 mb-2 px-1">
+          <h3 className="text-[10px] font-bold text-zinc-500 mb-1.5 px-1 uppercase tracking-wider">
             Bank Details
           </h3>
-          <div className="bg-white/5 border border-white/5 rounded-2xl p-1.5 space-y-1">
+          <div className="bg-white/5 border border-white/5 rounded-xl p-1">
             <button
               onClick={() => navigate("/profile/bank-account")}
-              className="flex items-center gap-3 p-2.5 active:bg-white/5 rounded-xl transition-colors cursor-pointer group w-full"
+              className="flex items-center gap-2.5 p-2.5 active:bg-white/5 rounded-lg transition-colors cursor-pointer group w-full"
             >
-              <div className="bg-zinc-800 p-2 rounded-lg text-zinc-400">
+              <div className="bg-zinc-800 p-1.5 rounded-lg text-zinc-400">
                 <LuLandmark className="w-4 h-4" />
               </div>
               {user.bank ? (
-                <div className="flex-1 text-left">
-                  <p className="text-[9px] text-zinc-500 font-bold tracking-widest uppercase mb-0.5">
+                <div className="flex-1 text-left min-w-0">
+                  <p className="text-[9px] text-zinc-500 font-bold tracking-wider uppercase mb-0.5">
                     {user.bank.bankName}
                   </p>
-                  <p className="text-xs font-medium">
-                    **** **** **** {user.bank.account}
+                  <p className="text-[11px] font-medium truncate">
+                    •••• {user.bank.account}
                   </p>
-                  <p className="text-[9px] text-zinc-500 font-bold mt-1 uppercase tracking-wider">
-                    Branch Code: {user.bank.ifsc}
+                  <p className="text-[8px] text-zinc-600 font-bold mt-0.5 uppercase tracking-wider">
+                    {user.bank.ifsc}
                   </p>
                 </div>
               ) : (
                 <div className="flex-1 text-left">
-                  <p className="text-[9px] text-zinc-500 font-bold tracking-widest uppercase mb-0.5">
+                  <p className="text-[9px] text-zinc-500 font-bold tracking-wider uppercase mb-0.5">
                     Bank Account
                   </p>
-                  <p className="text-xs font-medium text-zinc-500 italic">
-                    Tap to add bank details
+                  <p className="text-[11px] font-medium text-zinc-500 italic">
+                    Tap to add
                   </p>
                 </div>
               )}
-              <LuChevronRight className="w-3.5 h-3.5 text-zinc-600 group-active:translate-x-1 transition-transform" />
+              <LuChevronRight className="w-3 h-3 text-zinc-600 group-active:translate-x-1 transition-transform flex-shrink-0" />
             </button>
           </div>
         </div>
 
         {/* Vehicle Details */}
         <div>
-          <h3 className="text-xs font-bold text-zinc-500 mb-2 px-1">
+          <h3 className="text-[10px] font-bold text-zinc-500 mb-1.5 px-1 uppercase tracking-wider">
             Vehicle Information
           </h3>
-          <div className="bg-white/5 border border-white/5 rounded-2xl p-1.5 space-y-1">
+          <div className="bg-white/5 border border-white/5 rounded-xl p-1">
             <button
               onClick={() => navigate("/profile/vehicle-details")}
-              className="flex items-center gap-3 p-2.5 active:bg-white/5 rounded-xl transition-colors cursor-pointer group w-full"
+              className="flex items-center gap-2.5 p-2.5 active:bg-white/5 rounded-lg transition-colors cursor-pointer group w-full"
             >
-              <div className="bg-zinc-800 p-2 rounded-lg text-zinc-400">
+              <div className="bg-zinc-800 p-1.5 rounded-lg text-zinc-400">
                 <LuTruck className="w-4 h-4" />
               </div>
               {user.vehicle ? (
-                <div className="flex-1 text-left">
-                  <p className="text-[9px] text-zinc-500 font-bold tracking-widest uppercase mb-0.5">
+                <div className="flex-1 text-left min-w-0">
+                  <p className="text-[9px] text-zinc-500 font-bold tracking-wider uppercase mb-0.5">
                     Vehicle Details
                   </p>
-                  <p className="text-xs font-medium">{user.vehicle}</p>
+                  <p className="text-[11px] font-medium truncate">
+                    {user.vehicle}
+                  </p>
                 </div>
               ) : (
                 <div className="flex-1 text-left">
-                  <p className="text-[9px] text-zinc-500 font-bold tracking-widest uppercase mb-0.5">
+                  <p className="text-[9px] text-zinc-500 font-bold tracking-wider uppercase mb-0.5">
                     Vehicle Details
                   </p>
-                  <p className="text-xs font-medium text-zinc-500 italic">
-                    Tap to add vehicle details
+                  <p className="text-[11px] font-medium text-zinc-500 italic">
+                    Tap to add
                   </p>
                 </div>
               )}
-              <LuChevronRight className="w-3.5 h-3.5 text-zinc-600 group-active:translate-x-1 transition-transform" />
+              <LuChevronRight className="w-3 h-3 text-zinc-600 group-active:translate-x-1 transition-transform flex-shrink-0" />
             </button>
           </div>
         </div>
 
         {/* Emergency Contact */}
         <div>
-          <h3 className="text-xs font-bold text-zinc-500 mb-2 px-1">
+          <h3 className="text-[10px] font-bold text-zinc-500 mb-1.5 px-1 uppercase tracking-wider">
             Emergency Contact
           </h3>
-          <div className="bg-white/5 border border-white/5 rounded-2xl p-1.5 space-y-1">
+          <div className="bg-white/5 border border-white/5 rounded-xl p-1">
             <button
               onClick={() => navigate("/profile/emergency-contact")}
-              className="flex items-center gap-3 p-2.5 active:bg-white/5 rounded-xl transition-colors cursor-pointer group w-full"
+              className="flex items-center gap-2.5 p-2.5 active:bg-white/5 rounded-lg transition-colors cursor-pointer group w-full"
             >
-              <div className="bg-zinc-800 p-2 rounded-lg text-zinc-400">
+              <div className="bg-zinc-800 p-1.5 rounded-lg text-zinc-400">
                 <LuPhone className="w-4 h-4" />
               </div>
               {profileData?.profile?.emergencyContact?.name ? (
-                <div className="flex-1 text-left">
-                  <p className="text-[9px] text-zinc-500 font-bold tracking-widest uppercase mb-0.5">
+                <div className="flex-1 text-left min-w-0">
+                  <p className="text-[9px] text-zinc-500 font-bold tracking-wider uppercase mb-0.5">
                     Emergency Contact
                   </p>
-                  <p className="text-xs font-medium">
+                  <p className="text-[11px] font-medium truncate">
                     {profileData.profile.emergencyContact.name} •{" "}
                     {profileData.profile.emergencyContact.phone}
                   </p>
                   {profileData.profile.emergencyContact.relationship && (
-                    <p className="text-[9px] text-zinc-500 font-bold mt-0.5 uppercase tracking-wider">
+                    <p className="text-[8px] text-zinc-600 font-bold mt-0.5 uppercase tracking-wider">
                       {profileData.profile.emergencyContact.relationship}
                     </p>
                   )}
                 </div>
               ) : (
                 <div className="flex-1 text-left">
-                  <p className="text-[9px] text-zinc-500 font-bold tracking-widest uppercase mb-0.5">
+                  <p className="text-[9px] text-zinc-500 font-bold tracking-wider uppercase mb-0.5">
                     Emergency Contact
                   </p>
-                  <p className="text-xs font-medium text-zinc-500 italic">
-                    Tap to add emergency contact
+                  <p className="text-[11px] font-medium text-zinc-500 italic">
+                    Tap to add
                   </p>
                 </div>
               )}
-              <LuChevronRight className="w-3.5 h-3.5 text-zinc-600 group-active:translate-x-1 transition-transform" />
+              <LuChevronRight className="w-3 h-3 text-zinc-600 group-active:translate-x-1 transition-transform flex-shrink-0" />
             </button>
           </div>
         </div>
 
-        {/* Work Preferences */}
-        <WorkPreferences
-          user={user}
-          selectedShifts={selectedShifts}
-          onShiftClick={() => setShowShiftModal(true)}
-          onAreasClick={() => navigate("/profile/areas")}
-        />
-
         {/* Sign Out */}
-        <div className="pb-6">
+        <div className="pt-2 pb-4">
           <button
             onClick={handleLogout}
-            className="w-full bg-red-500/5 border border-red-500/10 rounded-2xl p-3.5 flex items-center justify-between active:bg-red-500/10 transition-all"
+            className="w-full bg-red-500/5 border border-red-500/10 rounded-xl p-3 flex items-center justify-between active:bg-red-500/10 transition-all"
           >
-            <div className="flex items-center gap-3">
-              <div className="bg-red-500/15 p-2 rounded-xl text-red-500">
-                <LuLogOut className="w-4.5 h-4.5" />
+            <div className="flex items-center gap-2.5">
+              <div className="bg-red-500/15 p-1.5 rounded-lg text-red-500">
+                <LuLogOut className="w-4 h-4" />
               </div>
-              <span className="text-xs font-bold text-red-500">Sign Out</span>
+              <span className="text-[11px] font-bold text-red-500">
+                Sign Out
+              </span>
             </div>
           </button>
         </div>
