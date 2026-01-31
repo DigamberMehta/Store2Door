@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Save, AlertCircle, Upload, X } from "lucide-react";
+import { Save, AlertCircle, Upload, X, Lock } from "lucide-react";
 import toast from "react-hot-toast";
 import { storeAPI } from "../../../../services/store/api/store.api";
 import { uploadAPI } from "../../../../services/store/api/upload.api";
@@ -18,6 +18,8 @@ const StoreProfilePage = () => {
     taxId: "",
     businessType: [],
   });
+
+  const isReadOnly = true; // Store managers can only view, not edit
 
   useEffect(() => {
     fetchStoreProfile();
@@ -144,6 +146,21 @@ const StoreProfilePage = () => {
         </p>
       </div>
 
+      {/* Read-Only Notice */}
+      {isReadOnly && (
+        <div className="px-4 mb-4">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3">
+            <Lock className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-medium text-blue-900">Read-Only Mode</p>
+              <p className="text-sm text-blue-700 mt-1">
+                Contact your administrator to edit profile settings
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="px-4 pb-8">
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Basic Information Card */}
@@ -178,9 +195,10 @@ const StoreProfilePage = () => {
                   name="description"
                   value={formData.description}
                   onChange={handleInputChange}
+                  disabled={isReadOnly}
                   rows={4}
                   maxLength={500}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all resize-none"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all resize-none disabled:bg-gray-100 disabled:cursor-not-allowed"
                   placeholder="Brief description of your store"
                 />
                 <p className="text-xs text-gray-500 mt-1">
@@ -303,7 +321,8 @@ const StoreProfilePage = () => {
                   name="businessLicense"
                   value={formData.businessLicense}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all"
+                  disabled={isReadOnly}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
                   placeholder="Enter business license number"
                 />
               </div>
@@ -318,7 +337,8 @@ const StoreProfilePage = () => {
                   name="taxId"
                   value={formData.taxId}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all"
+                  disabled={isReadOnly}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
                   placeholder="Enter tax ID or VAT number"
                 />
               </div>
@@ -354,25 +374,27 @@ const StoreProfilePage = () => {
           </div>
 
           {/* Submit Button */}
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              disabled={loading || uploading}
-              className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-6 py-2.5 rounded-lg font-medium transition-colors"
-            >
-              {loading ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Saving...</span>
-                </>
-              ) : (
-                <>
-                  <Save className="w-4 h-4" />
-                  <span>Save Changes</span>
-                </>
-              )}
-            </button>
-          </div>
+          {!isReadOnly && (
+            <div className="flex justify-end">
+              <button
+                type="submit"
+                disabled={loading || uploading}
+                className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-6 py-2.5 rounded-lg font-medium transition-colors"
+              >
+                {loading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    <span>Save Changes</span>
+                  </>
+                )}
+              </button>
+            </div>
+          )}
         </form>
       </div>
     </div>
