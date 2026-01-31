@@ -240,6 +240,30 @@ const storeSchema = new mongoose.Schema(
       trim: true,
     },
 
+    // Bank Account Information
+    accountHolderName: {
+      type: String,
+      trim: true,
+    },
+    bankName: {
+      type: String,
+      trim: true,
+    },
+    accountNumber: {
+      type: String,
+      trim: true,
+    },
+    accountType: {
+      type: String,
+      enum: ["savings", "cheque", "business"],
+      default: "savings",
+    },
+    branchCode: {
+      type: String,
+      trim: true,
+      maxlength: 6,
+    },
+
     // Categories and Business Type
     categories: [
       {
