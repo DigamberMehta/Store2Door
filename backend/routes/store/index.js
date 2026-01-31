@@ -32,7 +32,7 @@ router.post("/auth/logout", logoutUser);
 
 // Mount sub-routes
 router.use("/products", storeProductRoutes);
-router.use("/store", storeStoreRoutes);
+router.use("/stores", storeStoreRoutes);
 router.use("/orders", storeOrderRoutes);
 router.use("/reviews", storeReviewRoutes);
 router.use("/earnings", storeEarningsRoutes);
