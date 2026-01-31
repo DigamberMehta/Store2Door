@@ -41,8 +41,9 @@ const OrderDetailsPage = () => {
       }
     } catch (err) {
       console.error("Error fetching order details:", err);
-      setError("Failed to load order details");
-      toast.error("Failed to load order details");
+      const errorMsg = "Failed to load order details";
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -86,14 +87,17 @@ const OrderDetailsPage = () => {
       const response = await updateOrderStatus(id, newStatus);
       if (response.success) {
         setOrder(response.data);
+        toast.dismiss(); // Dismiss confirmation toast before showing success
         toast.success(
           `Order status updated to ${newStatus.replace("_", " ").toUpperCase()}`,
         );
       } else {
+        toast.dismiss(); // Dismiss confirmation toast before showing error
         toast.error(response.message || "Failed to update order status");
       }
     } catch (err) {
       console.error("Error updating status:", err);
+      toast.dismiss(); // Dismiss confirmation toast before showing error
       toast.error("Failed to update order status");
     } finally {
       setUpdating(false);
