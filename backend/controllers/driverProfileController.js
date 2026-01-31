@@ -825,10 +825,8 @@ export const getDriverOrders = asyncHandler(async (req, res) => {
 
   if (status) {
     query.status = status;
-  } else {
-    // Get active orders by default
-    query.status = { $in: ["picked_up", "on_the_way", "ready_for_pickup"] };
   }
+  // If no status provided, return ALL orders (for delivery history)
 
   const orders = await Order.find(query)
     .populate("storeId", "name address location phone")
