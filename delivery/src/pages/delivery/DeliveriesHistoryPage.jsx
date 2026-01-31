@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import BottomNavigation from "../../components/home/BottomNavigation";
 import { ordersAPI } from "../../services/api/orders.api";
+import { formatDate, sortByDateDesc } from "../../utils/date";
 
 const DeliveriesHistoryPage = () => {
   const navigate = useNavigate();
@@ -40,7 +41,9 @@ const DeliveriesHistoryPage = () => {
       if (response.success) {
         // Backend returns { orders, count } in data
         const orders = response.data?.orders || [];
-        setDeliveries(orders);
+        // Sort deliveries by date (newest first)
+        const sortedOrders = sortByDateDesc(orders, "createdAt");
+        setDeliveries(sortedOrders);
 
         // Calculate stats
         const completed = orders.filter((o) => o.status === "delivered").length;
@@ -78,25 +81,6 @@ const DeliveriesHistoryPage = () => {
     if (status === "delivered") return <CheckCircle className="w-4 h-4" />;
     if (status === "cancelled") return <XCircle className="w-4 h-4" />;
     return <Package className="w-4 h-4" />;
-  };
-
-  const formatDate = (date) => {
-    const d = new Date(date);
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    if (d.toDateString() === today.toDateString()) {
-      return `Today, ${d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}`;
-    } else if (d.toDateString() === yesterday.toDateString()) {
-      return `Yesterday, ${d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}`;
-    }
-    return d.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
   };
 
   return (

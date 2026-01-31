@@ -13,6 +13,7 @@ import {
 import BottomNavigation from "../../components/home/BottomNavigation";
 import { ordersAPI } from "../../services/api/orders.api";
 import { driverProfileAPI } from "../../services/api/driverProfile.api";
+import { formatDateOnly } from "../../utils/date";
 
 const WalletPage = () => {
   const navigate = useNavigate();
@@ -206,9 +207,7 @@ const WalletPage = () => {
                           {tx.description || tx.note}
                         </p>
                         <p className="text-[10px] text-zinc-500 mt-0.5">
-                          {new Date(
-                            tx.createdAt || tx.date,
-                          ).toLocaleDateString()}
+                          {formatDateOnly(tx.createdAt || tx.date)}
                         </p>
                       </div>
                     </div>

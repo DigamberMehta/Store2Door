@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { MdStar, MdVerified, MdClose } from "react-icons/md";
 import { ThumbsUp, ThumbsDown, MessageSquare } from "lucide-react";
 import reviewAPI from "../../services/api/review.api";
+import { formatDateOnly } from "../../utils/date";
 
 const RatingsReviews = ({ product, avgRating, totalReviews }) => {
   const [reviews, setReviews] = useState([]);
@@ -324,7 +325,7 @@ const RatingsReviews = ({ product, avgRating, totalReviews }) => {
                       ))}
                     </div>
                     <span className="text-white/40 text-[10px]">
-                      {new Date(review.createdAt).toLocaleDateString()}
+                      {formatDateOnly(review.createdAt)}
                     </span>
                   </div>
                 </div>

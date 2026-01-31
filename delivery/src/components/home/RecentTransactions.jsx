@@ -2,6 +2,7 @@ import { Package, ArrowUpRight, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { ordersAPI } from "../../services/api";
+import { formatDate } from "../../utils/date";
 
 const RecentTransactions = () => {
   const navigate = useNavigate();
@@ -18,29 +19,10 @@ const RecentTransactions = () => {
 
         // Format transactions for display
         const formatted = data.map((t) => {
-          const date = new Date(t.createdAt || t.deliveredAt);
-          const isToday = new Date().toDateString() === date.toDateString();
-          const isYesterday =
-            new Date(Date.now() - 86400000).toDateString() ===
-            date.toDateString();
-
-          let dateStr = isToday
-            ? "Today"
-            : isYesterday
-              ? "Yesterday"
-              : date.toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                });
-          const timeStr = date.toLocaleTimeString("en-US", {
-            hour: "numeric",
-            minute: "2-digit",
-          });
-
           return {
             id: t._id || t.id,
             title: `${t.items} ${t.items === 1 ? "item" : "items"} • ${t.storeName || "Store"}`,
-            time: `${dateStr} | ${timeStr}`,
+            time: formatDate(t.createdAt || t.deliveredAt),
             amount: `+ R${(t.amount || 0).toFixed(2)}`,
             tip: t.tip > 0 ? `+ R${t.tip.toFixed(2)} tips` : null,
           };

@@ -15,6 +15,11 @@ import {
 } from "lucide-react";
 import { getOrders } from "../../services/api/order.api";
 import toast from "react-hot-toast";
+import {
+  formatDateOnly,
+  formatTimeOnly,
+  sortByDateDesc,
+} from "../../utils/date";
 
 const OrdersPage = () => {
   const navigate = useNavigate();
@@ -30,7 +35,10 @@ const OrdersPage = () => {
     setLoading(true);
     try {
       const response = await getOrders();
-      setOrders(response.orders || []);
+      const ordersData = response.orders || [];
+      // Sort orders by date (newest first)
+      const sortedOrders = sortByDateDesc(ordersData, "createdAt");
+      setOrders(sortedOrders);
     } catch (error) {
       console.error("Error fetching orders:", error);
       toast.error("Failed to load orders");
@@ -75,21 +83,6 @@ const OrdersPage = () => {
       .split("_")
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(" ");
-  };
-
-  const formatDate = (date) => {
-    return new Date(date).toLocaleDateString("en-ZA", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
-  };
-
-  const formatTime = (date) => {
-    return new Date(date).toLocaleTimeString("en-ZA", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
   };
 
   const filteredOrders = orders.filter((order) => {
@@ -183,8 +176,8 @@ const OrdersPage = () => {
                   <div className="flex items-center gap-2 text-white/40 text-[11px]">
                     <Calendar className="w-3 h-3" />
                     <span>
-                      {formatDate(order.createdAt)} at{" "}
-                      {formatTime(order.createdAt)}
+                      {formatDateOnly(order.createdAt)} at{" "}
+                      {formatTimeOnly(order.createdAt)}
                     </span>
                   </div>
                 </div>

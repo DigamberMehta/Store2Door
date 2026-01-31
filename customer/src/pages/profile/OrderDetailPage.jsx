@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { getOrderById } from "../../services/api/order.api";
 import toast from "react-hot-toast";
+import { formatDateOnly, formatTimeOnly } from "../../utils/date";
 
 const OrderDetailPage = () => {
   const navigate = useNavigate();
@@ -80,21 +81,6 @@ const OrderDetailPage = () => {
       .join(" ");
   };
 
-  const formatDate = (date) => {
-    return new Date(date).toLocaleDateString("en-ZA", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
-  };
-
-  const formatTime = (date) => {
-    return new Date(date).toLocaleTimeString("en-ZA", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
   const formatPrice = (price) => {
     return typeof price === "number" ? price.toFixed(2) : "0.00";
   };
@@ -149,7 +135,8 @@ const OrderDetailPage = () => {
           <div className="flex items-center gap-2 text-white/40 text-[11px]">
             <Calendar className="w-3 h-3" />
             <span>
-              {formatDate(order.createdAt)} at {formatTime(order.createdAt)}
+              {formatDateOnly(order.createdAt)} at{" "}
+              {formatTimeOnly(order.createdAt)}
             </span>
           </div>
         </div>

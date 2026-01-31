@@ -17,6 +17,7 @@ import ShiftModal from "./work/ShiftModal";
 import PhotoUploadModal from "./document/PhotoUploadModal";
 import BasicDetails from "./personal/BasicDetails";
 import WorkPreferences from "./work/WorkPreferences";
+import { formatDateOnly } from "../../utils/date";
 
 const ProfilePage = () => {
   const navigate = useNavigate();
@@ -67,9 +68,7 @@ const ProfilePage = () => {
       const response = await driverProfileAPI.getBankAccount();
 
       setBankData(response.data.bankDetails);
-    } catch (error) {
-
-    }
+    } catch (error) {}
   };
 
   const handleUpdateShifts = async () => {
@@ -164,10 +163,7 @@ const ProfilePage = () => {
         email: profileData.user?.email || "Not provided",
         phone: profileData.user?.phone || "Not provided",
         dob: profileData.profile?.dateOfBirth
-          ? new Date(profileData.profile.dateOfBirth).toLocaleDateString(
-              "en-US",
-              { month: "short", day: "numeric", year: "numeric" },
-            )
+          ? formatDateOnly(profileData.profile.dateOfBirth)
           : null,
         address: profileData.profile?.address?.street
           ? `${profileData.profile.address.street || ""}, ${profileData.profile.address.city || ""}, ${profileData.profile.address.province || ""} ${profileData.profile.address.postalCode || ""}`
