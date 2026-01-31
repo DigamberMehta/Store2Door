@@ -164,9 +164,14 @@ const DashboardPage = () => {
   return (
     <div className="bg-gray-50 min-h-screen">
       {/* Header with Refresh Button */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4 mb-6">
+      <div className="bg-white border-b border-gray-200 px-4 py-3 mb-4">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+          <div>
+            <h1 className="text-lg font-bold text-gray-900">Dashboard</h1>
+            <p className="text-xs text-gray-500 mt-1">
+              Store performance overview
+            </p>
+          </div>
           <button
             onClick={fetchDashboardData}
             disabled={loading}
@@ -179,12 +184,12 @@ const DashboardPage = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="px-6">
+      <div className="px-4">
         <StatsCards stats={dashboardData.stats} />
       </div>
 
       {/* Main Grid */}
-      <div className="px-6 grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
+      <div className="px-4 grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
         {/* Left Column - 2/3 width */}
         <div className="lg:col-span-2 space-y-4">
           <SalesChart data={dashboardData.salesData} />

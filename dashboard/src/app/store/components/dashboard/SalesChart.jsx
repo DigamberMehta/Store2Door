@@ -4,9 +4,9 @@ const SalesChart = ({ data }) => {
   const maxValue = Math.max(...data.map((d) => d.value));
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-base font-bold text-gray-900">Sales Trend</h2>
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-sm font-bold text-gray-900">Sales Overview</h2>
         <div className="flex items-center gap-2 text-sm text-green-600 font-semibold">
           <TrendingUp className="w-4 h-4" />
           <span>+12.5%</span>
