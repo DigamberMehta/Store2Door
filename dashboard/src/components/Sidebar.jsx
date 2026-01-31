@@ -12,12 +12,21 @@ import {
   ShoppingBag,
   ChevronRight,
   ChevronDown,
+  Store,
+  MapPin,
+  Sparkles,
+  CreditCard,
+  Clock,
+  Truck,
 } from "lucide-react";
 
 const Sidebar = ({ user, onLogout, type = "store" }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [openMenus, setOpenMenus] = useState({ products: true });
+  const [openMenus, setOpenMenus] = useState({
+    products: true,
+    settings: true,
+  });
 
   const storeNavItems = [
     { path: "/store/dashboard", icon: LayoutDashboard, label: "Dashboard" },
@@ -37,7 +46,38 @@ const Sidebar = ({ user, onLogout, type = "store" }) => {
     { path: "/store/orders", icon: ShoppingCart, label: "Orders" },
     { path: "/store/finance", icon: DollarSign, label: "Finance" },
     { path: "/store/reviews", icon: Star, label: "Reviews" },
-    { path: "/store/settings", icon: Settings, label: "Settings" },
+    {
+      label: "Settings",
+      icon: Settings,
+      key: "settings",
+      submenu: [
+        {
+          path: "/store/settings/profile",
+          icon: Store,
+          label: "Store Profile",
+        },
+        {
+          path: "/store/settings/location",
+          icon: MapPin,
+          label: "Location & Contact",
+        },
+        {
+          path: "/store/settings/features",
+          icon: Sparkles,
+          label: "Store Features",
+        },
+        {
+          path: "/store/settings/bank",
+          icon: CreditCard,
+          label: "Bank Account",
+        },
+        {
+          path: "/store/settings/hours",
+          icon: Clock,
+          label: "Operating Hours",
+        },
+      ],
+    },
   ];
 
   const navItems = type === "store" ? storeNavItems : [];

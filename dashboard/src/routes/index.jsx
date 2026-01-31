@@ -32,7 +32,9 @@ import Payouts from "../app/store/pages/finance/PayoutHistoryPage";
 
 import ReviewList from "../app/store/pages/reviews/ReviewsPage";
 
-import StoreSettings from "../app/store/pages/settings/StoreProfilePage";
+import StoreProfile from "../app/store/pages/settings/ProfilePage";
+import LocationContact from "../app/store/pages/settings/LocationContactPage";
+import StoreFeatures from "../app/store/pages/settings/StoreFeaturesPage";
 import BankAccountSettings from "../app/store/pages/settings/BankAccountPage";
 import OperatingHoursSettings from "../app/store/pages/settings/OperatingHoursPage";
 import DeliverySettings from "../app/store/pages/settings/DeliverySettingsPage";
@@ -176,8 +178,16 @@ export const router = createBrowserRouter([
         element: <ReviewList />,
       },
       {
-        path: "settings",
-        element: <StoreSettings />,
+        path: "settings/profile",
+        element: <StoreProfile />,
+      },
+      {
+        path: "settings/location",
+        element: <LocationContact />,
+      },
+      {
+        path: "settings/features",
+        element: <StoreFeatures />,
       },
       {
         path: "settings/bank",
@@ -186,10 +196,6 @@ export const router = createBrowserRouter([
       {
         path: "settings/hours",
         element: <OperatingHoursSettings />,
-      },
-      {
-        path: "settings/delivery",
-        element: <DeliverySettings />,
       },
     ],
   },
