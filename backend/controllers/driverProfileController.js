@@ -967,7 +967,7 @@ export const getDriverTransactions = asyncHandler(async (req, res) => {
     status: "delivered",
   })
     .populate("storeId", "name")
-    .sort({ actualDeliveryTime: -1 })
+    .sort({ updatedAt: -1 }) // Sort by updatedAt for most recent deliveries
     .limit(parseInt(limit));
 
   const transactions = orders.map((order) => ({
