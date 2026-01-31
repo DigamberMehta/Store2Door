@@ -776,6 +776,24 @@ export const toggleOnlineStatus = asyncHandler(async (req, res) => {
  * @access  Private (Delivery Rider)
  */
 export const getAvailableOrders = asyncHandler(async (req, res) => {
+  // Check if driver is available/online
+  const driverProfile = await DeliveryRiderProfile.findOne({
+    userId: req.user.id,
+  });
+
+  // If driver is offline, return empty list
+  if (!driverProfile || !driverProfile.isAvailable) {
+    return res.json({
+      success: true,
+      data: {
+        orders: [],
+        count: 0,
+      },
+      message:
+        "You are currently offline. Toggle online to see available orders.",
+    });
+  }
+
   // Get orders that are ready for pickup and not yet assigned to a driver
   const orders = await Order.find({
     status: { $in: ["confirmed", "ready_for_pickup"] },
@@ -843,11 +861,17 @@ export const getDriverEarnings = asyncHandler(async (req, res) => {
   thisMonthStart.setDate(1);
   thisMonthStart.setHours(0, 0, 0, 0);
 
-  // Get today's earnings
+  // Get today's earnings - use actualDeliveryTime or fallback to updatedAt
   const todayOrders = await Order.find({
     riderId: req.user.id,
     status: "delivered",
-    actualDeliveryTime: { $gte: today },
+    $or: [
+      { actualDeliveryTime: { $gte: today } },
+      {
+        actualDeliveryTime: { $exists: false },
+        updatedAt: { $gte: today },
+      },
+    ],
   });
 
   const todayEarnings = todayOrders.reduce((sum, order) => {
@@ -864,7 +888,13 @@ export const getDriverEarnings = asyncHandler(async (req, res) => {
   const weekOrders = await Order.find({
     riderId: req.user.id,
     status: "delivered",
-    actualDeliveryTime: { $gte: thisWeekStart },
+    $or: [
+      { actualDeliveryTime: { $gte: thisWeekStart } },
+      {
+        actualDeliveryTime: { $exists: false },
+        updatedAt: { $gte: thisWeekStart },
+      },
+    ],
   });
 
   const weekEarnings = weekOrders.reduce((sum, order) => {
@@ -875,7 +905,13 @@ export const getDriverEarnings = asyncHandler(async (req, res) => {
   const monthOrders = await Order.find({
     riderId: req.user.id,
     status: "delivered",
-    actualDeliveryTime: { $gte: thisMonthStart },
+    $or: [
+      { actualDeliveryTime: { $gte: thisMonthStart } },
+      {
+        actualDeliveryTime: { $exists: false },
+        updatedAt: { $gte: thisMonthStart },
+      },
+    ],
   });
 
   const monthEarnings = monthOrders.reduce((sum, order) => {
