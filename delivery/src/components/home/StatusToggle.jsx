@@ -23,14 +23,21 @@ const StatusToggle = () => {
 
   const handleToggle = async () => {
     const newStatus = !isOnline;
+    const previousStatus = isOnline;
+
+    // Optimistic update - change UI immediately
+    setIsOnline(newStatus);
+    toast.success(`You are now ${newStatus ? "online" : "offline"}`, {
+      duration: 2000,
+    });
 
     try {
       await driverProfileAPI.toggleOnlineStatus(newStatus);
-      setIsOnline(newStatus);
-      toast.success(`You are now ${newStatus ? "online" : "offline"}`);
     } catch (error) {
+      // Revert to previous state on error
+      setIsOnline(previousStatus);
       console.error("Error updating status:", error);
-      toast.error("Failed to update status");
+      toast.error("Failed to update status. Please try again.");
     }
   };
 

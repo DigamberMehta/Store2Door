@@ -257,33 +257,61 @@ const StoreDetailPage = () => {
       return;
     }
 
+    const productId = product._id || product.id;
+
+    // Optimistic update - add to cart immediately in UI
+    const previousCartItems = new Map(cartItems);
+    const updatedCartItems = new Map(cartItems);
+    updatedCartItems.set(productId, {
+      productId: productId,
+      quantity: 1,
+      product: product,
+      itemId: `temp-${Date.now()}`, // Temporary ID for optimistic update
+    });
+    setCartItems(updatedCartItems);
+
+    // Show success toast immediately
+    toast.success("Added to cart!", {
+      duration: 2000,
+      position: "top-center",
+      style: {
+        background: "#1a1a1a",
+        color: "#fff",
+        border: "1px solid rgba(49,134,22,0.3)",
+      },
+    });
+
     try {
-      await cartAPI.addToCart({
-        productId: product._id || product.id,
+      const response = await cartAPI.addToCart({
+        productId: productId,
         storeId: store._id || store.id,
         quantity: 1,
         selectedVariant: null,
       });
 
+      // Update with actual cart item data from backend
+      if (response.success && response.data) {
+        const actualCartItems = new Map(cartItems);
+        actualCartItems.set(productId, {
+          productId: productId,
+          quantity: 1,
+          product: product,
+          itemId: response.data.itemId || response.data._id,
+        });
+        setCartItems(actualCartItems);
+      }
+
       // Trigger cart update
       window.dispatchEvent(new CustomEvent("cartUpdated"));
-
-      // Show success toast
-      toast.success("Added to cart!", {
-        duration: 2000,
-        position: "top-center",
-        style: {
-          background: "#1a1a1a",
-          color: "#fff",
-          border: "1px solid rgba(49,134,22,0.3)",
-        },
-      });
     } catch (error) {
+      // Revert optimistic update on error
+      setCartItems(previousCartItems);
+
       if (error.response?.data?.code === "DIFFERENT_STORE") {
         // Show modal instead of toast
         setConflictData(error.response.data.data);
         setPendingCartItem({
-          productId: product._id || product.id,
+          productId: productId,
           storeId: store._id || store.id,
           quantity: 1,
         });

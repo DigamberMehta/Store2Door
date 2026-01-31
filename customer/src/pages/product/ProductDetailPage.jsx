@@ -53,18 +53,34 @@ const ProductDetailPage = () => {
       return;
     }
 
+    const currentVariant = product.variants?.[selectedVariant];
+    const selectedVariantData = currentVariant
+      ? {
+          name: currentVariant.name,
+          value: currentVariant.value,
+          priceModifier: currentVariant.priceModifier || 0,
+        }
+      : null;
+
+    // Optimistic update - show success immediately
+    setAddingToCart(true);
+    toast.success(
+      `Added ${quantity} ${quantity === 1 ? "item" : "items"} to cart!`,
+      {
+        duration: 2000,
+        position: "top-center",
+        style: {
+          background: "#1a1a1a",
+          color: "#fff",
+          border: "1px solid rgba(49,134,22,0.3)",
+        },
+      },
+    );
+
+    // Trigger cart update immediately for optimistic UI
+    window.dispatchEvent(new CustomEvent("cartUpdated"));
+
     try {
-      setAddingToCart(true);
-
-      const currentVariant = product.variants?.[selectedVariant];
-      const selectedVariantData = currentVariant
-        ? {
-            name: currentVariant.name,
-            value: currentVariant.value,
-            priceModifier: currentVariant.priceModifier || 0,
-          }
-        : null;
-
       await cartAPI.addToCart({
         productId: product._id,
         storeId: product.storeId,
@@ -72,22 +88,8 @@ const ProductDetailPage = () => {
         selectedVariant: selectedVariantData,
       });
 
-      // Trigger cart update by dispatching custom event
+      // Trigger cart update again to sync with backend
       window.dispatchEvent(new CustomEvent("cartUpdated"));
-
-      // Show success toast
-      toast.success(
-        `Added ${quantity} ${quantity === 1 ? "item" : "items"} to cart!`,
-        {
-          duration: 2000,
-          position: "top-center",
-          style: {
-            background: "#1a1a1a",
-            color: "#fff",
-            border: "1px solid rgba(49,134,22,0.3)",
-          },
-        },
-      );
     } catch (error) {
       if (error.response?.data?.code === "DIFFERENT_STORE") {
         // This is not an error - show modal for user to choose
@@ -113,6 +115,8 @@ const ProductDetailPage = () => {
             border: "1px solid rgba(239,68,68,0.3)",
           },
         });
+        // Revert cart update on error
+        window.dispatchEvent(new CustomEvent("cartUpdated"));
       }
     } finally {
       setAddingToCart(false);
