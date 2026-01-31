@@ -193,16 +193,12 @@ const OrderDetailPage = () => {
           </div>
         )}
 
-        {/* Earning Summary */}
+        {/* Your Earnings */}
         <div className="bg-emerald-500/[0.03] border border-emerald-500/10 rounded-2xl p-4">
           <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-widest mb-4">
-            Earning Summary
+            Your Earnings
           </p>
           <div className="space-y-2">
-            <div className="flex justify-between text-xs">
-              <span className="text-zinc-500">Subtotal</span>
-              <span className="text-white">R{order.subtotal?.toFixed(2)}</span>
-            </div>
             <div className="flex justify-between text-xs">
               <span className="text-zinc-500">Delivery Fee</span>
               <span className="text-white">
@@ -218,9 +214,11 @@ const OrderDetailPage = () => {
               </div>
             )}
             <div className="pt-2 mt-2 border-t border-white/5 flex justify-between">
-              <span className="text-sm font-bold text-white">Total</span>
+              <span className="text-sm font-bold text-white">
+                Total Earnings
+              </span>
               <span className="text-base font-bold text-emerald-400">
-                R{order.total?.toFixed(2)}
+                R{((order.deliveryFee || 0) + (order.tip || 0)).toFixed(2)}
               </span>
             </div>
           </div>

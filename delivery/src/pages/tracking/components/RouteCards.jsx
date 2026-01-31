@@ -3,6 +3,14 @@ import { Store, MapPin, Phone } from "lucide-react";
 const RouteCards = ({ order }) => {
   return (
     <div className="space-y-3">
+      {/* Order ID */}
+      <div className="flex p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl items-center justify-between">
+        <p className="text-xs text-zinc-400">Order ID</p>
+        <p className="font-mono font-bold text-emerald-400">
+          #{order.orderNumber}
+        </p>
+      </div>
+
       {/* Store Card */}
       <div className="flex p-3 bg-white/5 border border-white/5 rounded-xl items-center">
         <div className="p-2 bg-white/10 rounded-full shadow-sm text-orange-400 mr-3">
