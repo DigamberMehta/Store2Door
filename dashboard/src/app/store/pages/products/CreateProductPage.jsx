@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import toast from "react-hot-toast";
 import testProducts from "./testData.json";
 import BasicInformationSection from "./create-product/BasicInformationSection";
 import PricingSection from "./create-product/PricingSection";
@@ -239,7 +240,10 @@ const CreateProductPage = () => {
   const addImage = () => {
     setFormData((prev) => ({
       ...prev,
-      images: [...prev.images, { url: "", alt: "", isPrimary: false, file: null, preview: null }],
+      images: [
+        ...prev.images,
+        { url: "", alt: "", isPrimary: false, file: null, preview: null },
+      ],
     }));
   };
 
@@ -342,12 +346,34 @@ const CreateProductPage = () => {
       );
 
       if (response.data.success) {
-        alert("Product created successfully!");
+        toast.success("Product created successfully!");
         navigate("/store/products");
       }
     } catch (error) {
       console.error("Error creating product:", error);
-      alert(error.response?.data?.message || "Failed to create product");
+
+      // Handle validation errors with specific field messages
+      if (
+        error.response?.data?.errors &&
+        Array.isArray(error.response.data.errors)
+      ) {
+        // Show each field error as a separate toast
+        error.response.data.errors.forEach((err) => {
+          toast.error(err.message);
+        });
+
+        // Also show a summary if there are multiple errors
+        if (error.response.data.errors.length > 1) {
+          toast.error(
+            `${error.response.data.errors.length} validation errors found`,
+          );
+        }
+      } else {
+        // Show generic error message
+        toast.error(
+          error.response?.data?.message || "Failed to create product",
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -405,22 +431,43 @@ const CreateProductPage = () => {
 
   return (
     <div className="bg-gray-50 min-h-screen">
-      <div className="bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-10 shadow-sm">
+      <div className="bg-white border-b border-gray-200 px-4 py-3 sticky top-0 z-10 shadow-sm">
         <div className="max-w-6xl mx-auto flex items-start justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Add New Product
-            </h1>
-            <p className="text-sm text-gray-500 mt-1">
+            <h1 className="text-lg font-bold text-gray-900">Add New Product</h1>
+            <p className="text-xs text-gray-500 mt-1">
               Fill in the product details below. Fields marked with{" "}
               <span className="text-red-500">*</span> are required.
             </p>
+          </div>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => fillTestData("electronics")}
+              className="px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
+            >
+              Fill Electronics
+            </button>
+            <button
+              type="button"
+              onClick={() => fillTestData("groceries")}
+              className="px-3 py-1.5 text-xs font-medium text-green-600 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors"
+            >
+              Fill Groceries
+            </button>
+            <button
+              type="button"
+              onClick={() => fillTestData("clothing")}
+              className="px-3 py-1.5 text-xs font-medium text-purple-600 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors"
+            >
+              Fill Clothing
+            </button>
           </div>
         </div>
       </div>
 
       <div className="">
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <BasicInformationSection
             formData={formData}
             handleInputChange={handleInputChange}

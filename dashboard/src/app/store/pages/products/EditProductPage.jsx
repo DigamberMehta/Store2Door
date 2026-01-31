@@ -106,20 +106,20 @@ const EditProductPage = () => {
         `http://localhost:3000/api/managers/products/${id}`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       if (response.data.success) {
         const product = response.data.data;
-        
+
         // Set selected category first
         if (product.categoryId && categories.length > 0) {
-          const category = categories.find(c => c._id === product.categoryId);
+          const category = categories.find((c) => c._id === product.categoryId);
           if (category) {
             setSelectedCategory(category);
           }
         }
-        
+
         setFormData({
           name: product.name || "",
           description: product.description || "",
@@ -129,9 +129,13 @@ const EditProductPage = () => {
           shortDescription: product.shortDescription || "",
           subcategory: product.subcategory || "",
           tags: Array.isArray(product.tags) ? product.tags.join(", ") : "",
-          originalPrice: product.originalWholesalePrice || product.originalPrice || "",
+          originalPrice:
+            product.originalWholesalePrice || product.originalPrice || "",
           currency: product.currency || "ZAR",
-          images: product.images?.length > 0 ? product.images : [{ url: "", alt: "", isPrimary: true }],
+          images:
+            product.images?.length > 0
+              ? product.images
+              : [{ url: "", alt: "", isPrimary: true }],
           inventory: {
             quantity: product.inventory?.quantity || "",
             lowStockThreshold: product.inventory?.lowStockThreshold || "10",
@@ -151,12 +155,17 @@ const EditProductPage = () => {
           isPrescriptionRequired: product.isPrescriptionRequired || false,
           isFragile: product.isFragile || false,
           isActive: product.isActive !== undefined ? product.isActive : true,
-          isAvailable: product.isAvailable !== undefined ? product.isAvailable : true,
+          isAvailable:
+            product.isAvailable !== undefined ? product.isAvailable : true,
           preparationTime: product.preparationTime || "15",
           isFeatured: product.isFeatured || false,
           isOnSale: product.isOnSale || false,
-          saleStartDate: product.saleStartDate ? new Date(product.saleStartDate).toISOString().split('T')[0] : "",
-          saleEndDate: product.saleEndDate ? new Date(product.saleEndDate).toISOString().split('T')[0] : "",
+          saleStartDate: product.saleStartDate
+            ? new Date(product.saleStartDate).toISOString().split("T")[0]
+            : "",
+          saleEndDate: product.saleEndDate
+            ? new Date(product.saleEndDate).toISOString().split("T")[0]
+            : "",
           specifications: {
             brand: product.specifications?.brand || "",
             model: product.specifications?.model || "",
@@ -398,13 +407,11 @@ const EditProductPage = () => {
 
   return (
     <div className="bg-gray-50 min-h-screen">
-      <div className="bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-10 shadow-sm">
+      <div className="bg-white border-b border-gray-200 px-4 py-3 sticky top-0 z-10 shadow-sm">
         <div className="max-w-6xl mx-auto flex items-start justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Edit Product
-            </h1>
-            <p className="text-sm text-gray-500 mt-1">
+            <h1 className="text-lg font-bold text-gray-900">Edit Product</h1>
+            <p className="text-xs text-gray-500 mt-1">
               Update product details below. Fields marked with{" "}
               <span className="text-red-500">*</span> are required.
             </p>
