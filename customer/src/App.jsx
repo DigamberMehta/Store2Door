@@ -26,7 +26,11 @@ import OrderDeliveredPage from "./pages/orders/OrderDeliveredPage";
 import PaymentPage from "./pages/payment/PaymentPage";
 import PaymentSuccessPage from "./pages/payment/PaymentSuccessPage";
 import PaymentFailurePage from "./pages/payment/PaymentFailurePage";
-import { AboutUsPage, TermsOfServicePage, PrivacyPolicyPage } from "./pages/info";
+import {
+  AboutUsPage,
+  TermsOfServicePage,
+  PrivacyPolicyPage,
+} from "./pages/info";
 import FloatingCartButton from "./components/FloatingCartButton";
 
 // Wrapper component to provide navigation handlers
