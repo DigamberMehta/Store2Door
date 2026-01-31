@@ -6,10 +6,45 @@ import { apiClient } from "./client.js";
  */
 export const storeAPI = {
   /**
-   * Get own store information
+   * Get own store information (full - use sparingly)
    */
   getMy: async () => {
     return apiClient.get("/stores/my");
+  },
+
+  /**
+   * Get own store profile (basic info only)
+   */
+  getMyProfile: async () => {
+    return apiClient.get("/stores/my/profile");
+  },
+
+  /**
+   * Get own store location & contact info
+   */
+  getMyLocation: async () => {
+    return apiClient.get("/stores/my/location");
+  },
+
+  /**
+   * Get own store features
+   */
+  getMyFeatures: async () => {
+    return apiClient.get("/stores/my/features");
+  },
+
+  /**
+   * Get own store bank account details
+   */
+  getMyBankAccount: async () => {
+    return apiClient.get("/stores/my/bank-account");
+  },
+
+  /**
+   * Get own store operating hours
+   */
+  getMyOperatingHours: async () => {
+    return apiClient.get("/stores/my/operating-hours");
   },
 
   /**
