@@ -1,6 +1,6 @@
 import express from "express";
 import { authenticate, authorize } from "../../middleware/auth.js";
-import { uploadMultiple } from "../../middleware/upload.js";
+import { uploadMultiple, uploadSingle } from "../../middleware/upload.js";
 import { uploadToCloudinary } from "../../config/cloudinary.js";
 import fs from "fs";
 
@@ -33,7 +33,7 @@ router.post(
           const result = await uploadToCloudinary(
             file.path,
             "products",
-            "image"
+            "image",
           );
 
           // Delete local file after upload
@@ -69,7 +69,49 @@ router.post(
         error: error.message,
       });
     }
-  }
+  },
 );
+
+/**
+ * @desc Upload store image (logo or cover)
+ * @route POST /api/managers/upload/store-image
+ * @access Private (Store Manager)
+ */
+router.post("/store-image", uploadSingle("image"), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: "No file uploaded",
+      });
+    }
+
+    // Upload to Cloudinary in stores folder
+    const result = await uploadToCloudinary(req.file.path, "stores", "image");
+
+    // Delete local file after upload
+    fs.unlinkSync(req.file.path);
+
+    res.status(200).json({
+      success: true,
+      message: "Image uploaded successfully",
+      data: {
+        url: result.url,
+        publicId: result.public_id,
+      },
+    });
+  } catch (error) {
+    console.error("Upload error:", error);
+    // Delete local file even if upload fails
+    if (req.file && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+    res.status(500).json({
+      success: false,
+      message: "Failed to upload image",
+      error: error.message,
+    });
+  }
+});
 
 export default router;
