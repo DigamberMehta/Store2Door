@@ -743,130 +743,65 @@ export const updateOrderStatus = async (req, res) => {
       });
     }
 
-    order.status = status;
+    // Use the Order model's updateStatus method which handles transactions
+    await order.updateStatus(status, notes);
 
-    // Set timestamps based on status
-    if (status === "confirmed") {
-      order.confirmedAt = new Date();
-    } else if (status === "picked_up") {
-      order.pickedUpAt = new Date();
-    } else if (status === "delivered") {
-      order.deliveredAt = new Date();
-
-      // Credit driver with delivery fee + tip
-      if (order.riderId) {
-        try {
-          const driverProfile = await DeliveryRiderProfile.findOne({
-            userId: order.riderId,
-          });
-          if (driverProfile) {
-            const earnings = (order.deliveryFee || 0) + (order.tip || 0);
-
-            // Update driver earnings
-            driverProfile.stats.totalEarnings += earnings;
-            driverProfile.stats.totalTips += order.tip || 0;
-            driverProfile.stats.completedDeliveries += 1;
-
-            await driverProfile.save();
-
-            console.log(
-              `[Order Delivered] Credited driver ${order.riderId} with R${earnings.toFixed(2)} (Fee: R${order.deliveryFee}, Tip: R${order.tip || 0})`,
-            );
-          } else {
-            console.warn(
-              `[Order Delivered] Driver profile not found for riderId: ${order.riderId}`,
-            );
-          }
-        } catch (driverError) {
-          console.error(
-            "[Order Delivered] Error crediting driver:",
-            driverError,
-          );
-          // Don't fail the order update if driver credit fails
+    // Update driver profile stats (for analytics only, not for balance tracking)
+    if (status === "delivered" && order.riderId) {
+      try {
+        const driverProfile = await DeliveryRiderProfile.findOne({
+          userId: order.riderId,
+        });
+        if (driverProfile) {
+          driverProfile.stats.completedDeliveries += 1;
+          await driverProfile.save();
         }
+      } catch (error) {
+        console.error("[Stats Update] Error updating driver stats:", error);
       }
+    }
 
-      // Credit store with product earnings
-      if (order.storeId) {
-        try {
-          const store = await Store.findById(order.storeId);
-          if (store) {
-            // Calculate store earnings and platform commission from order items
-            let storeEarnings = 0;
-            let platformCommission = 0;
-
-            order.items.forEach((item) => {
-              // Store gets the base price (unitPrice * quantity)
-              const baseAmount = item.unitPrice * item.quantity;
-              storeEarnings += baseAmount;
-
-              // Platform gets the markup (unitPrice * markupPercentage/100 * quantity)
-              const markup =
-                ((item.unitPrice * (item.markupPercentage || 20)) / 100) *
-                item.quantity;
-              platformCommission += markup;
-            });
-
-            // Update store stats (only store-related data)
-            store.stats.storeEarnings =
-              (store.stats.storeEarnings || 0) + storeEarnings;
-            store.stats.totalRevenue =
-              (store.stats.totalRevenue || 0) + order.subtotal;
-
-            await store.save();
-
-            // Update platform financials
-            try {
-              await PlatformFinancials.recordOrderDelivery({
-                subtotal: order.subtotal,
-                platformCommission,
-                storeEarnings,
-                deliveryFee: order.deliveryFee || 0,
-                tip: order.tip || 0,
-                discount: order.discount || 0,
-              });
-
-              console.log(
-                `[Order Delivered] Store credited: R${storeEarnings.toFixed(2)} | Platform commission: R${platformCommission.toFixed(2)} | Driver: R${((order.deliveryFee || 0) + (order.tip || 0)).toFixed(2)}`,
-              );
-            } catch (financialsError) {
-              console.error(
-                "[Order Delivered] Error updating platform financials:",
-                financialsError,
-              );
-              // Don't fail the order update if financials update fails
-            }
-          } else {
-            console.warn(
-              `[Order Delivered] Store not found for storeId: ${order.storeId}`,
-            );
-          }
-        } catch (storeError) {
-          console.error("[Order Delivered] Error crediting store:", storeError);
-          // Don't fail the order update if store credit fails
+    // Update store stats (for analytics only, not for balance tracking)
+    if (status === "delivered" && order.storeId) {
+      try {
+        const store = await Store.findById(order.storeId);
+        if (store) {
+          store.stats.totalOrders = (store.stats.totalOrders || 0) + 1;
+          await store.save();
         }
+      } catch (error) {
+        console.error("[Stats Update] Error updating store stats:", error);
+      }
+    }
+
+    // Update platform financials for reporting
+    if (status === "delivered") {
+      try {
+        const paymentSplit = order.calculatePaymentSplit();
+        await PlatformFinancials.recordOrderDelivery({
+          subtotal: order.subtotal,
+          platformCommission: paymentSplit.platformAmount,
+          storeEarnings: paymentSplit.storeAmount,
+          deliveryFee: order.deliveryFee || 0,
+          tip: order.tip || 0,
+          discount: order.discount || 0,
+        });
+      } catch (error) {
+        console.error(
+          "[Financials Update] Error updating platform financials:",
+          error,
+        );
       }
     } else if (status === "cancelled") {
-      order.cancelledAt = new Date();
-
-      // Record cancellation in platform financials
       try {
         await PlatformFinancials.recordOrderCancellation();
-      } catch (financialsError) {
+      } catch (error) {
         console.error(
-          "[Order Cancelled] Error updating platform financials:",
-          financialsError,
+          "[Financials Update] Error recording cancellation:",
+          error,
         );
       }
     }
-
-    // Note: trackingHistory is automatically updated by pre-save middleware in Order model
-
-    if (notes) {
-      order.notes = notes;
-    }
-
-    await order.save();
 
     // Emit socket event for real-time update
     emitToOrder(orderId, "order:status-changed", {

@@ -515,6 +515,7 @@ orderSchema.methods.updateStatus = async function (newStatus, notes, location) {
               deliveryFee: this.deliveryFee || 0,
               tip: this.tip || 0,
               storeId: this.storeId,
+              itemCount: this.items.length,
             },
           );
         }

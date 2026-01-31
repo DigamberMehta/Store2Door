@@ -91,17 +91,6 @@ export const getDriverProfile = asyncHandler(async (req, res) => {
         averageDeliveryTime: null,
         onTimeDeliveryRate: 100,
       },
-      preferences: {
-        maxDeliveriesPerDay: 20,
-        preferredVehicleType: null,
-        acceptCashPayments: true,
-        autoAcceptOrders: false,
-        notificationPreferences: {
-          sms: true,
-          email: true,
-          push: true,
-        },
-      },
     });
     // Re-fetch with populated user data
     profile = await DeliveryRiderProfile.findOne({
@@ -928,7 +917,7 @@ export const getDriverEarnings = asyncHandler(async (req, res) => {
       todayEarnings,
       weeklyEarnings: weekEarnings,
       monthlyEarnings: monthEarnings,
-      currentBalance,
+      currentBalance, // Available balance (not yet withdrawn)
       totalWithdrawn,
       today: {
         earnings: todayEarnings,
@@ -989,7 +978,7 @@ export const getDriverTransactions = asyncHandler(async (req, res) => {
     storeName: tx.orderId?.storeId?.name,
     deliveryFee: tx.metadata?.deliveryFee || 0,
     tip: tx.metadata?.tip || 0,
-    items: 0, // Will be populated from order if needed
+    items: tx.metadata?.itemCount || 0,
   }));
 
   res.json({
