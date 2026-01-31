@@ -442,6 +442,9 @@ paymentSchema.statics.getPendingPayments = function () {
 
 // Virtual for total refunded
 paymentSchema.virtual("totalRefunded").get(function () {
+  if (!this.refunds || !Array.isArray(this.refunds)) {
+    return 0;
+  }
   return this.refunds
     .filter((r) => r.status === "succeeded")
     .reduce((sum, r) => sum + r.amount, 0);

@@ -22,7 +22,7 @@ router.get("/", async (req, res) => {
     // Build date filter based on period
     let dateFilter = {};
     const now = new Date();
-    
+
     if (period === "week") {
       const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
       dateFilter = { createdAt: { $gte: weekAgo } };
@@ -54,7 +54,7 @@ router.get("/", async (req, res) => {
       Payment.find(query)
         .populate({
           path: "orderId",
-          select: "orderNumber total status items",
+          select: "orderNumber total status items paymentSplit",
           populate: {
             path: "items.productId",
             select: "name",

@@ -115,6 +115,26 @@ export const getOrderDetails = async (req, res) => {
       });
     }
 
+    // Conditionally populate paymentId only if it exists
+    if (order.paymentId) {
+      await order.populate(
+        "paymentId",
+        "paymentNumber status method amount createdAt completedAt yocoPaymentId yocoCheckoutId",
+      );
+    }
+
+    // Calculate payment split if it's missing or all zeros
+    if (
+      !order.paymentSplit ||
+      (order.paymentSplit.storeAmount === 0 &&
+        order.paymentSplit.driverAmount === 0 &&
+        order.paymentSplit.platformAmount === 0)
+    ) {
+      order.paymentSplit = order.calculatePaymentSplit();
+      // Optionally save the calculated split back to the database
+      await order.save();
+    }
+
     res.json({
       success: true,
       data: order,

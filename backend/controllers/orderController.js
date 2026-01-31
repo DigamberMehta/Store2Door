@@ -303,6 +303,43 @@ export const createOrder = async (req, res) => {
       ).toFixed(2),
     );
 
+    // Calculate payment split
+    // Store gets the wholesale price (sum of all product wholesale prices)
+    const storeAmount = formattedItems.reduce((sum, item) => {
+      const product = products.find(
+        (p) => p._id.toString() === item.productId.toString(),
+      );
+      const wholesalePrice = product.price || 0; // Original store price without markup
+      return sum + wholesalePrice * item.quantity;
+    }, 0);
+
+    // Driver gets delivery fee + tip (always full amount, never discounted)
+    const driverAmount = calculatedDeliveryFee + roundedTip;
+
+    // Calculate total markup across all products
+    const totalMarkup = formattedItems.reduce((sum, item) => {
+      const markupAmount =
+        item.unitPrice - item.unitPrice / (1 + item.markupPercentage / 100);
+      return sum + markupAmount * item.quantity;
+    }, 0);
+
+    // Platform absorbs the discount
+    const discountAbsorbed = calculatedDiscount;
+
+    // Platform net earnings = markup - discount absorbed
+    const platformNetEarnings = totalMarkup - discountAbsorbed;
+
+    const paymentSplit = {
+      storeAmount: parseFloat(storeAmount.toFixed(2)),
+      driverAmount: parseFloat(driverAmount.toFixed(2)),
+      platformAmount: parseFloat(platformNetEarnings.toFixed(2)),
+      platformBreakdown: {
+        totalMarkup: parseFloat(totalMarkup.toFixed(2)),
+        discountAbsorbed: parseFloat(discountAbsorbed.toFixed(2)),
+        netEarnings: parseFloat(platformNetEarnings.toFixed(2)),
+      },
+    };
+
     // Generate unique order number
     const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
 
@@ -338,6 +375,7 @@ export const createOrder = async (req, res) => {
       total: calculatedTotal,
       deliveryAddress: transformedDeliveryAddress,
       appliedCoupon: appliedCouponData,
+      paymentSplit: paymentSplit,
       paymentMethod: paymentMethod || "yoco_card",
       paymentId,
       status: "pending", // Will be updated to 'placed' after payment verification

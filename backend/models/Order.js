@@ -292,6 +292,46 @@ const orderSchema = new mongoose.Schema(
       discountAmount: Number,
     },
 
+    // Payment split breakdown
+    // Platform absorbs all discount losses, driver and store always get full amounts
+    paymentSplit: {
+      // Store receives their original wholesale price (no markup, no discount impact)
+      storeAmount: {
+        type: Number,
+        default: 0,
+        min: [0, "Store amount cannot be negative"],
+      },
+      // Driver receives full delivery fee + tip (never affected by discounts)
+      driverAmount: {
+        type: Number,
+        default: 0,
+        min: [0, "Driver amount cannot be negative"],
+      },
+      // Platform receives markup minus any discount losses
+      platformAmount: {
+        type: Number,
+        default: 0,
+      },
+      // Breakdown of platform earnings
+      platformBreakdown: {
+        // Total markup from all products (before discount)
+        totalMarkup: {
+          type: Number,
+          default: 0,
+        },
+        // Discount absorbed by platform
+        discountAbsorbed: {
+          type: Number,
+          default: 0,
+        },
+        // Net platform earnings (totalMarkup - discountAbsorbed)
+        netEarnings: {
+          type: Number,
+          default: 0,
+        },
+      },
+    },
+
     // Delivery information
     deliveryAddress: deliveryAddressSchema,
     estimatedDeliveryTime: {
@@ -479,6 +519,44 @@ orderSchema.methods.addRating = function (ratingData) {
     ratedAt: new Date(),
   };
   return this.save();
+};
+
+// Calculate payment split breakdown
+orderSchema.methods.calculatePaymentSplit = function () {
+  // Store gets sum of wholesale prices
+  const storeAmount = this.items.reduce((sum, item) => {
+    const wholesalePrice = item.unitPrice / (1 + item.markupPercentage / 100);
+    return sum + wholesalePrice * item.quantity;
+  }, 0);
+
+  // Driver gets delivery fee + tip
+  const driverAmount = this.deliveryFee + this.tip;
+
+  // Total markup
+  const totalMarkup = this.items.reduce((sum, item) => {
+    const markupAmount =
+      item.unitPrice - item.unitPrice / (1 + item.markupPercentage / 100);
+    return sum + markupAmount * item.quantity;
+  }, 0);
+
+  // Platform absorbs discount
+  const discountAbsorbed = this.discount;
+  const platformNetEarnings = totalMarkup - discountAbsorbed;
+
+  return {
+    storeAmount: parseFloat(storeAmount.toFixed(2)),
+    driverAmount: parseFloat(driverAmount.toFixed(2)),
+    platformAmount: parseFloat(platformNetEarnings.toFixed(2)),
+    platformBreakdown: {
+      totalMarkup: parseFloat(totalMarkup.toFixed(2)),
+      discountAbsorbed: parseFloat(discountAbsorbed.toFixed(2)),
+      netEarnings: parseFloat(platformNetEarnings.toFixed(2)),
+    },
+    total: this.total,
+    verified:
+      Math.abs(storeAmount + driverAmount + platformNetEarnings - this.total) <
+      0.01,
+  };
 };
 
 // Static methods

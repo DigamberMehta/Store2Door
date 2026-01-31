@@ -84,7 +84,7 @@ export const getStoreDashboardStats = async (req, res) => {
         .sort({ createdAt: -1 })
         .limit(10)
         .populate("customerId", "name email")
-        .select("orderId customerId total items status createdAt"),
+        .select("orderNumber customerId total items status createdAt"),
 
       // Top selling products (only succeeded payments)
       Order.aggregate([
@@ -162,7 +162,7 @@ export const getStoreDashboardStats = async (req, res) => {
       Review.find({ storeId })
         .sort({ createdAt: -1 })
         .limit(5)
-        .populate("customerId", "name")
+        .populate("reviewerId", "name")
         .populate("productId", "name")
         .select("rating comment createdAt"),
 
@@ -207,7 +207,7 @@ export const getStoreDashboardStats = async (req, res) => {
 
     // Format recent orders
     const formattedOrders = recentOrders.map((order) => ({
-      id: order.orderId,
+      id: order.orderNumber,
       customer: order.customerId?.name || "Unknown Customer",
       amount: order.total,
       items: order.items.length,

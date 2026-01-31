@@ -1,5 +1,6 @@
 import express from "express";
 import { authenticate, authorize } from "../../middleware/auth.js";
+import { uploadMultiple } from "../../middleware/upload.js";
 import {
   createProduct,
   updateProduct,
@@ -22,8 +23,8 @@ router.get("/", getStoreProducts);
 // Get product by ID
 router.get("/:id", getStoreProductById);
 
-// Create new product
-router.post("/", createProduct);
+// Create new product (with image upload support)
+router.post("/", uploadMultiple("images", 10), createProduct);
 
 // Update product
 router.put("/:id", updateProduct);

@@ -457,13 +457,21 @@ export const createProduct = asyncHandler(async (req, res) => {
   if (req.body.productData) {
     try {
       productInfo = JSON.parse(req.body.productData);
+      console.log("✅ Parsed productData from FormData");
     } catch (error) {
+      console.error("❌ Failed to parse productData:", error);
       return res.status(400).json({
         success: false,
         message: "Invalid product data format",
       });
     }
   }
+
+  console.log("📦 Product Info Keys:", Object.keys(productInfo));
+  console.log("📝 Name:", productInfo.name);
+  console.log("📝 Description:", productInfo.description);
+  console.log("📝 Category:", productInfo.category);
+  console.log("📝 CategoryId:", productInfo.categoryId);
 
   // Validate category exists
   if (productInfo.categoryId) {
@@ -480,24 +488,27 @@ export const createProduct = asyncHandler(async (req, res) => {
   let images = [];
   if (req.files && req.files.length > 0) {
     // Upload images to Cloudinary
-    const uploadPromises = req.files.map((file, index) => 
-      uploadToCloudinary(file.path, "products", "image")
+    const uploadPromises = req.files.map((file, index) =>
+      uploadToCloudinary(file.path, "products", "image"),
     );
-    
+
     const uploadResults = await Promise.all(uploadPromises);
-    
+
     // Get image metadata if provided
     const imageMetadata = productInfo.imageMetadata || [];
-    
+
     images = uploadResults.map((result, index) => ({
       url: result.url,
       alt: imageMetadata[index]?.alt || `Product image ${index + 1}`,
       isPrimary: index === 0, // First image is primary
     }));
-  } else if (productInfo.imageMetadata && productInfo.imageMetadata.length > 0) {
+  } else if (
+    productInfo.imageMetadata &&
+    productInfo.imageMetadata.length > 0
+  ) {
     // Use provided URLs if no files uploaded
     images = productInfo.imageMetadata
-      .filter(img => img.url)
+      .filter((img) => img.url)
       .map((img, index) => ({
         url: img.url,
         alt: img.alt || `Product image ${index + 1}`,
@@ -546,13 +557,62 @@ export const createProduct = asyncHandler(async (req, res) => {
       100;
   }
 
-  const product = await Product.create(productData);
+  // Validate required fields before creating
+  const requiredFields = ["name", "description", "category", "categoryId"];
+  const missingFields = requiredFields.filter((field) => !productData[field]);
 
-  res.status(201).json({
-    success: true,
-    message: "Product created successfully",
-    data: product,
-  });
+  if (missingFields.length > 0) {
+    console.error("Missing required fields:", missingFields);
+    console.error(
+      "Product data received:",
+      JSON.stringify(productData, null, 2),
+    );
+
+    // More user-friendly field names
+    const fieldNames = {
+      name: "Product name",
+      description: "Product description",
+      category: "Category",
+      categoryId: "Category ID",
+    };
+
+    return res.status(400).json({
+      success: false,
+      message: "Validation failed - missing required fields",
+      errors: missingFields.map((field) => ({
+        field,
+        message: `${fieldNames[field] || field} is required`,
+      })),
+    });
+  }
+
+  try {
+    const product = await Product.create(productData);
+
+    res.status(201).json({
+      success: true,
+      message: "Product created successfully",
+      data: product,
+    });
+  } catch (error) {
+    console.error("Product creation error:", error);
+
+    // Handle Mongoose validation errors
+    if (error.name === "ValidationError") {
+      const errors = Object.keys(error.errors).map((field) => ({
+        field,
+        message: error.errors[field].message,
+      }));
+
+      return res.status(400).json({
+        success: false,
+        message: "Product validation failed",
+        errors,
+      });
+    }
+
+    throw error;
+  }
 });
 
 /**
