@@ -457,6 +457,15 @@ const CheckoutPage = () => {
                             </p>
                           )}
                         </div>
+
+                        {/* Delete button - Below product info */}
+                        <button
+                          onClick={() => removeItem(item._id)}
+                          className="flex items-center gap-1 text-red-400 hover:text-red-300 transition-colors text-[10px] mt-1 w-fit"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                          <span>Remove</span>
+                        </button>
                       </div>
 
                       {/* Price and Quantity */}

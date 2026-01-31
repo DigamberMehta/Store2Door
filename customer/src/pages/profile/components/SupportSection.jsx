@@ -1,8 +1,4 @@
-import {
-  HelpCircle,
-  MessageCircle,
-  ChevronRight,
-} from "lucide-react";
+import { HelpCircle, MessageCircle, ChevronRight } from "lucide-react";
 
 const SupportSection = () => {
   return (
