@@ -124,14 +124,9 @@ const OrderTrackingPage = () => {
     fetchOrder();
   }, [orderId]);
 
-  // Debug: Log when order status changes
+  // Redirect when order is delivered
   useEffect(() => {
     if (order) {
-      console.log(
-        "[OrderTracking] Order state updated, current status:",
-        order.status,
-      );
-
       // Redirect to delivered page when order is delivered
       if (order.status === "delivered") {
         setTimeout(() => {
@@ -236,11 +231,6 @@ const OrderTrackingPage = () => {
     // If driver is assigned and has location, show marker immediately
     if (order.riderId && order.driverLocation) {
       const { latitude, longitude } = order.driverLocation;
-      console.log("Initial driver location from order:", {
-        latitude,
-        longitude,
-        riderId: order.riderId,
-      });
       if (latitude && longitude) {
         driverMarker.current
           .setLngLat([longitude, latitude])
@@ -251,8 +241,6 @@ const OrderTrackingPage = () => {
           )
           .addTo(map.current);
 
-        console.log("Driver marker added to map");
-
         // Fit bounds to show all markers
         const bounds = new mapboxgl.LngLatBounds();
         bounds.extend([longitude, latitude]);
@@ -260,11 +248,6 @@ const OrderTrackingPage = () => {
         if (customerCoords[0] !== 0) bounds.extend(customerCoords);
         map.current.fitBounds(bounds, { padding: 50 });
       }
-    } else {
-      console.log("No driver location:", {
-        hasRider: !!order.riderId,
-        hasLocation: !!order.driverLocation,
-      });
     }
 
     return () => {
@@ -277,22 +260,13 @@ const OrderTrackingPage = () => {
 
   // Socket.IO connection and real-time updates
   useEffect(() => {
-    console.log(
-      "[OrderTracking] Socket useEffect triggered, orderId:",
-      orderId,
-    );
-
     if (!orderId) {
-      console.warn("[OrderTracking] No orderId, skipping socket setup");
       return;
     }
 
     // Get user ID from localStorage
     const userStr = localStorage.getItem("user");
     if (!userStr) {
-      console.warn(
-        "[OrderTracking] No user in localStorage, skipping socket setup",
-      );
       return;
     }
 
@@ -300,13 +274,8 @@ const OrderTrackingPage = () => {
     const userId = user._id || user.id;
 
     if (!userId) {
-      console.warn(
-        "[OrderTracking] No userId found in user object, skipping socket setup",
-      );
       return;
     }
-
-    console.log("[OrderTracking] Setting up socket with userId:", userId);
 
     // Connect socket
     const socket = socketService.connect(userId, "customer");
@@ -316,33 +285,22 @@ const OrderTrackingPage = () => {
       return;
     }
 
-    console.log(
-      "[OrderTracking] Socket instance created, connected:",
-      socket.connected,
-    );
-
     // Wait for connection before joining room
     const onConnect = () => {
-      console.log("[OrderTracking] Socket connected, joining order room");
       socketService.joinOrderTracking(orderId, userId);
     };
 
-    const onDisconnect = () => {
-      console.log("[OrderTracking] Socket disconnected");
-    };
+    const onDisconnect = () => {};
 
     if (socket.connected) {
-      console.log("[OrderTracking] Socket already connected");
       onConnect();
     } else {
-      console.log("[OrderTracking] Waiting for socket to connect...");
       socket.on("connect", onConnect);
       socket.on("disconnect", onDisconnect);
     }
 
     // Listen for driver location updates
     const handleDriverLocation = ({ location }) => {
-      console.log("[OrderTracking] Received driver location:", location);
       if (location && map.current && driverMarker.current) {
         const { latitude, longitude } = location;
         setDriverLocation(location);
@@ -365,8 +323,6 @@ const OrderTrackingPage = () => {
           )
           .addTo(map.current);
 
-        console.log("Driver marker updated:", longitude, latitude);
-
         // Update route
         updateRoute([longitude, latitude]);
 
@@ -378,30 +334,17 @@ const OrderTrackingPage = () => {
             duration: 1000,
           });
         }
-      } else {
-        console.log("Missing:", {
-          location,
-          hasMap: !!map.current,
-          hasMarker: !!driverMarker.current,
-        });
       }
     };
 
     // Listen for order status changes
     const handleStatusChange = ({ status, trackingHistory }) => {
-      console.log(
-        "[OrderTracking] Status changed via socket:",
-        status,
-        trackingHistory,
-      );
       setOrder((prev) => {
-        console.log("[OrderTracking] Previous order status:", prev?.status);
         const updated = {
           ...prev,
           status,
           trackingHistory: trackingHistory || prev.trackingHistory,
         };
-        console.log("[OrderTracking] Updated order status:", updated.status);
 
         // Update route when status changes (if driver location is available)
         if (driverMarker.current) {

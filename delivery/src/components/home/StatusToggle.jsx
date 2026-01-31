@@ -34,13 +34,13 @@ const StatusToggle = () => {
 
     try {
       await driverProfileAPI.toggleOnlineStatus(newStatus);
-      
+
       // Notify socket server about availability change
       const driverStr = localStorage.getItem("driver");
       if (driverStr) {
         const driver = JSON.parse(driverStr);
         const driverId = driver._id || driver.id;
-        
+
         if (socketService.socket && socketService.isConnected) {
           socketService.socket.emit("driver:availability-update", {
             driverId,
@@ -49,6 +49,13 @@ const StatusToggle = () => {
           console.log(`Sent availability update to socket: ${newStatus}`);
         }
       }
+
+      // Dispatch custom event to notify other components
+      window.dispatchEvent(
+        new CustomEvent("driver:status-changed", {
+          detail: { isAvailable: newStatus },
+        }),
+      );
     } catch (error) {
       // Revert to previous state on error
       setIsOnline(previousStatus);

@@ -687,6 +687,20 @@ export const acceptOrder = async (req, res) => {
       });
     }
 
+    // Check if driver already has an active order
+    const activeOrder = await Order.findOne({
+      riderId: userId,
+      status: { $in: ["assigned", "on_the_way"] },
+    });
+
+    if (activeOrder) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "You already have an active order. Please complete or cancel it before accepting a new one.",
+      });
+    }
+
     // Assign driver to order (but don't mark as picked up yet)
     order.riderId = userId;
     order.status = "assigned"; // Driver accepted, heading to store

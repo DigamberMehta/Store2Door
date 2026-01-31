@@ -197,7 +197,17 @@ const DeliveriesHistoryPage = () => {
           deliveries.map((delivery) => (
             <div
               key={delivery._id}
-              onClick={() => navigate(`/tracking/${delivery._id}`)}
+              onClick={() => {
+                // Navigate to tracking only if order is active, otherwise show details
+                if (
+                  delivery.status === "assigned" ||
+                  delivery.status === "on_the_way"
+                ) {
+                  navigate(`/tracking/${delivery._id}`);
+                } else {
+                  navigate(`/order/${delivery._id}`);
+                }
+              }}
               className="bg-white/5 border border-white/5 rounded-2xl p-4 active:bg-white/10 transition-colors"
             >
               {/* Header */}

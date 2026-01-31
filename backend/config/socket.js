@@ -195,7 +195,7 @@ export const broadcastOrderStatusChange = (orderId, status, trackingData) => {
 export const broadcastToDrivers = (event, data) => {
   if (io) {
     console.log(`[Socket] Broadcasting ${event} to online drivers only`, data);
-    
+
     // Get all online drivers
     const onlineDrivers = [];
     for (const [userId, isAvailable] of driverAvailability.entries()) {
@@ -205,7 +205,7 @@ export const broadcastToDrivers = (event, data) => {
     }
 
     console.log(`[Socket] Found ${onlineDrivers.length} online drivers`);
-    
+
     // Emit to each online driver
     onlineDrivers.forEach((driverId) => {
       const socketId = connectedUsers.get(driverId);

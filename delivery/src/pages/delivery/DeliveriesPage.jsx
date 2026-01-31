@@ -63,9 +63,20 @@ const DeliveriesPage = () => {
       socketService.on("order:new-available", handleNewOrder);
       socketService.on("order:status-changed", handleNewOrder);
 
+      // Listen for driver status changes
+      const handleStatusChange = (event) => {
+        console.log(
+          "[DeliveriesPage] Driver status changed, refreshing orders",
+        );
+        fetchDeliveries();
+      };
+
+      window.addEventListener("driver:status-changed", handleStatusChange);
+
       return () => {
         socketService.off("order:new-available", handleNewOrder);
         socketService.off("order:status-changed", handleNewOrder);
+        window.removeEventListener("driver:status-changed", handleStatusChange);
       };
     }
   }, []);
