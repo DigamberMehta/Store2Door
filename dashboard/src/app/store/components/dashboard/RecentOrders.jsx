@@ -32,9 +32,9 @@ const RecentOrders = ({ orders }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-base font-bold text-gray-900">Recent Orders</h2>
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-sm font-bold text-gray-900">Recent Orders</h2>
         <button className="text-xs font-medium text-green-600 hover:text-green-700">
           View All
         </button>
