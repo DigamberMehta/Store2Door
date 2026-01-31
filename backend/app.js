@@ -45,6 +45,7 @@ app.use(
       "https://door2door-dashboard.vercel.app", // Production dashboard
       "https://store2doordelivery.co.za", // Production domain
       "https://www.store2doordelivery.co.za", // Production domain with www
+      "https://dashboard.store2doordelivery.co.za", // admin and store manager
       process.env.FRONTEND_URL,
     ].filter(Boolean),
     credentials: true,
