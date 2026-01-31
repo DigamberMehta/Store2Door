@@ -8,6 +8,7 @@ import {
   Facebook,
   Instagram,
   Twitter,
+  Lock,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { storeAPI } from "../../../../services/store/api/store.api";
@@ -15,6 +16,7 @@ import { storeAPI } from "../../../../services/store/api/store.api";
 const LocationContactPage = () => {
   const [loading, setLoading] = useState(false);
   const [fetchingStore, setFetchingStore] = useState(true);
+  const isReadOnly = true; // Store managers can only view, not edit
 
   const [formData, setFormData] = useState({
     address: {
@@ -173,8 +175,9 @@ const LocationContactPage = () => {
                   name="street"
                   value={formData.address.street}
                   onChange={handleAddressChange}
+                  disabled={isReadOnly}
                   required
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-600 focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all"
                   placeholder="123 Main Street"
                 />
               </div>
@@ -189,8 +192,9 @@ const LocationContactPage = () => {
                     name="city"
                     value={formData.address.city}
                     onChange={handleAddressChange}
+                    disabled={isReadOnly}
                     required
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-600 focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all"
                     placeholder="City name"
                   />
                 </div>
@@ -204,8 +208,9 @@ const LocationContactPage = () => {
                     name="province"
                     value={formData.address.province}
                     onChange={handleAddressChange}
+                    disabled={isReadOnly}
                     required
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-600 focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all"
                     placeholder="Province or State"
                   />
                 </div>
@@ -221,7 +226,8 @@ const LocationContactPage = () => {
                     name="postalCode"
                     value={formData.address.postalCode}
                     onChange={handleAddressChange}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all"
+                    disabled={isReadOnly}
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-600 focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all"
                     placeholder="12345"
                   />
                 </div>
@@ -235,7 +241,8 @@ const LocationContactPage = () => {
                     name="country"
                     value={formData.address.country}
                     onChange={handleAddressChange}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all"
+                    disabled={isReadOnly}
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-600 focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all"
                     placeholder="Country"
                   />
                 </div>
@@ -262,7 +269,7 @@ const LocationContactPage = () => {
                         },
                       }))
                     }
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-600 focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all"
                     placeholder="40.7128"
                   />
                 </div>
@@ -287,7 +294,7 @@ const LocationContactPage = () => {
                         },
                       }))
                     }
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-600 focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all"
                     placeholder="-74.0060"
                   />
                 </div>
@@ -314,7 +321,8 @@ const LocationContactPage = () => {
                   name="phone"
                   value={formData.contactInfo.phone}
                   onChange={handleContactChange}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all"
+                  disabled={isReadOnly}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-600 focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all"
                   placeholder="+1 (555) 123-4567"
                 />
               </div>
@@ -328,7 +336,8 @@ const LocationContactPage = () => {
                   name="email"
                   value={formData.contactInfo.email}
                   onChange={handleContactChange}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all"
+                  disabled={isReadOnly}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-600 focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all"
                   placeholder="store@example.com"
                 />
               </div>
@@ -342,7 +351,8 @@ const LocationContactPage = () => {
                   name="website"
                   value={formData.contactInfo.website}
                   onChange={handleContactChange}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all"
+                  disabled={isReadOnly}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-600 focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all"
                   placeholder="https://www.yourstore.com"
                 />
               </div>
@@ -366,7 +376,8 @@ const LocationContactPage = () => {
                   name="facebook"
                   value={formData.contactInfo.socialMedia.facebook}
                   onChange={handleSocialChange}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all"
+                  disabled={isReadOnly}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-600 focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all"
                   placeholder="https://facebook.com/yourstore"
                 />
               </div>
@@ -381,7 +392,8 @@ const LocationContactPage = () => {
                   name="instagram"
                   value={formData.contactInfo.socialMedia.instagram}
                   onChange={handleSocialChange}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all"
+                  disabled={isReadOnly}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-600 focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all"
                   placeholder="https://instagram.com/yourstore"
                 />
               </div>
@@ -396,7 +408,8 @@ const LocationContactPage = () => {
                   name="twitter"
                   value={formData.contactInfo.socialMedia.twitter}
                   onChange={handleSocialChange}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all"
+                  disabled={isReadOnly}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-600 focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all"
                   placeholder="https://twitter.com/yourstore"
                 />
               </div>
@@ -404,25 +417,27 @@ const LocationContactPage = () => {
           </div>
 
           {/* Submit Button */}
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              disabled={loading}
-              className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-6 py-2.5 rounded-lg font-medium transition-colors"
-            >
-              {loading ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Saving...</span>
-                </>
-              ) : (
-                <>
-                  <Save className="w-4 h-4" />
-                  <span>Save Changes</span>
-                </>
-              )}
-            </button>
-          </div>
+          {!isReadOnly && (
+            <div className="flex justify-end">
+              <button
+                type="submit"
+                disabled={loading}
+                className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-6 py-2.5 rounded-lg font-medium transition-colors"
+              >
+                {loading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    <span>Save Changes</span>
+                  </>
+                )}
+              </button>
+            </div>
+          )}
         </form>
       </div>
     </div>

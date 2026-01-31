@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
-import { Save, CreditCard, AlertCircle } from "lucide-react";
+import { Save, CreditCard, AlertCircle, Lock } from "lucide-react";
 import toast from "react-hot-toast";
 import { storeAPI } from "../../../../services/store/api/store.api";
 
 const BankAccountPage = () => {
   const [loading, setLoading] = useState(false);
   const [fetchingStore, setFetchingStore] = useState(true);
+  const isReadOnly = true; // Store managers can only view, not edit
+
   const [formData, setFormData] = useState({
     accountHolderName: "",
     bankName: "",
@@ -87,20 +89,6 @@ const BankAccountPage = () => {
 
       <div className="px-4 pb-8">
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Security Notice */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex gap-3">
-            <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm font-medium text-blue-900">
-                Bank Details Security
-              </p>
-              <p className="text-xs text-blue-700 mt-1">
-                Your bank account information is encrypted and stored securely.
-                We never share this information with third parties.
-              </p>
-            </div>
-          </div>
-
           {/* Bank Account Details Card */}
           <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
             <div className="flex items-center gap-2 mb-4">
@@ -121,8 +109,9 @@ const BankAccountPage = () => {
                   name="accountHolderName"
                   value={formData.accountHolderName}
                   onChange={handleInputChange}
+                  disabled={isReadOnly}
                   required
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-600 focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all"
                   placeholder="Full name on bank account"
                 />
                 <p className="text-xs text-gray-500 mt-1">
@@ -139,8 +128,9 @@ const BankAccountPage = () => {
                   name="bankName"
                   value={formData.bankName}
                   onChange={handleInputChange}
+                  disabled={isReadOnly}
                   required
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-600 focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all"
                 >
                   <option value="">Select your bank</option>
                   <option value="ABSA">ABSA</option>
@@ -165,8 +155,9 @@ const BankAccountPage = () => {
                   name="accountType"
                   value={formData.accountType}
                   onChange={handleInputChange}
+                  disabled={isReadOnly}
                   required
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-600 focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all"
                 >
                   <option value="savings">Savings Account</option>
                   <option value="cheque">Cheque Account</option>
@@ -184,8 +175,9 @@ const BankAccountPage = () => {
                   name="accountNumber"
                   value={formData.accountNumber}
                   onChange={handleInputChange}
+                  disabled={isReadOnly}
                   required
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-600 focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all"
                   placeholder="Enter your account number"
                   maxLength={20}
                 />
@@ -204,8 +196,9 @@ const BankAccountPage = () => {
                   name="branchCode"
                   value={formData.branchCode}
                   onChange={handleInputChange}
+                  disabled={isReadOnly}
                   required
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-600 focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all"
                   placeholder="6-digit branch code"
                   maxLength={6}
                 />
@@ -229,25 +222,27 @@ const BankAccountPage = () => {
           </div>
 
           {/* Submit Button */}
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              disabled={loading}
-              className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-6 py-2.5 rounded-lg font-medium transition-colors"
-            >
-              {loading ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Saving...</span>
-                </>
-              ) : (
-                <>
-                  <Save className="w-4 h-4" />
-                  <span>Save Changes</span>
-                </>
-              )}
-            </button>
-          </div>
+          {!isReadOnly && (
+            <div className="flex justify-end">
+              <button
+                type="submit"
+                disabled={loading}
+                className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-6 py-2.5 rounded-lg font-medium transition-colors"
+              >
+                {loading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    <span>Save Changes</span>
+                  </>
+                )}
+              </button>
+            </div>
+          )}
         </form>
       </div>
     </div>

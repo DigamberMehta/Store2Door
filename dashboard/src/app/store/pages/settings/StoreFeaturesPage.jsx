@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Save, CheckCircle2, Star } from "lucide-react";
+import { Save, CheckCircle2, Star, Lock } from "lucide-react";
 import toast from "react-hot-toast";
 import { storeAPI } from "../../../../services/store/api/store.api";
 
@@ -7,6 +7,7 @@ const StoreFeaturesPage = () => {
   const [loading, setLoading] = useState(false);
   const [fetchingStore, setFetchingStore] = useState(true);
   const [features, setFeatures] = useState([]);
+  const isReadOnly = true; // Store managers can only view, not edit
 
   useEffect(() => {
     fetchStoreProfile();
@@ -156,6 +157,7 @@ const StoreFeaturesPage = () => {
                         type="checkbox"
                         checked={features.includes(feature)}
                         onChange={() => handleFeatureToggle(feature)}
+                        disabled={isReadOnly}
                         className="w-5 h-5 text-green-600 rounded focus:ring-2 focus:ring-green-500/20"
                       />
                       <span className="text-sm font-medium text-gray-700">
@@ -169,25 +171,27 @@ const StoreFeaturesPage = () => {
           })}
 
           {/* Submit Button */}
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              disabled={loading}
-              className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-6 py-2.5 rounded-lg font-medium transition-colors"
-            >
-              {loading ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Saving...</span>
-                </>
-              ) : (
-                <>
-                  <Save className="w-4 h-4" />
-                  <span>Save Changes</span>
-                </>
-              )}
-            </button>
-          </div>
+          {!isReadOnly && (
+            <div className="flex justify-end">
+              <button
+                type="submit"
+                disabled={loading}
+                className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-6 py-2.5 rounded-lg font-medium transition-colors"
+              >
+                {loading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    <span>Save Changes</span>
+                  </>
+                )}
+              </button>
+            </div>
+          )}
         </form>
       </div>
     </div>

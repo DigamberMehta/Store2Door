@@ -46,6 +46,7 @@ app.use(
       "https://store2doordelivery.co.za", // Production domain
       "https://www.store2doordelivery.co.za", // Production domain with www
       "https://dashboard.store2doordelivery.co.za", // admin and store manager
+      "https://delivery.store2doordelivery.co.za",
       process.env.FRONTEND_URL,
     ].filter(Boolean),
     credentials: true,

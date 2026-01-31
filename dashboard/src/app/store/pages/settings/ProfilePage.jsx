@@ -146,21 +146,6 @@ const StoreProfilePage = () => {
         </p>
       </div>
 
-      {/* Read-Only Notice */}
-      {isReadOnly && (
-        <div className="px-4 mb-4">
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3">
-            <Lock className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="font-medium text-blue-900">Read-Only Mode</p>
-              <p className="text-sm text-blue-700 mt-1">
-                Contact your administrator to edit profile settings
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
       <div className="px-4 pb-8">
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Basic Information Card */}
@@ -180,8 +165,9 @@ const StoreProfilePage = () => {
                   name="name"
                   value={formData.name}
                   onChange={handleInputChange}
+                  disabled={isReadOnly}
                   required
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-600"
                   placeholder="Enter store name"
                 />
               </div>
@@ -219,38 +205,42 @@ const StoreProfilePage = () => {
                         alt="Store logo"
                         className="w-full h-full object-cover"
                       />
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setFormData((prev) => ({ ...prev, logo: "" }))
-                        }
-                        className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full hover:bg-red-600 transition-colors"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
+                      {!isReadOnly && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setFormData((prev) => ({ ...prev, logo: "" }))
+                          }
+                          className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full hover:bg-red-600 transition-colors"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      )}
                     </div>
                   )}
-                  <label className="cursor-pointer flex-1">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) =>
-                        e.target.files?.[0] &&
-                        handleImageUpload("logo", e.target.files[0])
-                      }
-                      className="hidden"
-                      disabled={uploading}
-                    />
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 hover:border-green-500 transition-colors">
-                      <Upload className="w-6 h-6 text-gray-400 mx-auto mb-2" />
-                      <p className="text-sm text-gray-600 text-center">
-                        Click to upload logo
-                      </p>
-                      <p className="text-xs text-gray-400 text-center mt-1">
-                        PNG, JPG up to 5MB
-                      </p>
-                    </div>
-                  </label>
+                  {!isReadOnly && (
+                    <label className="cursor-pointer flex-1">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) =>
+                          e.target.files?.[0] &&
+                          handleImageUpload("logo", e.target.files[0])
+                        }
+                        className="hidden"
+                        disabled={isReadOnly || uploading}
+                      />
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 hover:border-green-500 transition-colors">
+                        <Upload className="w-6 h-6 text-gray-400 mx-auto mb-2" />
+                        <p className="text-sm text-gray-600 text-center">
+                          Click to upload logo
+                        </p>
+                        <p className="text-xs text-gray-400 text-center mt-1">
+                          PNG, JPG up to 5MB
+                        </p>
+                      </div>
+                    </label>
+                  )}
                 </div>
               </div>
 
@@ -267,38 +257,42 @@ const StoreProfilePage = () => {
                         alt="Cover"
                         className="w-full h-full object-cover"
                       />
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setFormData((prev) => ({ ...prev, coverImage: "" }))
-                        }
-                        className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full hover:bg-red-600 transition-colors"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
+                      {!isReadOnly && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setFormData((prev) => ({ ...prev, coverImage: "" }))
+                          }
+                          className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full hover:bg-red-600 transition-colors"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                   )}
-                  <label className="cursor-pointer block">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) =>
-                        e.target.files?.[0] &&
-                        handleImageUpload("coverImage", e.target.files[0])
-                      }
-                      className="hidden"
-                      disabled={uploading}
-                    />
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-green-500 transition-colors">
-                      <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-sm text-gray-600 text-center">
-                        Click to upload cover image
-                      </p>
-                      <p className="text-xs text-gray-400 text-center mt-1">
-                        Recommended: 1200x400px, PNG or JPG
-                      </p>
-                    </div>
-                  </label>
+                  {!isReadOnly && (
+                    <label className="cursor-pointer block">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) =>
+                          e.target.files?.[0] &&
+                          handleImageUpload("coverImage", e.target.files[0])
+                        }
+                        className="hidden"
+                        disabled={isReadOnly || uploading}
+                      />
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-green-500 transition-colors">
+                        <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                        <p className="text-sm text-gray-600 text-center">
+                          Click to upload cover image
+                        </p>
+                        <p className="text-xs text-gray-400 text-center mt-1">
+                          Recommended: 1200x400px, PNG or JPG
+                        </p>
+                      </div>
+                    </label>
+                  )}
                 </div>
               </div>
             </div>
@@ -338,7 +332,7 @@ const StoreProfilePage = () => {
                   value={formData.taxId}
                   onChange={handleInputChange}
                   disabled={isReadOnly}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-600"
                   placeholder="Enter tax ID or VAT number"
                 />
               </div>
@@ -361,7 +355,8 @@ const StoreProfilePage = () => {
                         type="checkbox"
                         checked={formData.businessType.includes(type.value)}
                         onChange={() => handleBusinessTypeChange(type.value)}
-                        className="w-4 h-4 text-green-600 rounded focus:ring-2 focus:ring-green-500/20"
+                        disabled={isReadOnly}
+                        className="w-4 h-4 text-green-600 rounded focus:ring-2 focus:ring-green-500/20 disabled:cursor-not-allowed disabled:opacity-50"
                       />
                       <span className="text-sm text-gray-700">
                         {type.label}

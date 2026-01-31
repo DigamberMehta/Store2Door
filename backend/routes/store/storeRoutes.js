@@ -8,7 +8,6 @@ import {
   getMyStoreFeatures,
   getMyStoreBankAccount,
   getMyStoreOperatingHours,
-  updateMyStore,
   updateOperatingHours,
   updateDeliverySettings,
 } from "../../controllers/storeController.js";
@@ -29,10 +28,7 @@ router.get("/my/features", getMyStoreFeatures);
 router.get("/my/bank-account", getMyStoreBankAccount);
 router.get("/my/operating-hours", getMyStoreOperatingHours);
 
-// Update own store
-router.put("/my", updateMyStore);
-
-// Update store operating hours
+// Update store operating hours (ONLY endpoint store managers can update)
 router.put("/my/operating-hours", updateOperatingHours);
 
 // Update store delivery settings
