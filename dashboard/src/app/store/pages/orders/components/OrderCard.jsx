@@ -48,22 +48,22 @@ const OrderCard = ({ order }) => {
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div>
-          <h3 className="font-bold text-gray-900 text-lg">
+          <h3 className="font-bold text-gray-900 text-sm">
             #{order.orderNumber}
           </h3>
-          <div className="flex items-center gap-2 mt-1">
-            <Clock className="w-4 h-4 text-gray-400" />
-            <span className="text-sm text-gray-600">
+          <div className="flex items-center gap-1 mt-1">
+            <Clock className="w-3 h-3 text-gray-400" />
+            <span className="text-xs text-gray-600">
               {formatDate(order.createdAt)}
             </span>
           </div>
         </div>
         <div className="text-right">
-          <p className="font-bold text-xl text-gray-900">
+          <p className="font-bold text-base text-gray-900">
             R{order.total.toFixed(2)}
           </p>
           <span
-            className={`inline-block px-2 py-1 rounded-full text-xs font-medium border mt-1 ${getStatusColor(order.status)}`}
+            className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-medium border mt-1 ${getStatusColor(order.status)}`}
           >
             {order.status.replace("_", " ").toUpperCase()}
           </span>
@@ -72,40 +72,40 @@ const OrderCard = ({ order }) => {
 
       {/* Customer Info */}
       <div className="flex items-center gap-2 mb-2">
-        <User className="w-4 h-4 text-gray-400" />
-        <span className="text-sm text-gray-700 font-medium">
+        <User className="w-3 h-3 text-gray-400" />
+        <span className="text-xs text-gray-700 font-medium">
           {order.customerId?.name || "Guest"}
         </span>
       </div>
 
       {/* Delivery Address */}
-      <div className="flex items-start gap-2 mb-3">
-        <MapPin className="w-4 h-4 text-gray-400 mt-0.5" />
-        <span className="text-sm text-gray-600 line-clamp-1">
+      <div className="flex items-start gap-2 mb-2">
+        <MapPin className="w-3 h-3 text-gray-400 mt-0.5" />
+        <span className="text-xs text-gray-600 line-clamp-1">
           {order.deliveryAddress?.street}, {order.deliveryAddress?.city}
         </span>
       </div>
 
       {/* Items Count */}
-      <div className="flex items-center gap-2 mb-3">
-        <Package className="w-4 h-4 text-gray-400" />
-        <span className="text-sm text-gray-600">
+      <div className="flex items-center gap-2 mb-2">
+        <Package className="w-3 h-3 text-gray-400" />
+        <span className="text-xs text-gray-600">
           {order.items.length} {order.items.length === 1 ? "item" : "items"}
         </span>
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-        <div className="flex items-center gap-2">
-          <CreditCard className="w-4 h-4 text-gray-400" />
+      <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+        <div className="flex items-center gap-1">
+          <CreditCard className="w-3 h-3 text-gray-400" />
           <span
-            className={`text-xs font-medium px-2 py-1 rounded ${getPaymentStatusColor(order.paymentStatus)}`}
+            className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${getPaymentStatusColor(order.paymentStatus)}`}
           >
             {order.paymentStatus.toUpperCase()}
           </span>
         </div>
         {order.deliveryFee > 0 && (
-          <span className="text-xs text-gray-500">
+          <span className="text-[10px] text-gray-500">
             Delivery: R{order.deliveryFee.toFixed(2)}
           </span>
         )}
