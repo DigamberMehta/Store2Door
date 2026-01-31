@@ -1,13 +1,19 @@
 import { FileText, Shield, Share2, Star, ChevronRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const AboutSection = () => {
+  const navigate = useNavigate();
+
   return (
     <div>
       <h3 className="text-white/40 text-[10px] uppercase tracking-wider font-semibold px-2 mb-2">
         About
       </h3>
       <div className="space-y-2">
-        <button className="w-full bg-white/5 backdrop-blur-xl rounded-xl border border-white/5 p-3 active:bg-white/10 transition-all text-left">
+        <button
+          onClick={() => navigate("/about")}
+          className="w-full bg-white/5 backdrop-blur-xl rounded-xl border border-white/5 p-3 active:bg-white/10 transition-all text-left"
+        >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <div className="p-1.5 bg-white/5 rounded-lg">
@@ -37,7 +43,7 @@ const AboutSection = () => {
         </button>
 
         <button
-          onClick={() => {}}
+          onClick={() => navigate("/terms")}
           className="w-full bg-white/5 backdrop-blur-xl rounded-xl border border-white/5 p-3 active:bg-white/10 transition-all text-left"
         >
           <div className="flex items-center justify-between">
@@ -54,7 +60,7 @@ const AboutSection = () => {
         </button>
 
         <button
-          onClick={() => {}}
+          onClick={() => navigate("/privacy")}
           className="w-full bg-white/5 backdrop-blur-xl rounded-xl border border-white/5 p-3 active:bg-white/10 transition-all text-left"
         >
           <div className="flex items-center justify-between">

@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronRight, Shield, Lock } from "lucide-react";
-import Header from "../../components/Header";
+import { ChevronRight, Shield, Lock, ChevronLeft } from "lucide-react";
 
 const PrivacyPolicyPage = () => {
   const navigate = useNavigate();
@@ -13,12 +12,12 @@ const PrivacyPolicyPage = () => {
   const sections = [
     {
       title: "1. Introduction",
-      content:
-        "Store2Door ("we," "us," "our," or "Company") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and otherwise process your personal information when you use our website, mobile application, and related services (collectively, the "Services").",
+      content: `Store2Door ("we," "us," "our," or "Company") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and otherwise process your personal information when you use our website, mobile application, and related services (collectively, the "Services").`,
     },
     {
       title: "2. Information We Collect",
-      content: "We collect information you provide directly to us and information collected automatically:",
+      content:
+        "We collect information you provide directly to us and information collected automatically:",
       subPoints: [
         "Account Information: Name, email address, phone number, delivery address, payment information",
         "Order Information: Purchase history, items ordered, delivery preferences, special instructions",
@@ -103,65 +102,77 @@ const PrivacyPolicyPage = () => {
     {
       title: "13. Contact Us",
       content:
-        'If you have questions or concerns about our privacy practices, or if you wish to exercise your privacy rights, please contact us at support@store2doordelivery.co.za or write to us at our registered office address.',
+        "If you have questions or concerns about our privacy practices, or if you wish to exercise your privacy rights, please contact us at support@store2doordelivery.co.za or write to us at our registered office address.",
     },
   ];
 
   return (
     <div className="min-h-screen bg-black text-white pb-20">
-      <Header />
-
-      {/* Hero Section */}
-      <div className="bg-gradient-to-r from-green-900 to-green-700 pt-20 pb-16 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-6">Privacy Policy</h1>
-          <p className="text-xl text-green-100">
-            Last updated: January 2026
-          </p>
+      {/* Header */}
+      <div className="sticky top-0 z-50 bg-black/40 backdrop-blur-xl border-b border-white/5">
+        <div className="flex items-center justify-between px-3 py-2.5">
+          <button
+            onClick={() => navigate(-1)}
+            className="p-1.5 -ml-1.5 active:bg-white/10 rounded-full transition-all"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <h1 className="text-sm font-semibold tracking-tight">
+            Privacy Policy
+          </h1>
+          <div className="w-8"></div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-4 py-12">
-        {/* Intro Section with Security Info */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div className="bg-gray-900 rounded-lg border border-gray-800 p-8">
-            <div className="flex items-center gap-3 mb-4">
-              <Shield className="w-6 h-6 text-green-500" />
-              <h3 className="text-xl font-bold text-green-500">Your Privacy Matters</h3>
+      <div className="px-4 py-6">
+        {/* Intro Section */}
+        <div className="space-y-3 mb-6">
+          <div className="bg-white/5 backdrop-blur-xl rounded-xl border border-white/5 p-4">
+            <div className="flex items-center gap-2.5 mb-2">
+              <Shield className="w-5 h-5 text-green-500" />
+              <h3 className="text-sm font-bold text-white">
+                Your Privacy Matters
+              </h3>
             </div>
-            <p className="text-gray-300">
-              We take your privacy seriously and are committed to being transparent about how 
-              we collect and use your information. Your trust is important to us.
+            <p className="text-white/70 text-xs leading-relaxed">
+              We take your privacy seriously and are committed to being
+              transparent about how we collect and use your information.
             </p>
           </div>
-          <div className="bg-gray-900 rounded-lg border border-gray-800 p-8">
-            <div className="flex items-center gap-3 mb-4">
-              <Lock className="w-6 h-6 text-green-500" />
-              <h3 className="text-xl font-bold text-green-500">Data Protection</h3>
+
+          <div className="bg-white/5 backdrop-blur-xl rounded-xl border border-white/5 p-4">
+            <div className="flex items-center gap-2.5 mb-2">
+              <Lock className="w-5 h-5 text-green-500" />
+              <h3 className="text-sm font-bold text-white">Data Protection</h3>
             </div>
-            <p className="text-gray-300">
-              We implement industry-leading security measures to protect your personal 
-              information from unauthorized access and misuse.
+            <p className="text-white/70 text-xs leading-relaxed">
+              We implement industry-standard security measures to protect your
+              personal information.
             </p>
           </div>
         </div>
 
-        {/* Main Policy Content */}
-        <div className="space-y-6">
+        {/* Policy Sections */}
+        <div className="space-y-3">
           {sections.map((section, index) => (
-            <div key={index} className="bg-gray-900 rounded-lg border border-gray-800 p-6 hover:border-green-500 transition">
-              <h2 className="text-2xl font-bold text-green-500 mb-4 flex items-start gap-2">
-                <ChevronRight className="w-6 h-6 flex-shrink-0 mt-1" />
+            <div
+              key={index}
+              className="bg-white/5 backdrop-blur-xl rounded-xl border border-white/5 p-4"
+            >
+              <h2 className="text-sm font-bold text-white mb-2 flex items-start gap-2">
+                <ChevronRight className="w-4 h-4 flex-shrink-0 mt-0.5" />
                 {section.title}
               </h2>
-              <p className="text-gray-300 text-base leading-relaxed mb-4">
+
+              <p className="text-white/70 text-xs leading-relaxed mb-3">
                 {section.content}
               </p>
+
               {section.subPoints && (
-                <ul className="list-disc list-inside space-y-2 text-gray-300 ml-4">
+                <ul className="list-disc list-inside space-y-1 text-white/60 ml-3">
                   {section.subPoints.map((point, i) => (
-                    <li key={i} className="text-base">
+                    <li key={i} className="text-xs">
                       {point}
                     </li>
                   ))}
@@ -169,56 +180,6 @@ const PrivacyPolicyPage = () => {
               )}
             </div>
           ))}
-        </div>
-
-        {/* Summary of Rights */}
-        <div className="mt-12 bg-gray-900 rounded-lg border border-gray-800 p-8">
-          <h2 className="text-2xl font-bold text-green-500 mb-6">Summary of Your Rights</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="flex items-start gap-3">
-              <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
-              <div>
-                <p className="font-semibold text-white">Right to Know</p>
-                <p className="text-sm text-gray-400">What data we collect about you</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
-              <div>
-                <p className="font-semibold text-white">Right to Delete</p>
-                <p className="text-sm text-gray-400">Request deletion of your data</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
-              <div>
-                <p className="font-semibold text-white">Right to Correct</p>
-                <p className="text-sm text-gray-400">Update inaccurate information</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
-              <div>
-                <p className="font-semibold text-white">Right to Opt-Out</p>
-                <p className="text-sm text-gray-400">Control promotional communications</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Contact Section */}
-        <div className="mt-12 bg-gradient-to-r from-green-600 to-green-500 rounded-lg p-8 text-center">
-          <h2 className="text-2xl font-bold mb-4">Questions About Your Privacy?</h2>
-          <p className="text-lg mb-6 text-white">
-            We're here to help. Contact our Privacy Team with any questions or to exercise 
-            your privacy rights.
-          </p>
-          <a
-            href="mailto:privacy@store2doordelivery.co.za"
-            className="inline-block bg-white text-green-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition"
-          >
-            Contact Privacy Team
-          </a>
         </div>
       </div>
     </div>

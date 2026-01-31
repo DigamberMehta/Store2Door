@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronRight } from "lucide-react";
-import Header from "../../components/Header";
+import { ChevronRight, ChevronLeft } from "lucide-react";
 
 const TermsOfServicePage = () => {
   const navigate = useNavigate();
@@ -82,27 +81,31 @@ const TermsOfServicePage = () => {
 
   return (
     <div className="min-h-screen bg-black text-white pb-20">
-      <Header />
-
-      {/* Hero Section */}
-      <div className="bg-gradient-to-r from-green-900 to-green-700 pt-20 pb-16 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-6">
+      {/* Header */}
+      <div className="sticky top-0 z-50 bg-black/40 backdrop-blur-xl border-b border-white/5">
+        <div className="flex items-center justify-between px-3 py-2.5">
+          <button
+            onClick={() => navigate(-1)}
+            className="p-1.5 -ml-1.5 active:bg-white/10 rounded-full transition-all"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <h1 className="text-sm font-semibold tracking-tight">
             Terms of Service
           </h1>
-          <p className="text-xl text-green-100">Last updated: January 2026</p>
+          <div className="w-8"></div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-4 py-12">
-        <div className="bg-gray-900 rounded-lg border border-gray-800 p-8 mb-8">
-          <p className="text-gray-300 text-lg leading-relaxed mb-4">
+      <div className="px-4 py-6">
+        <div className="bg-white/5 backdrop-blur-xl rounded-xl border border-white/5 p-6 mb-6">
+          <p className="text-white/70 text-sm leading-relaxed mb-3">
             Welcome to Store2Door. These Terms of Service ("Terms") govern your
             use of our website, mobile application, and services. Please read
             them carefully before using our platform.
           </p>
-          <p className="text-gray-300 text-lg leading-relaxed">
+          <p className="text-white/70 text-sm leading-relaxed">
             If you have any questions about these terms, please contact us at
             <span className="text-green-500 font-semibold">
               {" "}
@@ -112,23 +115,23 @@ const TermsOfServicePage = () => {
         </div>
 
         {/* Sections */}
-        <div className="space-y-6">
+        <div className="space-y-3">
           {sections.map((section, index) => (
             <div
               key={index}
-              className="bg-gray-900 rounded-lg border border-gray-800 p-6 hover:border-green-500 transition"
+              className="bg-white/5 backdrop-blur-xl rounded-xl border border-white/5 p-4"
             >
-              <h2 className="text-2xl font-bold text-green-500 mb-4 flex items-start gap-2">
-                <ChevronRight className="w-6 h-6 flex-shrink-0 mt-1" />
+              <h2 className="text-sm font-bold text-white mb-2 flex items-start gap-2">
+                <ChevronRight className="w-4 h-4 flex-shrink-0 mt-0.5" />
                 {section.title}
               </h2>
-              <p className="text-gray-300 text-base leading-relaxed mb-4">
+              <p className="text-white/70 text-xs leading-relaxed mb-3">
                 {section.content}
               </p>
               {section.subPoints && (
-                <ul className="list-disc list-inside space-y-2 text-gray-300 ml-4">
+                <ul className="list-disc list-inside space-y-1 text-white/60 ml-3">
                   {section.subPoints.map((point, i) => (
-                    <li key={i} className="text-base">
+                    <li key={i} className="text-xs">
                       {point}
                     </li>
                   ))}
@@ -139,17 +142,17 @@ const TermsOfServicePage = () => {
         </div>
 
         {/* Contact Section */}
-        <div className="mt-12 bg-gradient-to-r from-green-600 to-green-500 rounded-lg p-8 text-center">
-          <h2 className="text-2xl font-bold mb-4">
+        <div className="mt-6 bg-white/5 backdrop-blur-xl rounded-xl border border-white/5 p-6 text-center">
+          <h2 className="text-lg font-bold mb-3 text-white">
             Questions About Our Terms?
           </h2>
-          <p className="text-lg mb-6 text-white">
+          <p className="text-sm mb-4 text-white/70">
             If you have any questions or concerns about these Terms of Service,
             please don't hesitate to reach out to us.
           </p>
           <a
             href="mailto:support@store2doordelivery.co.za"
-            className="inline-block bg-white text-green-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition"
+            className="inline-block bg-green-600 text-white px-6 py-2.5 rounded-lg text-sm font-semibold active:bg-green-700 transition"
           >
             Contact Support
           </a>
