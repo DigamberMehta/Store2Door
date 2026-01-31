@@ -134,8 +134,20 @@ const EditProductPage = () => {
           currency: product.currency || "ZAR",
           images:
             product.images?.length > 0
-              ? product.images.map(img => ({ ...img, file: null, preview: null }))
-              : [{ url: "", alt: "", isPrimary: true, file: null, preview: null }],
+              ? product.images.map((img) => ({
+                  ...img,
+                  file: null,
+                  preview: null,
+                }))
+              : [
+                  {
+                    url: "",
+                    alt: "",
+                    isPrimary: true,
+                    file: null,
+                    preview: null,
+                  },
+                ],
           inventory: {
             quantity: product.inventory?.quantity || "",
             lowStockThreshold: product.inventory?.lowStockThreshold || "10",

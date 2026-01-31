@@ -23,55 +23,76 @@ const ProductImagesSection = ({
       return;
     }
 
-    // Add each file to the form
+    // Check file sizes first
+    const validFiles = [];
     files.forEach((file) => {
-      // Check file size (5MB max)
       if (file.size > 5 * 1024 * 1024) {
         toast.error(`${file.name} is too large. Maximum size is 5MB`);
-        return;
+      } else {
+        validFiles.push(file);
       }
+    });
 
-      // Find first empty slot or add new one
+    if (validFiles.length === 0) {
+      e.target.value = "";
+      return;
+    }
+
+    // Process each file
+    let currentLength = images.length;
+    validFiles.forEach((file, fileIndex) => {
+      // Find first empty slot
       const emptyIndex = images.findIndex(
-        (image) => !image.url && !image.preview,
+        (image) => !image.url && !image.preview && !image.file,
       );
+
       if (emptyIndex !== -1) {
-        // Fill empty slot
+        // Fill empty slot immediately
         if (handleImageFileChange) {
           handleImageFileChange(emptyIndex, file);
         } else {
-          // Fallback for edit page without handleImageFileChange
           const preview = URL.createObjectURL(file);
           handleImageChange(emptyIndex, "file", file);
           handleImageChange(emptyIndex, "preview", preview);
           handleImageChange(emptyIndex, "url", "");
         }
-        if (emptyIndex === 0 && !images.some((i) => i.isPrimary)) {
+        // Set as primary if no images exist yet
+        const hasImages = images.some((i) => i.url || i.preview || i.file);
+        if (
+          !hasImages ||
+          (emptyIndex === 0 && !images.some((i) => i.isPrimary))
+        ) {
           handleImageChange(emptyIndex, "isPrimary", true);
         }
       } else {
-        // Add new image slot
+        // Need to add new slot
+        const targetIndex = currentLength;
+        currentLength++; // Increment for next iteration
+
         addImage();
-        const newIndex = images.length;
-        setTimeout(() => {
-          if (handleImageFileChange) {
-            handleImageFileChange(newIndex, file);
-          } else {
-            const preview = URL.createObjectURL(file);
-            handleImageChange(newIndex, "file", file);
-            handleImageChange(newIndex, "preview", preview);
-            handleImageChange(newIndex, "url", "");
-          }
-          handleImageChange(
-            newIndex,
-            "isPrimary",
-            newIndex === 0 && !images.some((i) => i.isPrimary),
-          );
-        }, 10);
+
+        // Wait for state to update before setting file
+        setTimeout(
+          () => {
+            if (handleImageFileChange) {
+              handleImageFileChange(targetIndex, file);
+            } else {
+              const preview = URL.createObjectURL(file);
+              handleImageChange(targetIndex, "file", file);
+              handleImageChange(targetIndex, "preview", preview);
+              handleImageChange(targetIndex, "url", "");
+            }
+            // Set as primary if it's the first image
+            if (targetIndex === 0) {
+              handleImageChange(targetIndex, "isPrimary", true);
+            }
+          },
+          100 * (fileIndex + 1),
+        );
       }
     });
 
-    toast.success(`${files.length} image(s) selected`);
+    toast.success(`${validFiles.length} image(s) selected`);
     e.target.value = ""; // Reset file input
   };
 
