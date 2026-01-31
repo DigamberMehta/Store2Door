@@ -497,25 +497,65 @@ orderSchema.methods.updateStatus = async function (newStatus, notes, location) {
   if (newStatus === "delivered") {
     this.actualDeliveryTime = new Date();
 
-    // Create transaction for driver earnings (only if not already delivered)
-    if (!wasDelivered && this.riderId) {
+    // Create 3 transactions for payment split (only if not already delivered)
+    if (!wasDelivered) {
       try {
-        const totalEarnings = (this.deliveryFee || 0) + (this.tip || 0);
+        // Calculate payment split
+        const paymentSplit = this.calculatePaymentSplit();
 
-        await Transaction.createEarning(
-          this.riderId,
-          this._id,
-          totalEarnings,
-          `Delivery - ${this.orderNumber}`,
-          {
-            orderNumber: this.orderNumber,
-            deliveryFee: this.deliveryFee || 0,
-            tip: this.tip || 0,
-            storeId: this.storeId,
-          },
+        // 1. Create driver earning transaction
+        if (this.riderId && paymentSplit.driverAmount > 0) {
+          await Transaction.createEarning(
+            this.riderId,
+            this._id,
+            paymentSplit.driverAmount,
+            `Delivery - ${this.orderNumber}`,
+            {
+              orderNumber: this.orderNumber,
+              deliveryFee: this.deliveryFee || 0,
+              tip: this.tip || 0,
+              storeId: this.storeId,
+            },
+          );
+        }
+
+        // 2. Create store revenue transaction
+        if (this.storeId && paymentSplit.storeAmount > 0) {
+          await Transaction.createStoreRevenue(
+            this.storeId,
+            this._id,
+            paymentSplit.storeAmount,
+            `Order revenue - ${this.orderNumber}`,
+            {
+              orderNumber: this.orderNumber,
+              itemsTotal: paymentSplit.storeAmount,
+              customerPaid: this.subtotal,
+              itemCount: this.items.length,
+            },
+          );
+        }
+
+        // 3. Create platform commission transaction
+        if (paymentSplit.platformAmount !== 0) {
+          await Transaction.createPlatformCommission(
+            this._id,
+            paymentSplit.platformAmount,
+            `Commission - ${this.orderNumber}`,
+            {
+              orderNumber: this.orderNumber,
+              totalMarkup: paymentSplit.platformBreakdown.totalMarkup,
+              discountAbsorbed: paymentSplit.platformBreakdown.discountAbsorbed,
+              netEarnings: paymentSplit.platformBreakdown.netEarnings,
+              storeId: this.storeId,
+            },
+          );
+        }
+
+        console.log(
+          `[Transactions Created] Order ${this.orderNumber}: Driver R${paymentSplit.driverAmount} | Store R${paymentSplit.storeAmount} | Platform R${paymentSplit.platformAmount}`,
         );
       } catch (error) {
-        console.error("Error creating transaction:", error);
+        console.error("Error creating transactions:", error);
         // Don't fail the order update if transaction fails
       }
     }

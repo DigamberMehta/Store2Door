@@ -1,5 +1,6 @@
 import Store from "../models/Store.js";
 import Product from "../models/Product.js";
+import Transaction from "../models/Transaction.js";
 import mongoose from "mongoose";
 import { asyncHandler } from "../middleware/validation.js";
 import fuzzysort from "fuzzysort";
@@ -625,5 +626,218 @@ export const updateDeliverySettings = asyncHandler(async (req, res) => {
     success: true,
     message: "Delivery settings updated successfully",
     data: { deliverySettings: store.deliverySettings },
+  });
+});
+
+/**
+ * @desc    Get store's transactions (earnings, withdrawals)
+ * @route   GET /api/stores/:id/transactions
+ * @access  Private (Store Owner)
+ */
+export const getStoreTransactions = asyncHandler(async (req, res) => {
+  const { id: storeId } = req.params;
+  const { limit = 50 } = req.query;
+
+  const transactions = await Transaction.find({
+    storeId,
+    userType: "store",
+    status: { $in: ["completed", "pending"] },
+  })
+    .populate("orderId", "orderNumber items subtotal")
+    .sort({ createdAt: -1 })
+    .limit(parseInt(limit));
+
+  res.json({
+    success: true,
+    data: transactions,
+  });
+});
+
+/**
+ * @desc    Get store's earnings summary
+ * @route   GET /api/stores/:id/earnings
+ * @access  Private (Store Owner)
+ */
+export const getStoreEarnings = asyncHandler(async (req, res) => {
+  const { id: storeId } = req.params;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const thisWeekStart = new Date();
+  thisWeekStart.setDate(today.getDate() - today.getDay());
+  thisWeekStart.setHours(0, 0, 0, 0);
+
+  const thisMonthStart = new Date();
+  thisMonthStart.setDate(1);
+  thisMonthStart.setHours(0, 0, 0, 0);
+
+  // Get today's earnings
+  const todayTransactions = await Transaction.find({
+    storeId,
+    userType: "store",
+    type: "order_revenue",
+    status: "completed",
+    createdAt: { $gte: today },
+  });
+
+  const todayEarnings = todayTransactions.reduce(
+    (sum, tx) => sum + tx.amount,
+    0,
+  );
+
+  // Get this week's earnings
+  const weekTransactions = await Transaction.find({
+    storeId,
+    userType: "store",
+    type: "order_revenue",
+    status: "completed",
+    createdAt: { $gte: thisWeekStart },
+  });
+
+  const weekEarnings = weekTransactions.reduce((sum, tx) => sum + tx.amount, 0);
+
+  // Get this month's earnings
+  const monthTransactions = await Transaction.find({
+    storeId,
+    userType: "store",
+    type: "order_revenue",
+    status: "completed",
+    createdAt: { $gte: thisMonthStart },
+  });
+
+  const monthEarnings = monthTransactions.reduce(
+    (sum, tx) => sum + tx.amount,
+    0,
+  );
+
+  // Get current balance
+  const currentBalance = await Transaction.getBalance(storeId, "store");
+
+  // Get total withdrawn
+  const withdrawals = await Transaction.find({
+    storeId,
+    userType: "store",
+    type: "withdrawal",
+    status: "completed",
+  });
+
+  const totalWithdrawn = withdrawals.reduce(
+    (sum, tx) => sum + Math.abs(tx.amount),
+    0,
+  );
+
+  res.json({
+    success: true,
+    data: {
+      currentBalance,
+      totalEarnings: currentBalance + totalWithdrawn,
+      totalWithdrawn,
+      todayEarnings,
+      weeklyEarnings: weekEarnings,
+      monthlyEarnings: monthEarnings,
+      today: {
+        earnings: todayEarnings,
+        orders: todayTransactions.length,
+      },
+      week: {
+        earnings: weekEarnings,
+        orders: weekTransactions.length,
+      },
+      month: {
+        earnings: monthEarnings,
+        orders: monthTransactions.length,
+      },
+    },
+  });
+});
+
+/**
+ * @desc    Create store withdrawal request
+ * @route   POST /api/stores/:id/withdrawals
+ * @access  Private (Store Owner)
+ */
+export const createStoreWithdrawal = asyncHandler(async (req, res) => {
+  const { id: storeId } = req.params;
+  const { amount } = req.body;
+
+  if (!amount || amount <= 0) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid withdrawal amount",
+    });
+  }
+
+  const MIN_WITHDRAWAL = 100; // R100 minimum for stores
+  if (amount < MIN_WITHDRAWAL) {
+    return res.status(400).json({
+      success: false,
+      message: `Minimum withdrawal amount is R${MIN_WITHDRAWAL}`,
+    });
+  }
+
+  const currentBalance = await Transaction.getBalance(storeId, "store");
+
+  if (currentBalance < amount) {
+    return res.status(400).json({
+      success: false,
+      message: "Insufficient balance",
+      currentBalance,
+    });
+  }
+
+  const store = await Store.findById(storeId);
+  if (!store || !store.bankAccount?.accountNumber) {
+    return res.status(400).json({
+      success: false,
+      message: "Please add bank account details first",
+    });
+  }
+
+  try {
+    const withdrawal = await Transaction.createWithdrawal(
+      storeId,
+      "store",
+      amount,
+      `Withdrawal to ${store.bankAccount.bank || "bank"}`,
+      {
+        storeName: store.name,
+        bankAccount: {
+          accountNumber: store.bankAccount.accountNumber,
+          accountType: store.bankAccount.accountType,
+          bank: store.bankAccount.bank,
+        },
+        requestedAt: new Date(),
+      },
+    );
+
+    res.status(201).json({
+      success: true,
+      message: "Withdrawal request created successfully",
+      data: withdrawal,
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: error.message || "Failed to create withdrawal",
+    });
+  }
+});
+
+/**
+ * @desc    Get store balance
+ * @route   GET /api/stores/:id/balance
+ * @access  Private (Store Owner)
+ */
+export const getStoreBalance = asyncHandler(async (req, res) => {
+  const { id: storeId } = req.params;
+
+  const balance = await Transaction.getBalance(storeId, "store");
+
+  res.json({
+    success: true,
+    data: {
+      balance,
+    },
   });
 });

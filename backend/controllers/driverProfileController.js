@@ -863,6 +863,7 @@ export const getDriverEarnings = asyncHandler(async (req, res) => {
   // Get today's earnings from transactions
   const todayTransactions = await Transaction.find({
     userId: req.user.id,
+    userType: "driver",
     type: { $in: ["earning", "tip"] },
     status: "completed",
     createdAt: { $gte: today },
@@ -879,6 +880,7 @@ export const getDriverEarnings = asyncHandler(async (req, res) => {
   // Get this week's earnings
   const weekTransactions = await Transaction.find({
     userId: req.user.id,
+    userType: "driver",
     type: { $in: ["earning", "tip"] },
     status: "completed",
     createdAt: { $gte: thisWeekStart },
@@ -889,6 +891,7 @@ export const getDriverEarnings = asyncHandler(async (req, res) => {
   // Get this month's earnings
   const monthTransactions = await Transaction.find({
     userId: req.user.id,
+    userType: "driver",
     type: { $in: ["earning", "tip"] },
     status: "completed",
     createdAt: { $gte: thisMonthStart },
@@ -900,10 +903,11 @@ export const getDriverEarnings = asyncHandler(async (req, res) => {
   );
 
   // Get current balance and total withdrawn
-  const currentBalance = await Transaction.getBalance(req.user.id);
+  const currentBalance = await Transaction.getBalance(req.user.id, "driver");
 
   const withdrawals = await Transaction.find({
     userId: req.user.id,
+    userType: "driver",
     type: "withdrawal",
     status: { $in: ["completed", "pending"] },
   });
@@ -959,6 +963,7 @@ export const getDriverTransactions = asyncHandler(async (req, res) => {
   // Get transactions from Transaction model
   const transactions = await Transaction.find({
     userId: req.user.id,
+    userType: "driver",
     status: { $in: ["completed", "pending"] },
   })
     .populate("orderId", "orderNumber storeId")
@@ -1047,7 +1052,7 @@ export const createWithdrawal = asyncHandler(async (req, res) => {
   }
 
   // Check current balance
-  const currentBalance = await Transaction.getBalance(req.user.id);
+  const currentBalance = await Transaction.getBalance(req.user.id, "driver");
 
   if (currentBalance < amount) {
     return res.status(400).json({
@@ -1071,6 +1076,7 @@ export const createWithdrawal = asyncHandler(async (req, res) => {
     // Create withdrawal transaction
     const withdrawal = await Transaction.createWithdrawal(
       req.user.id,
+      "driver",
       amount,
       `Withdrawal to ${profile.bankAccount.bank}`,
       {
@@ -1104,6 +1110,7 @@ export const createWithdrawal = asyncHandler(async (req, res) => {
 export const getWithdrawals = asyncHandler(async (req, res) => {
   const withdrawals = await Transaction.find({
     userId: req.user.id,
+    userType: "driver",
     type: "withdrawal",
   })
     .sort({ createdAt: -1 })
@@ -1121,7 +1128,7 @@ export const getWithdrawals = asyncHandler(async (req, res) => {
  * @access  Private (Delivery Rider)
  */
 export const getBalance = asyncHandler(async (req, res) => {
-  const balance = await Transaction.getBalance(req.user.id);
+  const balance = await Transaction.getBalance(req.user.id, "driver");
 
   res.json({
     success: true,

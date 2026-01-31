@@ -5,7 +5,17 @@ const transactionSchema = new mongoose.Schema(
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
+      index: true,
+    },
+    userType: {
+      type: String,
+      enum: ["driver", "store", "platform"],
       required: true,
+      index: true,
+    },
+    storeId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Store",
       index: true,
     },
     type: {
@@ -18,6 +28,9 @@ const transactionSchema = new mongoose.Schema(
         "refund",
         "adjustment",
         "tip",
+        "order_revenue",
+        "commission",
+        "platform_fee",
       ],
       required: true,
     },
@@ -54,10 +67,12 @@ const transactionSchema = new mongoose.Schema(
 
 // Index for faster queries
 transactionSchema.index({ userId: 1, createdAt: -1 });
+transactionSchema.index({ storeId: 1, createdAt: -1 });
 transactionSchema.index({ userId: 1, type: 1 });
+transactionSchema.index({ userType: 1, type: 1 });
 transactionSchema.index({ status: 1 });
 
-// Static method to create earning transaction
+// Static method to create earning transaction (for drivers)
 transactionSchema.statics.createEarning = async function (
   userId,
   orderId,
@@ -65,12 +80,59 @@ transactionSchema.statics.createEarning = async function (
   description,
   metadata = {},
 ) {
-  const currentBalance = await this.getBalance(userId);
+  const currentBalance = await this.getBalance(userId, "driver");
   const newBalance = currentBalance + amount;
 
   return await this.create({
     userId,
+    userType: "driver",
     type: "earning",
+    amount,
+    balanceAfter: newBalance,
+    description,
+    orderId,
+    status: "completed",
+    metadata,
+  });
+};
+
+// Static method to create store revenue transaction
+transactionSchema.statics.createStoreRevenue = async function (
+  storeId,
+  orderId,
+  amount,
+  description,
+  metadata = {},
+) {
+  const currentBalance = await this.getBalance(storeId, "store");
+  const newBalance = currentBalance + amount;
+
+  return await this.create({
+    storeId,
+    userType: "store",
+    type: "order_revenue",
+    amount,
+    balanceAfter: newBalance,
+    description,
+    orderId,
+    status: "completed",
+    metadata,
+  });
+};
+
+// Static method to create platform commission transaction
+transactionSchema.statics.createPlatformCommission = async function (
+  orderId,
+  amount,
+  description,
+  metadata = {},
+) {
+  const currentBalance = await this.getBalance(null, "platform");
+  const newBalance = currentBalance + amount;
+
+  return await this.create({
+    userType: "platform",
+    type: "commission",
     amount,
     balanceAfter: newBalance,
     description,
@@ -83,11 +145,16 @@ transactionSchema.statics.createEarning = async function (
 // Static method to create withdrawal transaction
 transactionSchema.statics.createWithdrawal = async function (
   userId,
+  userType,
   amount,
   description,
   metadata = {},
 ) {
-  const currentBalance = await this.getBalance(userId);
+  const currentBalance = await this.getBalance(
+    userType === "store" ? null : userId,
+    userType,
+    userType === "store" ? userId : null,
+  );
 
   if (currentBalance < amount) {
     throw new Error("Insufficient balance");
@@ -95,20 +162,42 @@ transactionSchema.statics.createWithdrawal = async function (
 
   const newBalance = currentBalance - amount;
 
-  return await this.create({
-    userId,
+  const txData = {
+    userType,
     type: "withdrawal",
     amount: -amount, // Negative for deductions
     balanceAfter: newBalance,
     description,
     status: "pending",
     metadata,
-  });
+  };
+
+  if (userType === "store") {
+    txData.storeId = userId; // For stores, userId is actually storeId
+  } else {
+    txData.userId = userId;
+  }
+
+  return await this.create(txData);
 };
 
 // Static method to get current balance
-transactionSchema.statics.getBalance = async function (userId) {
-  const lastTransaction = await this.findOne({ userId })
+transactionSchema.statics.getBalance = async function (
+  userId,
+  userType,
+  storeId = null,
+) {
+  const query = { userType };
+
+  if (userType === "store") {
+    query.storeId = storeId || userId;
+  } else if (userType === "platform") {
+    // Platform transactions have no userId or storeId
+  } else {
+    query.userId = userId;
+  }
+
+  const lastTransaction = await this.findOne(query)
     .sort({ createdAt: -1 })
     .select("balanceAfter");
 
@@ -118,14 +207,21 @@ transactionSchema.statics.getBalance = async function (userId) {
 // Static method to get earnings summary
 transactionSchema.statics.getEarningsSummary = async function (
   userId,
+  userType,
   startDate,
   endDate,
 ) {
   const query = {
-    userId,
-    type: { $in: ["earning", "tip"] },
+    userType,
+    type: { $in: ["earning", "tip", "order_revenue", "commission"] },
     status: "completed",
   };
+
+  if (userType === "store") {
+    query.storeId = userId;
+  } else if (userType !== "platform") {
+    query.userId = userId;
+  }
 
   if (startDate && endDate) {
     query.createdAt = { $gte: startDate, $lte: endDate };
