@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import Transaction from "./Transaction.js";
 
 // Order item sub-schema
 const orderItemSchema = new mongoose.Schema({
@@ -481,7 +482,9 @@ orderSchema.pre("save", function (next) {
 });
 
 // Instance methods
-orderSchema.methods.updateStatus = function (newStatus, notes, location) {
+orderSchema.methods.updateStatus = async function (newStatus, notes, location) {
+  const wasDelivered = this.status === "delivered";
+
   this.status = newStatus;
   this.trackingHistory.push({
     status: newStatus,
@@ -493,6 +496,29 @@ orderSchema.methods.updateStatus = function (newStatus, notes, location) {
   // Set specific timestamps
   if (newStatus === "delivered") {
     this.actualDeliveryTime = new Date();
+
+    // Create transaction for driver earnings (only if not already delivered)
+    if (!wasDelivered && this.riderId) {
+      try {
+        const totalEarnings = (this.deliveryFee || 0) + (this.tip || 0);
+
+        await Transaction.createEarning(
+          this.riderId,
+          this._id,
+          totalEarnings,
+          `Delivery - ${this.orderNumber}`,
+          {
+            orderNumber: this.orderNumber,
+            deliveryFee: this.deliveryFee || 0,
+            tip: this.tip || 0,
+            storeId: this.storeId,
+          },
+        );
+      } catch (error) {
+        console.error("Error creating transaction:", error);
+        // Don't fail the order update if transaction fails
+      }
+    }
   } else if (newStatus === "cancelled") {
     this.cancelledAt = new Date();
   }

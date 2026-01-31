@@ -19,6 +19,9 @@ import {
   getDriverEarnings,
   getDriverTransactions,
   getDriverOrderDetail,
+  createWithdrawal,
+  getWithdrawals,
+  getBalance,
 } from "../controllers/driverProfileController.js";
 import { authenticate, authorize } from "../middleware/auth.js";
 import { uploadSingle } from "../middleware/upload.js";
@@ -76,5 +79,10 @@ router.get("/orders/:orderId", getDriverOrderDetail);
 // Earnings and transactions
 router.get("/earnings", getDriverEarnings);
 router.get("/transactions", getDriverTransactions);
+router.get("/balance", getBalance);
+
+// Withdrawals
+router.post("/withdrawals", createWithdrawal);
+router.get("/withdrawals", getWithdrawals);
 
 export default router;

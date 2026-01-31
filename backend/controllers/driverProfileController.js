@@ -1,5 +1,6 @@
 import DeliveryRiderProfile from "../models/DeliveryRiderProfile.js";
 import Order from "../models/Order.js";
+import Transaction from "../models/Transaction.js";
 import { asyncHandler } from "../middleware/validation.js";
 import {
   uploadToCloudinary,
@@ -859,89 +860,84 @@ export const getDriverEarnings = asyncHandler(async (req, res) => {
   thisMonthStart.setDate(1);
   thisMonthStart.setHours(0, 0, 0, 0);
 
-  // Get today's earnings - use actualDeliveryTime or fallback to updatedAt
-  const todayOrders = await Order.find({
-    riderId: req.user.id,
-    status: "delivered",
-    $or: [
-      { actualDeliveryTime: { $gte: today } },
-      {
-        actualDeliveryTime: { $exists: false },
-        updatedAt: { $gte: today },
-      },
-    ],
+  // Get today's earnings from transactions
+  const todayTransactions = await Transaction.find({
+    userId: req.user.id,
+    type: { $in: ["earning", "tip"] },
+    status: "completed",
+    createdAt: { $gte: today },
   });
 
-  const todayEarnings = todayOrders.reduce((sum, order) => {
-    // Driver gets delivery fee + tip
-    return sum + (order.deliveryFee || 0) + (order.tip || 0);
-  }, 0);
+  const todayEarnings = todayTransactions.reduce(
+    (sum, tx) => sum + tx.amount,
+    0,
+  );
+  const todayTips = todayTransactions
+    .filter((tx) => tx.type === "tip")
+    .reduce((sum, tx) => sum + tx.amount, 0);
 
-  const todayTips = todayOrders.reduce(
-    (sum, order) => sum + (order.tip || 0),
+  // Get this week's earnings
+  const weekTransactions = await Transaction.find({
+    userId: req.user.id,
+    type: { $in: ["earning", "tip"] },
+    status: "completed",
+    createdAt: { $gte: thisWeekStart },
+  });
+
+  const weekEarnings = weekTransactions.reduce((sum, tx) => sum + tx.amount, 0);
+
+  // Get this month's earnings
+  const monthTransactions = await Transaction.find({
+    userId: req.user.id,
+    type: { $in: ["earning", "tip"] },
+    status: "completed",
+    createdAt: { $gte: thisMonthStart },
+  });
+
+  const monthEarnings = monthTransactions.reduce(
+    (sum, tx) => sum + tx.amount,
     0,
   );
 
-  // Get this week's earnings
-  const weekOrders = await Order.find({
-    riderId: req.user.id,
-    status: "delivered",
-    $or: [
-      { actualDeliveryTime: { $gte: thisWeekStart } },
-      {
-        actualDeliveryTime: { $exists: false },
-        updatedAt: { $gte: thisWeekStart },
-      },
-    ],
+  // Get current balance and total withdrawn
+  const currentBalance = await Transaction.getBalance(req.user.id);
+
+  const withdrawals = await Transaction.find({
+    userId: req.user.id,
+    type: "withdrawal",
+    status: { $in: ["completed", "pending"] },
   });
 
-  const weekEarnings = weekOrders.reduce((sum, order) => {
-    return sum + (order.deliveryFee || 0) + (order.tip || 0);
-  }, 0);
+  const totalWithdrawn = withdrawals
+    .filter((tx) => tx.status === "completed")
+    .reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
 
-  // Get this month's earnings
-  const monthOrders = await Order.find({
-    riderId: req.user.id,
-    status: "delivered",
-    $or: [
-      { actualDeliveryTime: { $gte: thisMonthStart } },
-      {
-        actualDeliveryTime: { $exists: false },
-        updatedAt: { $gte: thisMonthStart },
-      },
-    ],
-  });
-
-  const monthEarnings = monthOrders.reduce((sum, order) => {
-    return sum + (order.deliveryFee || 0) + (order.tip || 0);
-  }, 0);
-
-  // Get profile for total earnings
+  // Get profile for historical stats
   const profile = await DeliveryRiderProfile.findOne({ userId: req.user.id });
 
   res.json({
     success: true,
     data: {
-      totalEarnings: profile?.stats?.totalEarnings || 0,
-      totalTips: profile?.stats?.totalTips || 0,
-      totalDeliveryFees:
-        (profile?.stats?.totalEarnings || 0) - (profile?.stats?.totalTips || 0),
+      totalEarnings: currentBalance + totalWithdrawn,
+      totalTips: todayTips, // Can be calculated from all transactions if needed
+      totalDeliveryFees: currentBalance + totalWithdrawn - todayTips,
       todayEarnings,
       weeklyEarnings: weekEarnings,
       monthlyEarnings: monthEarnings,
-      totalWithdrawn: 0, // TODO: Implement withdrawals tracking
+      currentBalance,
+      totalWithdrawn,
       today: {
         earnings: todayEarnings,
         tips: todayTips,
-        deliveries: todayOrders.length,
+        deliveries: todayTransactions.length,
       },
       week: {
         earnings: weekEarnings,
-        deliveries: weekOrders.length,
+        deliveries: weekTransactions.length,
       },
       month: {
         earnings: monthEarnings,
-        deliveries: monthOrders.length,
+        deliveries: monthTransactions.length,
       },
       total: {
         earnings: profile?.stats?.totalEarnings || 0,
@@ -960,32 +956,40 @@ export const getDriverEarnings = asyncHandler(async (req, res) => {
 export const getDriverTransactions = asyncHandler(async (req, res) => {
   const { limit = 10 } = req.query;
 
-  const orders = await Order.find({
-    riderId: req.user.id,
-    status: "delivered",
+  // Get transactions from Transaction model
+  const transactions = await Transaction.find({
+    userId: req.user.id,
+    status: { $in: ["completed", "pending"] },
   })
-    .populate("storeId", "name")
-    .sort({ updatedAt: -1 }) // Sort by updatedAt for most recent deliveries
+    .populate("orderId", "orderNumber storeId")
+    .populate({
+      path: "orderId",
+      populate: { path: "storeId", select: "name" },
+    })
+    .sort({ createdAt: -1 })
     .limit(parseInt(limit));
 
-  const transactions = orders.map((order) => ({
-    _id: order._id,
-    type: "earning",
-    amount: (order.deliveryFee || 0) + (order.tip || 0),
-    description: `Delivery - ${order.orderNumber}`,
-    note: `Delivery from ${order.storeId?.name || "Store"}`,
-    status: "Success",
-    createdAt: order.actualDeliveryTime || order.updatedAt,
-    orderNumber: order.orderNumber,
-    storeName: order.storeId?.name,
-    deliveryFee: order.deliveryFee || 0,
-    tip: order.tip || 0,
-    items: order.items?.length || 0,
+  // Format transactions for frontend
+  const formattedTransactions = transactions.map((tx) => ({
+    _id: tx._id,
+    type: tx.type,
+    amount: Math.abs(tx.amount),
+    description: tx.description,
+    note: tx.orderId?.storeId?.name
+      ? `Delivery from ${tx.orderId.storeId.name}`
+      : tx.description,
+    status: tx.status === "completed" ? "Success" : tx.status,
+    createdAt: tx.createdAt,
+    orderNumber: tx.orderId?.orderNumber,
+    storeName: tx.orderId?.storeId?.name,
+    deliveryFee: tx.metadata?.deliveryFee || 0,
+    tip: tx.metadata?.tip || 0,
+    items: 0, // Will be populated from order if needed
   }));
 
   res.json({
     success: true,
-    data: transactions,
+    data: formattedTransactions,
   });
 });
 
@@ -1014,5 +1018,115 @@ export const getDriverOrderDetail = asyncHandler(async (req, res) => {
   res.json({
     success: true,
     data: order,
+  });
+});
+
+/**
+ * @desc    Create withdrawal request
+ * @route   POST /api/driver-profile/withdrawals
+ * @access  Private (Delivery Rider)
+ */
+export const createWithdrawal = asyncHandler(async (req, res) => {
+  const { amount, bankDetails } = req.body;
+
+  // Validate amount
+  if (!amount || amount <= 0) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid withdrawal amount",
+    });
+  }
+
+  // Check minimum withdrawal amount (e.g., R50)
+  const MIN_WITHDRAWAL = 50;
+  if (amount < MIN_WITHDRAWAL) {
+    return res.status(400).json({
+      success: false,
+      message: `Minimum withdrawal amount is R${MIN_WITHDRAWAL}`,
+    });
+  }
+
+  // Check current balance
+  const currentBalance = await Transaction.getBalance(req.user.id);
+
+  if (currentBalance < amount) {
+    return res.status(400).json({
+      success: false,
+      message: "Insufficient balance",
+      currentBalance,
+    });
+  }
+
+  // Get driver profile for bank details
+  const profile = await DeliveryRiderProfile.findOne({ userId: req.user.id });
+
+  if (!profile?.bankAccount?.accountNumber) {
+    return res.status(400).json({
+      success: false,
+      message: "Please add your bank account details first",
+    });
+  }
+
+  try {
+    // Create withdrawal transaction
+    const withdrawal = await Transaction.createWithdrawal(
+      req.user.id,
+      amount,
+      `Withdrawal to ${profile.bankAccount.bank}`,
+      {
+        bankAccount: {
+          accountNumber: profile.bankAccount.accountNumber,
+          accountType: profile.bankAccount.accountType,
+          bank: profile.bankAccount.bank,
+        },
+        requestedAt: new Date(),
+      },
+    );
+
+    res.status(201).json({
+      success: true,
+      message: "Withdrawal request created successfully",
+      data: withdrawal,
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: error.message || "Failed to create withdrawal",
+    });
+  }
+});
+
+/**
+ * @desc    Get driver's withdrawal history
+ * @route   GET /api/driver-profile/withdrawals
+ * @access  Private (Delivery Rider)
+ */
+export const getWithdrawals = asyncHandler(async (req, res) => {
+  const withdrawals = await Transaction.find({
+    userId: req.user.id,
+    type: "withdrawal",
+  })
+    .sort({ createdAt: -1 })
+    .limit(50);
+
+  res.json({
+    success: true,
+    data: withdrawals,
+  });
+});
+
+/**
+ * @desc    Get driver's current balance
+ * @route   GET /api/driver-profile/balance
+ * @access  Private (Delivery Rider)
+ */
+export const getBalance = asyncHandler(async (req, res) => {
+  const balance = await Transaction.getBalance(req.user.id);
+
+  res.json({
+    success: true,
+    data: {
+      balance,
+    },
   });
 });
