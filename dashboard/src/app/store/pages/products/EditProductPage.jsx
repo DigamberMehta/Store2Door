@@ -271,6 +271,18 @@ const EditProductPage = () => {
 
   const removeImage = (index) => {
     const newImages = formData.images.filter((_, i) => i !== index);
+    // If we removed the primary image, make the first remaining image primary
+    if (newImages.length > 0 && formData.images[index].isPrimary) {
+      newImages[0].isPrimary = true;
+    }
+    setFormData((prev) => ({ ...prev, images: newImages }));
+  };
+
+  const setPrimaryImage = (index) => {
+    const newImages = formData.images.map((img, i) => ({
+      ...img,
+      isPrimary: i === index,
+    }));
     setFormData((prev) => ({ ...prev, images: newImages }));
   };
 
@@ -279,6 +291,20 @@ const EditProductPage = () => {
     setLoading(true);
 
     try {
+      // Validate images
+      const validImages = formData.images.filter((img) => img.url);
+      if (validImages.length === 0) {
+        toast.error("Please add at least one product image");
+        setLoading(false);
+        return;
+      }
+
+      // Ensure at least one image is marked as primary
+      const hasPrimary = validImages.some((img) => img.isPrimary);
+      if (!hasPrimary && validImages.length > 0) {
+        validImages[0].isPrimary = true;
+      }
+
       const productData = {
         ...formData,
         tags: formData.tags
@@ -322,7 +348,7 @@ const EditProductPage = () => {
           }
           return acc;
         }, {}),
-        images: formData.images.filter((img) => img.url),
+        images: validImages,
       };
 
       const token = localStorage.getItem("storeAuthToken");
@@ -442,6 +468,7 @@ const EditProductPage = () => {
             handleImageChange={handleImageChange}
             addImage={addImage}
             removeImage={removeImage}
+            setPrimaryImage={setPrimaryImage}
           />
 
           <InventorySection

@@ -253,6 +253,18 @@ const CreateProductPage = () => {
       URL.revokeObjectURL(formData.images[index].preview);
     }
     const newImages = formData.images.filter((_, i) => i !== index);
+    // If we removed the primary image, make the first remaining image primary
+    if (newImages.length > 0 && formData.images[index].isPrimary) {
+      newImages[0].isPrimary = true;
+    }
+    setFormData((prev) => ({ ...prev, images: newImages }));
+  };
+
+  const setPrimaryImage = (index) => {
+    const newImages = formData.images.map((img, i) => ({
+      ...img,
+      isPrimary: i === index,
+    }));
     setFormData((prev) => ({ ...prev, images: newImages }));
   };
 
@@ -490,6 +502,7 @@ const CreateProductPage = () => {
             handleImageFileChange={handleImageFileChange}
             addImage={addImage}
             removeImage={removeImage}
+            setPrimaryImage={setPrimaryImage}
           />
 
           <InventorySection
