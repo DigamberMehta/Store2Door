@@ -26,6 +26,7 @@ import OrderDeliveredPage from "./pages/orders/OrderDeliveredPage";
 import PaymentPage from "./pages/payment/PaymentPage";
 import PaymentSuccessPage from "./pages/payment/PaymentSuccessPage";
 import PaymentFailurePage from "./pages/payment/PaymentFailurePage";
+import { AboutUsPage, TermsOfServicePage, PrivacyPolicyPage } from "./pages/info";
 import FloatingCartButton from "./components/FloatingCartButton";
 
 // Wrapper component to provide navigation handlers
@@ -187,6 +188,12 @@ function AppContent() {
         <Route path="/product/:id/:slug" element={<ProductDetailPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />
+
+        {/* Info Pages */}
+        <Route path="/about" element={<AboutUsPage />} />
+        <Route path="/terms" element={<TermsOfServicePage />} />
+        <Route path="/privacy" element={<PrivacyPolicyPage />} />
+
         {/* 404 Route - redirect to home */}
         <Route
           path="*"
