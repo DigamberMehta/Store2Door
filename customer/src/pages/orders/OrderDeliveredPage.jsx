@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { CheckCircle, Package, Home, Star } from "lucide-react";
 import { getOrderById } from "../../services/api/order.api";
+import { formatTimeOnly } from "../../utils/date";
 
 const OrderDeliveredPage = () => {
   const { orderId } = useParams();
@@ -37,14 +38,14 @@ const OrderDeliveredPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50 relative overflow-hidden">
+    <div className="min-h-screen bg-black relative overflow-hidden">
       {/* Confetti Animation */}
       {showConfetti && (
         <div className="fixed inset-0 pointer-events-none z-50">
@@ -71,50 +72,47 @@ const OrderDeliveredPage = () => {
       <div className="container mx-auto px-4 py-12 max-w-2xl">
         {/* Success Animation */}
         <div className="text-center mb-8 animate-slideDown">
-          <div className="inline-flex items-center justify-center w-32 h-32 bg-green-100 rounded-full mb-6 animate-bounce-slow">
-            <CheckCircle className="w-20 h-20 text-green-600 animate-checkmark" />
+          <div className="inline-flex items-center justify-center w-32 h-32 bg-green-500/20 backdrop-blur-xl rounded-full mb-6 animate-bounce-slow border border-green-500/30">
+            <CheckCircle className="w-20 h-20 text-green-500 animate-checkmark" />
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-3">
+          <h1 className="text-4xl font-bold text-white mb-3">
             Order Delivered! 🎉
           </h1>
-          <p className="text-lg text-gray-600">
+          <p className="text-lg text-white/70">
             Your order has been successfully delivered
           </p>
         </div>
 
         {/* Order Summary Card */}
-        <div className="bg-white rounded-2xl shadow-xl p-6 mb-6 animate-fadeIn">
+        <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/5 p-6 mb-6 animate-fadeIn">
           <div className="flex items-center gap-3 mb-6">
-            <Package className="w-6 h-6 text-green-600" />
+            <Package className="w-6 h-6 text-green-500" />
             <div>
-              <h2 className="font-semibold text-gray-900">
+              <h2 className="font-semibold text-white">
                 Order #{order?.orderNumber || orderId.slice(-6)}
               </h2>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-white/50">
                 Delivered at{" "}
                 {order?.deliveredAt
-                  ? new Date(order.deliveredAt).toLocaleTimeString("en-US", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })
+                  ? formatTimeOnly(order.deliveredAt)
                   : "Just now"}
               </p>
             </div>
           </div>
 
           {/* Items */}
-          <div className="border-t pt-4">
-            <h3 className="font-medium text-gray-700 mb-3">Items Delivered</h3>
+          <div className="border-t border-white/10 pt-4">
+            <h3 className="font-medium text-white/70 mb-3">Items Delivered</h3>
             <div className="space-y-2">
               {order?.items?.map((item, index) => (
                 <div
                   key={index}
                   className="flex justify-between items-center text-sm"
                 >
-                  <span className="text-gray-700">
+                  <span className="text-white/60">
                     {item.quantity}x {item.name}
                   </span>
-                  <span className="text-gray-900 font-medium">
+                  <span className="text-white font-medium">
                     R{(item.unitPrice * item.quantity).toFixed(2)}
                   </span>
                 </div>
@@ -122,12 +120,12 @@ const OrderDeliveredPage = () => {
             </div>
 
             {/* Total */}
-            <div className="mt-4 pt-4 border-t">
+            <div className="mt-4 pt-4 border-t border-white/10">
               <div className="flex justify-between items-center">
-                <span className="text-lg font-semibold text-gray-900">
+                <span className="text-lg font-semibold text-white">
                   Total Paid
                 </span>
-                <span className="text-2xl font-bold text-green-600">
+                <span className="text-2xl font-bold text-green-500">
                   R{order?.total?.toFixed(2)}
                 </span>
               </div>
@@ -135,37 +133,18 @@ const OrderDeliveredPage = () => {
           </div>
         </div>
 
-        {/* Rating Prompt */}
-        <div className="bg-white rounded-2xl shadow-xl p-6 mb-6 animate-fadeIn animation-delay-200">
-          <div className="text-center">
-            <Star className="w-8 h-8 text-yellow-500 mx-auto mb-3" />
-            <h3 className="font-semibold text-gray-900 mb-2">
-              How was your experience?
-            </h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Rate your delivery and help us improve
-            </p>
-            <button
-              onClick={() => navigate(`/orders/${orderId}/review`)}
-              className="bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-2.5 rounded-xl font-medium hover:from-green-700 hover:to-green-800 transition-all shadow-lg hover:shadow-xl"
-            >
-              Rate Order
-            </button>
-          </div>
-        </div>
-
         {/* Action Buttons */}
         <div className="grid grid-cols-2 gap-4 animate-fadeIn animation-delay-400">
           <button
             onClick={() => navigate("/orders")}
-            className="flex items-center justify-center gap-2 bg-white text-gray-700 px-6 py-3 rounded-xl font-medium hover:bg-gray-50 transition-all shadow-md hover:shadow-lg"
+            className="flex items-center justify-center gap-2 bg-white/10 backdrop-blur-xl border border-white/10 text-white px-6 py-3 rounded-xl font-medium hover:bg-white/15 transition-all"
           >
             <Package className="w-5 h-5" />
             My Orders
           </button>
           <button
             onClick={() => navigate("/")}
-            className="flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-xl font-medium hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg"
+            className="flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-black px-6 py-3 rounded-xl font-medium transition-all"
           >
             <Home className="w-5 h-5" />
             Home
@@ -174,9 +153,9 @@ const OrderDeliveredPage = () => {
 
         {/* Thank You Message */}
         <div className="text-center mt-8 animate-fadeIn animation-delay-600">
-          <p className="text-gray-600">
+          <p className="text-white/60">
             Thank you for ordering with{" "}
-            <span className="font-semibold text-green-600">Door2Door</span>! 💚
+            <span className="font-semibold text-green-500">Door2Door</span>! 💚
           </p>
         </div>
       </div>
