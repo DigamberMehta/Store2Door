@@ -404,3 +404,320 @@ export const getNearbyStores = asyncHandler(async (req, res) => {
     },
   });
 });
+
+/**
+ * @desc    Get own store information (full)
+ * @route   GET /api/managers/stores/my
+ * @access  Private (Store Manager)
+ */
+export const getMyStore = asyncHandler(async (req, res) => {
+  const store = await Store.findOne({ managerId: req.user.id });
+
+  if (!store) {
+    return res.status(404).json({
+      success: false,
+      message: "Store not found for this manager",
+    });
+  }
+
+  res.json({
+    success: true,
+    data: store,
+  });
+});
+
+/**
+ * @desc    Get own store profile (basic info)
+ * @route   GET /api/managers/stores/my/profile
+ * @access  Private (Store Manager)
+ */
+export const getMyStoreProfile = asyncHandler(async (req, res) => {
+  const store = await Store.findOne({ managerId: req.user.id }).select(
+    "name description logo coverImage businessLicense taxId businessType",
+  );
+
+  if (!store) {
+    return res.status(404).json({
+      success: false,
+      message: "Store not found for this manager",
+    });
+  }
+
+  res.json({
+    success: true,
+    data: store,
+  });
+});
+
+/**
+ * @desc    Get own store location & contact info
+ * @route   GET /api/managers/stores/my/location
+ * @access  Private (Store Manager)
+ */
+export const getMyStoreLocation = asyncHandler(async (req, res) => {
+  const store = await Store.findOne({ managerId: req.user.id }).select(
+    "address contactInfo",
+  );
+
+  if (!store) {
+    return res.status(404).json({
+      success: false,
+      message: "Store not found for this manager",
+    });
+  }
+
+  res.json({
+    success: true,
+    data: store,
+  });
+});
+
+/**
+ * @desc    Get own store features
+ * @route   GET /api/managers/stores/my/features
+ * @access  Private (Store Manager)
+ */
+export const getMyStoreFeatures = asyncHandler(async (req, res) => {
+  const store = await Store.findOne({ managerId: req.user.id }).select(
+    "features",
+  );
+
+  if (!store) {
+    return res.status(404).json({
+      success: false,
+      message: "Store not found for this manager",
+    });
+  }
+
+  res.json({
+    success: true,
+    data: store,
+  });
+});
+
+/**
+ * @desc    Get own store bank account details
+ * @route   GET /api/managers/stores/my/bank-account
+ * @access  Private (Store Manager)
+ */
+export const getMyStoreBankAccount = asyncHandler(async (req, res) => {
+  const store = await Store.findOne({ managerId: req.user.id }).select(
+    "accountHolderName bankName accountNumber accountType branchCode",
+  );
+
+  if (!store) {
+    return res.status(404).json({
+      success: false,
+      message: "Store not found for this manager",
+    });
+  }
+
+  res.json({
+    success: true,
+    data: store,
+  });
+});
+
+/**
+ * @desc    Get own store operating hours
+ * @route   GET /api/managers/stores/my/operating-hours
+ * @access  Private (Store Manager)
+ */
+export const getMyStoreOperatingHours = asyncHandler(async (req, res) => {
+  const store = await Store.findOne({ managerId: req.user.id }).select(
+    "operatingHours",
+  );
+
+  if (!store) {
+    return res.status(404).json({
+      success: false,
+      message: "Store not found for this manager",
+    });
+  }
+
+  res.json({
+    success: true,
+    data: store,
+  });
+});
+
+/**
+ * @desc    Update own store information
+ * @route   PUT /api/managers/stores/my
+ * @access  Private (Store Manager)
+ */
+export const updateMyStore = asyncHandler(async (req, res) => {
+  const store = await Store.findOne({ managerId: req.user.id });
+
+  if (!store) {
+    return res.status(404).json({
+      success: false,
+      message: "Store not found for this manager",
+    });
+  }
+
+  const {
+    name,
+    description,
+    logo,
+    coverImage,
+    businessLicense,
+    taxId,
+    businessType,
+    address,
+    contactInfo,
+    features,
+    isTemporarilyClosed,
+    temporaryCloseReason,
+    accountHolderName,
+    bankName,
+    accountNumber,
+    accountType,
+    branchCode,
+  } = req.body;
+
+  // Update basic information
+  if (name !== undefined) store.name = name;
+  if (description !== undefined) store.description = description;
+  if (logo !== undefined) store.logo = logo;
+  if (coverImage !== undefined) store.coverImage = coverImage;
+
+  // Update business information
+  if (businessLicense !== undefined) store.businessLicense = businessLicense;
+  if (taxId !== undefined) store.taxId = taxId;
+  if (businessType !== undefined) store.businessType = businessType;
+
+  // Update bank account information
+  if (accountHolderName !== undefined)
+    store.accountHolderName = accountHolderName;
+  if (bankName !== undefined) store.bankName = bankName;
+  if (accountNumber !== undefined) store.accountNumber = accountNumber;
+  if (accountType !== undefined) store.accountType = accountType;
+  if (branchCode !== undefined) store.branchCode = branchCode;
+
+  // Update address
+  if (address !== undefined) {
+    store.address = {
+      ...store.address,
+      ...address,
+    };
+  }
+
+  // Update contact info
+  if (contactInfo !== undefined) {
+    store.contactInfo = {
+      ...store.contactInfo,
+      ...contactInfo,
+      socialMedia: {
+        ...store.contactInfo?.socialMedia,
+        ...contactInfo.socialMedia,
+      },
+    };
+  }
+
+  // Update features
+  if (features !== undefined) store.features = features;
+
+  // Update temporary closure status
+  if (isTemporarilyClosed !== undefined) {
+    store.isTemporarilyClosed = isTemporarilyClosed;
+  }
+  if (temporaryCloseReason !== undefined) {
+    store.temporaryCloseReason = temporaryCloseReason;
+  }
+
+  await store.save();
+
+  res.json({
+    success: true,
+    message: "Store updated successfully",
+    data: store,
+  });
+});
+
+/**
+ * @desc    Update store operating hours
+ * @route   PUT /api/managers/stores/my/operating-hours
+ * @access  Private (Store Manager)
+ */
+export const updateOperatingHours = asyncHandler(async (req, res) => {
+  const { operatingHours } = req.body;
+
+  if (!operatingHours || !Array.isArray(operatingHours)) {
+    return res.status(400).json({
+      success: false,
+      message: "Operating hours must be an array",
+    });
+  }
+
+  const store = await Store.findOne({ managerId: req.user.id });
+
+  if (!store) {
+    return res.status(404).json({
+      success: false,
+      message: "Store not found",
+    });
+  }
+
+  store.operatingHours = operatingHours;
+  await store.save();
+
+  res.json({
+    success: true,
+    message: "Operating hours updated successfully",
+    data: { operatingHours: store.operatingHours },
+  });
+});
+
+/**
+ * @desc    Update store delivery settings
+ * @route   PUT /api/managers/stores/my/delivery-settings
+ * @access  Private (Store Manager)
+ */
+export const updateDeliverySettings = asyncHandler(async (req, res) => {
+  const store = await Store.findOne({ managerId: req.user.id });
+
+  if (!store) {
+    return res.status(404).json({
+      success: false,
+      message: "Store not found",
+    });
+  }
+
+  const {
+    deliveryRadius,
+    minimumOrder,
+    deliveryFee,
+    freeDeliveryAbove,
+    averagePreparationTime,
+    maxOrdersPerHour,
+  } = req.body;
+
+  // Update delivery settings
+  if (deliveryRadius !== undefined) {
+    store.deliverySettings.deliveryRadius = deliveryRadius;
+  }
+  if (minimumOrder !== undefined) {
+    store.deliverySettings.minimumOrder = minimumOrder;
+  }
+  if (deliveryFee !== undefined) {
+    store.deliverySettings.deliveryFee = deliveryFee;
+  }
+  if (freeDeliveryAbove !== undefined) {
+    store.deliverySettings.freeDeliveryAbove = freeDeliveryAbove;
+  }
+  if (averagePreparationTime !== undefined) {
+    store.deliverySettings.averagePreparationTime = averagePreparationTime;
+  }
+  if (maxOrdersPerHour !== undefined) {
+    store.deliverySettings.maxOrdersPerHour = maxOrdersPerHour;
+  }
+
+  await store.save();
+
+  res.json({
+    success: true,
+    message: "Delivery settings updated successfully",
+    data: { deliverySettings: store.deliverySettings },
+  });
+});

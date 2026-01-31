@@ -1,6 +1,17 @@
 import express from "express";
 import { authenticate, authorize } from "../../middleware/auth.js";
 import { getStoreDashboardStats } from "../../controllers/dashboardController.js";
+import {
+  getMyStore,
+  getMyStoreProfile,
+  getMyStoreLocation,
+  getMyStoreFeatures,
+  getMyStoreBankAccount,
+  getMyStoreOperatingHours,
+  updateMyStore,
+  updateOperatingHours,
+  updateDeliverySettings,
+} from "../../controllers/storeController.js";
 
 const router = express.Router();
 
@@ -8,29 +19,24 @@ const router = express.Router();
 router.use(authenticate);
 router.use(authorize("store_manager"));
 
-// Get own store information
-router.get("/", async (req, res) => {
-  // TODO: Implement get own store
-  res.json({ success: true, message: "Get own store endpoint" });
-});
+// Get own store information (full - use sparingly)
+router.get("/my", getMyStore);
+
+// Get specific sections of store data
+router.get("/my/profile", getMyStoreProfile);
+router.get("/my/location", getMyStoreLocation);
+router.get("/my/features", getMyStoreFeatures);
+router.get("/my/bank-account", getMyStoreBankAccount);
+router.get("/my/operating-hours", getMyStoreOperatingHours);
 
 // Update own store
-router.put("/", async (req, res) => {
-  // TODO: Implement update store
-  res.json({ success: true, message: "Update store endpoint" });
-});
+router.put("/my", updateMyStore);
 
 // Update store operating hours
-router.put("/operating-hours", async (req, res) => {
-  // TODO: Implement update operating hours
-  res.json({ success: true, message: "Update operating hours endpoint" });
-});
+router.put("/my/operating-hours", updateOperatingHours);
 
 // Update store delivery settings
-router.put("/delivery-settings", async (req, res) => {
-  // TODO: Implement update delivery settings
-  res.json({ success: true, message: "Update delivery settings endpoint" });
-});
+router.put("/my/delivery-settings", updateDeliverySettings);
 
 // Get store statistics
 router.get("/stats", getStoreDashboardStats);
