@@ -92,7 +92,7 @@ const WalletPage = () => {
                   Available Balance
                 </p>
                 <h2 className="text-3xl font-bold mt-1">
-                  R{earnings.totalEarnings?.toFixed(2) || "0.00"}
+                  R{earnings.currentBalance?.toFixed(2) || "0.00"}
                 </h2>
               </div>
               <div className="bg-white/10 p-3 rounded-2xl backdrop-blur-md">

@@ -1,42 +1,23 @@
 import { Package, ArrowUpRight, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
-import { ordersAPI } from "../../services/api";
 import { formatDate } from "../../utils/date";
 
-const RecentTransactions = () => {
+const RecentTransactions = ({
+  transactions: rawTransactions = [],
+  loading = false,
+}) => {
   const navigate = useNavigate();
-  const [transactions, setTransactions] = useState([]);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchTransactions = async () => {
-      try {
-        const response = await ordersAPI.getTransactions(3);
-        console.log("[RecentTransactions] Response:", response);
-        // Backend returns array directly in response.data
-        const data = Array.isArray(response?.data) ? response.data : [];
-
-        // Format transactions for display
-        const formatted = data.map((t) => {
-          return {
-            id: t._id || t.id,
-            title: `${t.items} ${t.items === 1 ? "item" : "items"} • ${t.storeName || "Store"}`,
-            time: formatDate(t.createdAt || t.deliveredAt),
-            amount: `+ R${(t.amount || 0).toFixed(2)}`,
-            tip: t.tip > 0 ? `+ R${t.tip.toFixed(2)} tips` : null,
-          };
-        });
-
-        setTransactions(formatted);
-      } catch (error) {
-        console.error("Error fetching transactions:", error);
-      } finally {
-        setLoading(false);
-      }
+  // Format transactions for display
+  const transactions = rawTransactions.map((t) => {
+    return {
+      id: t._id || t.id,
+      title: `${t.items} ${t.items === 1 ? "item" : "items"} • ${t.storeName || "Store"}`,
+      time: formatDate(t.createdAt || t.deliveredAt),
+      amount: `+ R${(t.amount || 0).toFixed(2)}`,
+      tip: t.tip > 0 ? `+ R${t.tip.toFixed(2)} tips` : null,
     };
-    fetchTransactions();
-  }, []);
+  });
 
   if (loading) {
     return (

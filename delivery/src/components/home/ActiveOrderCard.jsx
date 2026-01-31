@@ -1,33 +1,8 @@
 import { MapPin, Package, ArrowRight, Navigation } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
-import { ordersAPI } from "../../services/api";
 
-const ActiveOrderCard = () => {
+const ActiveOrderCard = ({ activeOrder, loading = false }) => {
   const navigate = useNavigate();
-  const [activeOrder, setActiveOrder] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchActiveOrder();
-  }, []);
-
-  const fetchActiveOrder = async () => {
-    try {
-      const response = await ordersAPI.getMyOrders();
-      if (response.success) {
-        // Find first active order (assigned or on_the_way)
-        const active = response.data?.orders?.find(
-          (o) => o.status === "assigned" || o.status === "on_the_way",
-        );
-        setActiveOrder(active);
-      }
-    } catch (error) {
-      console.error("Error fetching active order:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   if (loading) {
     return null;

@@ -1,27 +1,8 @@
 import { DollarSign } from "lucide-react";
-import { useState, useEffect } from "react";
-import { ordersAPI } from "../../services/api";
 
-const EarningCard = () => {
-  const [todayEarnings, setTodayEarnings] = useState(0);
-  const [totalEarnings, setTotalEarnings] = useState(0);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchEarnings = async () => {
-      try {
-        const response = await ordersAPI.getEarnings();
-        console.log("[EarningCard] Earnings response:", response);
-        setTodayEarnings(response?.data?.todayEarnings || 0);
-        setTotalEarnings(response?.data?.totalEarnings || 0);
-      } catch (error) {
-        console.error("Error fetching earnings:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchEarnings();
-  }, []);
+const EarningCard = ({ earnings = {}, loading = false }) => {
+  const todayEarnings = earnings?.todayEarnings || 0;
+  const currentBalance = earnings?.currentBalance || 0;
 
   if (loading) {
     return (
@@ -56,7 +37,7 @@ const EarningCard = () => {
         <div className="text-[10px] text-zinc-500 mt-1">
           Total:{" "}
           <span className="text-zinc-400 font-medium">
-            R{totalEarnings.toFixed(2)}
+            R{currentBalance.toFixed(2)}
           </span>
         </div>
       </div>
