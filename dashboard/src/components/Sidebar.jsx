@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -10,16 +11,29 @@ import {
   LogOut,
   ShoppingBag,
   ChevronRight,
+  ChevronDown,
 } from "lucide-react";
 
 const Sidebar = ({ user, onLogout, type = "store" }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [openMenus, setOpenMenus] = useState({ products: true });
 
   const storeNavItems = [
     { path: "/store/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-    { path: "/store/products", icon: Package, label: "View Product" },
-    { path: "/store/products/add", icon: PackagePlus, label: "Add Product" },
+    {
+      label: "Products",
+      icon: Package,
+      key: "products",
+      submenu: [
+        { path: "/store/products", icon: Package, label: "View Products" },
+        {
+          path: "/store/products/add",
+          icon: PackagePlus,
+          label: "Add Product",
+        },
+      ],
+    },
     { path: "/store/orders", icon: ShoppingCart, label: "Orders" },
     { path: "/store/finance", icon: DollarSign, label: "Finance" },
     { path: "/store/reviews", icon: Star, label: "Reviews" },
@@ -57,14 +71,90 @@ const Sidebar = ({ user, onLogout, type = "store" }) => {
         <div className="space-y-1">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const active = isActive(item.path);
 
+            // Handle submenu items
+            if (item.submenu) {
+              const isOpen = openMenus[item.key];
+              const hasActiveChild = item.submenu.some((sub) =>
+                isActive(sub.path),
+              );
+
+              return (
+                <div key={item.key}>
+                  <button
+                    onClick={() =>
+                      setOpenMenus((prev) => ({
+                        ...prev,
+                        [item.key]: !prev[item.key],
+                      }))
+                    }
+                    className={`
+                      w-full group flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200
+                      ${
+                        hasActiveChild
+                          ? "bg-green-50 text-green-600"
+                          : "text-gray-700 hover:bg-gray-50"
+                      }
+                    `}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Icon
+                        className={`w-4 h-4 ${hasActiveChild ? "text-green-600" : "text-gray-400 group-hover:text-gray-600"}`}
+                      />
+                      <span>{item.label}</span>
+                    </div>
+                    {isOpen ? (
+                      <ChevronDown className="w-4 h-4" />
+                    ) : (
+                      <ChevronRight className="w-4 h-4" />
+                    )}
+                  </button>
+
+                  {isOpen && (
+                    <div className="mt-1 ml-4 space-y-1">
+                      {item.submenu.map((subItem) => {
+                        const SubIcon = subItem.icon;
+                        const subActive = isActive(subItem.path);
+
+                        return (
+                          <Link
+                            key={subItem.path}
+                            to={subItem.path}
+                            className={`
+                              group flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200
+                              ${
+                                subActive
+                                  ? "bg-green-50 text-green-600"
+                                  : "text-gray-600 hover:bg-gray-50"
+                              }
+                            `}
+                          >
+                            <div className="flex items-center gap-2.5">
+                              <SubIcon
+                                className={`w-4 h-4 ${subActive ? "text-green-600" : "text-gray-400 group-hover:text-gray-600"}`}
+                              />
+                              <span>{subItem.label}</span>
+                            </div>
+                            {subActive && (
+                              <ChevronRight className="w-3 h-3 text-green-600" />
+                            )}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
+            // Regular menu item
+            const active = isActive(item.path);
             return (
               <Link
                 key={item.path}
                 to={item.path}
                 className={`
-                  group flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
+                  group flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200
                   ${
                     active
                       ? "bg-green-50 text-green-600"
@@ -72,15 +162,13 @@ const Sidebar = ({ user, onLogout, type = "store" }) => {
                   }
                 `}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2.5">
                   <Icon
-                    className={`w-5 h-5 ${active ? "text-green-600" : "text-gray-400 group-hover:text-gray-600"}`}
+                    className={`w-4 h-4 ${active ? "text-green-600" : "text-gray-400 group-hover:text-gray-600"}`}
                   />
                   <span>{item.label}</span>
                 </div>
-                {active && (
-                  <ChevronRight className="w-4 h-4 text-green-600" />
-                )}
+                {active && <ChevronRight className="w-4 h-4 text-green-600" />}
               </Link>
             );
           })}
@@ -89,23 +177,23 @@ const Sidebar = ({ user, onLogout, type = "store" }) => {
 
       {/* User Profile */}
       <div className="border-t border-gray-200 p-4">
-        <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-gray-50">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-600 to-emerald-600 flex items-center justify-center text-white font-semibold shadow-lg">
+        <div className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-gray-50">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-600 to-emerald-600 flex items-center justify-center text-white text-xs font-semibold shadow-lg">
             {user?.name?.[0]?.toUpperCase() || "U"}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-gray-900 truncate">
+            <p className="text-xs font-semibold text-gray-900 truncate">
               {user?.name || "User"}
             </p>
-            <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+            <p className="text-[10px] text-gray-500 truncate">{user?.email}</p>
           </div>
         </div>
 
         <button
           onClick={handleLogout}
-          className="mt-3 w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
+          className="mt-3 w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
         >
-          <LogOut className="w-5 h-5" />
+          <LogOut className="w-4 h-4" />
           <span>Logout</span>
         </button>
       </div>
