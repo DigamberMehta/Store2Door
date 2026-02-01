@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useStoreAuth } from "../../context/StoreAuthContext";
 import { useAdminAuth } from "../../context/AdminAuthContext";
 import {
@@ -295,18 +295,10 @@ const LoginPage = () => {
             </div>
             <div className="relative flex justify-center text-sm">
               <span className="px-4 bg-white text-gray-500">
-                Don't have an account?
+                Need help? Contact support
               </span>
             </div>
           </div>
-
-          {/* Sign Up Link */}
-          <Link
-            to="/signup"
-            className="block w-full text-center bg-gray-50 hover:bg-gray-100 text-gray-900 font-medium py-3.5 rounded-lg transition-all duration-200 border border-gray-200 hover:border-gray-300"
-          >
-            Create Store Account
-          </Link>
 
           {/* Footer */}
           <p className="text-center text-gray-500 text-xs mt-8">

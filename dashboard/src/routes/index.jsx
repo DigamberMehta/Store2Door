@@ -1,6 +1,5 @@
 import { createBrowserRouter } from "react-router-dom";
 import LoginPage from "../pages/auth/LoginPage";
-import SignUpPage from "../pages/auth/SignUpPage";
 import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage";
 
 // Layouts
@@ -106,10 +105,6 @@ export const router = createBrowserRouter([
   {
     path: "/login",
     element: <LoginPage />,
-  },
-  {
-    path: "/signup",
-    element: <SignUpPage />,
   },
   {
     path: "/forgot-password",

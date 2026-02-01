@@ -8,7 +8,6 @@ import storeEarningsRoutes from "./earningsRoutes.js";
 import storeUploadRoutes from "./uploadRoutes.js";
 import storePaymentRoutes from "./paymentRoutes.js";
 import {
-  registerUser,
   loginUser,
   logoutUser,
   forgotPassword,
@@ -18,7 +17,6 @@ import {
 const router = express.Router();
 
 // Public auth routes (no authentication required)
-router.post("/auth/register", registerUser);
 router.post("/auth/login", loginUser);
 router.post("/auth/forgot-password", forgotPassword);
 router.put("/auth/reset-password", resetPassword);

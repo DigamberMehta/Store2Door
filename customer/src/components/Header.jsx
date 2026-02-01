@@ -73,7 +73,6 @@ const Header = ({
                 Add delivery address
               </span>
             )}
- 
           </div>
         </div>
         <div className="flex gap-2">
@@ -93,7 +92,7 @@ const Header = ({
       <div className="relative px-4 py-2 pb-3">
         <div
           onClick={() => navigate("/search")}
-          className="flex items-center bg-black/30 backdrop-blur-sm border border-white/20 rounded-2xl px-5 py-3.5 gap-3 shadow-lg transition-all duration-300 focus-within:bg-black/40 focus-within:border-white/40 focus-within:shadow-xl hover:bg-black/35 cursor-pointer"
+          className="flex items-center bg-black/30 backdrop-blur-sm border border-white/20 rounded-2xl px-3 py-2.5 gap-3 shadow-lg transition-all duration-300 focus-within:bg-black/40 focus-within:border-white/40 focus-within:shadow-xl hover:bg-black/35 cursor-pointer"
         >
           <HiOutlineSearch className="text-xl text-white/80 flex-shrink-0 transition-colors duration-300 group-focus-within:text-white" />
           <div className="flex-1 text-sm text-white/60 font-light">
