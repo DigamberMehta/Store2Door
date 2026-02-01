@@ -98,7 +98,7 @@ const Sidebar = ({ user, onLogout, type = "store" }) => {
             <ShoppingBag className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-lg font-bold text-gray-900">Door2Door</h1>
+            <h1 className="text-lg font-bold text-gray-900">Store2Door</h1>
             <p className="text-xs text-gray-500">
               {type === "store" ? "Store Manager" : "Admin Panel"}
             </p>

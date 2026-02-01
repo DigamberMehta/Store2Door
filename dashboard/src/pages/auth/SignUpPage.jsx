@@ -104,7 +104,7 @@ const SignUpPage = () => {
             <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
               <ShoppingBag className="w-6 h-6 text-white" />
             </div>
-            <span className="text-2xl font-bold text-white">Door2Door</span>
+            <span className="text-2xl font-bold text-white">Store2Door</span>
           </div>
           <h2 className="text-4xl font-bold text-white mb-4 leading-tight">
             Start Selling
@@ -206,7 +206,7 @@ const SignUpPage = () => {
                 <ShoppingBag className="w-6 h-6 text-white" />
               </div>
               <span className="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-                Door2Door
+                Store2Door
               </span>
             </div>
           </div>
@@ -225,7 +225,7 @@ const SignUpPage = () => {
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
               Create Your Account
             </h1>
-            <p className="text-gray-600">Start your journey with Door2Door</p>
+            <p className="text-gray-600">Start your journey with Store2Door</p>
           </div>
 
           {/* Sign Up Form */}

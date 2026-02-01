@@ -94,7 +94,7 @@ const LoginPage = () => {
             <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
               <ShoppingBag className="w-6 h-6 text-white" />
             </div>
-            <span className="text-2xl font-bold text-white">Door2Door</span>
+            <span className="text-2xl font-bold text-white">Store2Door</span>
           </div>
           <h2 className="text-4xl font-bold text-white mb-4 leading-tight">
             Manage Your
@@ -134,7 +134,7 @@ const LoginPage = () => {
               <ShoppingBag className="w-6 h-6 text-white" />
             </div>
             <span className="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-              Door2Door
+              Store2Door
             </span>
           </div>
 
