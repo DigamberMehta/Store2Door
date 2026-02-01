@@ -30,6 +30,7 @@ import {
   AboutUsPage,
   TermsOfServicePage,
   PrivacyPolicyPage,
+  HelpSupportPage,
 } from "./pages/info";
 import FloatingCartButton from "./components/FloatingCartButton";
 
@@ -197,6 +198,7 @@ function AppContent() {
         <Route path="/about" element={<AboutUsPage />} />
         <Route path="/terms" element={<TermsOfServicePage />} />
         <Route path="/privacy" element={<PrivacyPolicyPage />} />
+        <Route path="/help" element={<HelpSupportPage />} />
 
         {/* 404 Route - redirect to home */}
         <Route
