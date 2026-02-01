@@ -24,11 +24,17 @@ const CategoryProductsSection = ({
 
   useEffect(() => {
     const fetchCategoryProducts = async () => {
+      // Wait for categories to load
+      if (categoriesLoading || !categoriesResponse) {
+        return;
+      }
+
       try {
         setLoading(true);
 
-        if (!categoriesResponse || !Array.isArray(categoriesResponse)) {
+        if (!Array.isArray(categoriesResponse)) {
           console.error("Invalid categories response");
+          setLoading(false);
           return;
         }
 
@@ -93,9 +99,16 @@ const CategoryProductsSection = ({
     };
 
     fetchCategoryProducts();
-  }, [parentSlug, latitude, longitude, selectedCategory]);
+  }, [
+    parentSlug,
+    latitude,
+    longitude,
+    selectedCategory,
+    categoriesResponse,
+    categoriesLoading,
+  ]);
 
-  if (loading) {
+  if (loading || categoriesLoading) {
     return (
       <div className="mb-6 px-3">
         <div className="h-6 bg-white/10 rounded w-48 mb-3 animate-pulse"></div>

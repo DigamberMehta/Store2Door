@@ -23,14 +23,20 @@ const Level2CategorySection = ({ parentSlug, onCategoryClick }) => {
 
   useEffect(() => {
     const fetchCategoryData = async () => {
+      // Wait for categories to load
+      if (categoriesLoading || !categoriesResponse) {
+        return;
+      }
+
       try {
         setLoading(true);
         console.log("📦 Fetching categories for parentSlug:", parentSlug);
 
         console.log("✅ Categories response:", categoriesResponse);
 
-        if (!categoriesResponse || !Array.isArray(categoriesResponse)) {
+        if (!Array.isArray(categoriesResponse)) {
           console.log("❌ Invalid categories response");
+          setLoading(false);
           return;
         }
 
@@ -99,9 +105,9 @@ const Level2CategorySection = ({ parentSlug, onCategoryClick }) => {
     };
 
     fetchCategoryData();
-  }, [parentSlug, latitude, longitude]);
+  }, [parentSlug, latitude, longitude, categoriesResponse, categoriesLoading]);
 
-  if (loading) {
+  if (loading || categoriesLoading) {
     return (
       <div className="mb-6">
         {[1, 2, 3].map((i) => (

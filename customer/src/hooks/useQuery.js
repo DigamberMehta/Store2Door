@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 
 // Module-level cache - shared across ALL components
 const queryCache = new Map();
+// Track in-flight requests to prevent duplicates
+const inFlightRequests = new Map();
 
 /**
  * Custom hook for caching API query results
@@ -24,16 +26,55 @@ export const useQuery = (queryFn, key, options = {}) => {
 
   const refetch = async () => {
     setState((prev) => ({ ...prev, loading: true, error: null }));
-    try {
-      const result = await queryFn();
-      const now = Date.now();
 
-      // Store in cache with timestamp
-      queryCache.set(key, {
-        data: result,
-        timestamp: now,
+    // Check if there's already a request in-flight for this key
+    if (inFlightRequests.has(key)) {
+      // Wait for the existing request
+      try {
+        const result = await inFlightRequests.get(key);
+        setState({
+          data: result,
+          loading: false,
+          error: null,
+        });
+        return;
+      } catch (err) {
+        setState({
+          data: null,
+          loading: false,
+          error: err.message,
+        });
+        return;
+      }
+    }
+
+    // Start a new request
+    const requestPromise = queryFn()
+      .then((result) => {
+        const now = Date.now();
+
+        // Store in cache with timestamp
+        queryCache.set(key, {
+          data: result,
+          timestamp: now,
+        });
+
+        // Remove from in-flight tracking
+        inFlightRequests.delete(key);
+
+        return result;
+      })
+      .catch((err) => {
+        // Remove from in-flight tracking on error
+        inFlightRequests.delete(key);
+        throw err;
       });
 
+    // Track this request
+    inFlightRequests.set(key, requestPromise);
+
+    try {
+      const result = await requestPromise;
       setState({
         data: result,
         loading: false,
