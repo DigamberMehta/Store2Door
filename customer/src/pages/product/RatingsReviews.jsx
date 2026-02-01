@@ -243,12 +243,6 @@ const RatingsReviews = ({ product, avgRating, totalReviews }) => {
             {(stats?.totalReviews || totalReviews || 0).toLocaleString()}{" "}
             ratings
           </p>
-          {stats?.simpleAverage &&
-            stats.simpleAverage !== stats.averageRating && (
-              <p className="text-white/30 text-[9px] mt-1">
-                (Simple avg: {stats.simpleAverage})
-              </p>
-            )}
         </div>
 
         <div className="flex-1 space-y-1.5">

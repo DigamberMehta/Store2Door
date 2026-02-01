@@ -9,7 +9,23 @@ export const createReview = async (req, res) => {
     const { reviewType, productId, storeId, riderId, rating, comment } =
       req.body;
 
-    // For product reviews, check if user has purchased the product (optional)
+    // Check if user has already reviewed this product/store/rider
+    const existingReview = await Review.findOne({
+      reviewType,
+      reviewerId: req.user._id,
+      ...(productId && { productId }),
+      ...(storeId && { storeId }),
+      ...(riderId && { riderId }),
+    });
+
+    if (existingReview) {
+      return res.status(400).json({
+        success: false,
+        message: "You have already reviewed this item. You can only submit one review per item.",
+      });
+    }
+
+    // For product reviews, check if user has purchased the product (REQUIRED)
     if (reviewType === "product" && productId) {
       const order = await Order.findOne({
         user: req.user._id,
@@ -22,8 +38,11 @@ export const createReview = async (req, res) => {
         req.body.orderId = order._id;
         req.body.isVerifiedPurchase = true;
       } else {
-        // User hasn't purchased - still allow review but mark as unverified
-        req.body.isVerifiedPurchase = false;
+        // User hasn't purchased - reject the review
+        return res.status(403).json({
+          success: false,
+          message: "You can only review products you have purchased and received.",
+        });
       }
     }
 
@@ -37,6 +56,13 @@ export const createReview = async (req, res) => {
       data: review,
     });
   } catch (error) {
+    // Handle duplicate key error
+    if (error.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: "You have already reviewed this item.",
+      });
+    }
     res.status(400).json({
       success: false,
       message: error.message,

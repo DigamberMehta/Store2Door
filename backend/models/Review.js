@@ -285,6 +285,20 @@ reviewSchema.index({ isVerifiedPurchase: 1, status: 1 });
 reviewSchema.index({ createdAt: -1, status: 1 });
 reviewSchema.index({ isReported: 1, status: 1 });
 
+// Unique constraint: one review per user per product/store/rider
+reviewSchema.index(
+  { reviewType: 1, reviewerId: 1, productId: 1 },
+  { unique: true, partialFilterExpression: { productId: { $exists: true } } }
+);
+reviewSchema.index(
+  { reviewType: 1, reviewerId: 1, storeId: 1 },
+  { unique: true, partialFilterExpression: { storeId: { $exists: true } } }
+);
+reviewSchema.index(
+  { reviewType: 1, reviewerId: 1, riderId: 1 },
+  { unique: true, partialFilterExpression: { riderId: { $exists: true } } }
+);
+
 // Text search index
 reviewSchema.index({
   title: "text",
