@@ -1,6 +1,7 @@
 import express from "express";
 import { createServer } from "http";
 import cors from "cors";
+import compression from "compression";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import userRoutes from "./routes/userRoutes.js";
@@ -52,6 +53,9 @@ app.use(
     credentials: true,
   }),
 );
+
+// Gzip compression middleware - reduces response size by 60-70%
+app.use(compression());
 
 // Body parser middleware
 app.use(express.json({ limit: "10mb" }));
