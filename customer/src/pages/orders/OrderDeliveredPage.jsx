@@ -155,7 +155,7 @@ const OrderDeliveredPage = () => {
         <div className="text-center mt-8 animate-fadeIn animation-delay-600">
           <p className="text-white/60">
             Thank you for ordering with{" "}
-            <span className="font-semibold text-green-500">Door2Door</span>! 💚
+            <span className="font-semibold text-green-500">Store2Door</span>! 💚
           </p>
         </div>
       </div>
