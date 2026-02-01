@@ -6,10 +6,18 @@ import { asyncHandler } from "../middleware/validation.js";
 import fuzzysort from "fuzzysort";
 import { expandQueryWithSynonyms } from "../config/synonyms.js";
 import DeliverySettings from "../models/DeliverySettings.js";
+import { cacheHelpers } from "../config/redis.js";
 import {
   calculateDistance,
   calculateDeliveryCharge,
 } from "../utils/distanceCalculator.js";
+
+// Cache TTL in seconds
+const CACHE_TTL = {
+  STORES: 1800, // 30 minutes
+  STORE_DETAIL: 900, // 15 minutes
+  DELIVERY_SETTINGS: 3600, // 1 hour
+};
 
 /**
  * @desc Get all stores with filters
@@ -30,6 +38,19 @@ export const getStores = asyncHandler(async (req, res) => {
   } = req.query;
 
   const skip = (parseInt(page) - 1) * parseInt(limit);
+
+  // Generate cache key based on filters
+  const cacheKey = `stores:${category || "all"}:${isOpen}:${featured}:${page}:${limit}`;
+
+  // Try cache first (only if no user location provided)
+  let cachedResult = null;
+  if (!userLat || !userLon) {
+    cachedResult = await cacheHelpers.get(cacheKey);
+    if (cachedResult) {
+      return res.status(200).json(cachedResult);
+    }
+  }
+
   const query = { isActive: true };
 
   // Filters
@@ -43,8 +64,21 @@ export const getStores = asyncHandler(async (req, res) => {
     query.isFeatured = true;
   }
 
-  // Get delivery settings for distance filtering
-  const deliverySettings = await DeliverySettings.findOne({ isActive: true });
+  // Get delivery settings (with caching)
+  const deliverySettingsCacheKey = "delivery:settings";
+  let deliverySettings = await cacheHelpers.get(deliverySettingsCacheKey);
+
+  if (!deliverySettings) {
+    deliverySettings = await DeliverySettings.findOne({
+      isActive: true,
+    }).lean();
+    await cacheHelpers.set(
+      deliverySettingsCacheKey,
+      deliverySettings,
+      CACHE_TTL.DELIVERY_SETTINGS,
+    );
+  }
+
   const maxDistance = deliverySettings?.maxDeliveryDistance || 7;
 
   // Fetch all stores matching the query
@@ -114,7 +148,7 @@ export const getStores = asyncHandler(async (req, res) => {
   const total = stores.length;
   const paginatedStores = stores.slice(skip, skip + parseInt(limit));
 
-  res.status(200).json({
+  const result = {
     success: true,
     data: paginatedStores,
     pagination: {
@@ -130,7 +164,14 @@ export const getStores = asyncHandler(async (req, res) => {
           distanceTiers: deliverySettings.distanceTiers,
         }
       : null,
-  });
+  };
+
+  // Cache result if no user location provided
+  if (!userLat || !userLon) {
+    await cacheHelpers.set(cacheKey, result, CACHE_TTL.STORES);
+  }
+
+  res.status(200).json(result);
 });
 
 /**
@@ -142,7 +183,17 @@ export const getStoreById = asyncHandler(async (req, res) => {
   const { identifier } = req.params;
   const { userLat, userLon } = req.query;
 
-  let store;
+  // Generate cache key
+  const cacheKey = `stores:${identifier}`;
+
+  // Try cache first (only if no user location provided)
+  let store = null;
+  if (!userLat || !userLon) {
+    const cached = await cacheHelpers.get(cacheKey);
+    if (cached) {
+      return res.status(200).json(cached);
+    }
+  }
 
   // Check if identifier is a valid ObjectId
   if (mongoose.Types.ObjectId.isValid(identifier)) {
@@ -179,10 +230,15 @@ export const getStoreById = asyncHandler(async (req, res) => {
         store.address.longitude,
       );
 
-      // Get delivery settings for charge calculation
-      const deliverySettings = await DeliverySettings.findOne({
-        isActive: true,
-      });
+      // Get delivery settings for charge calculation (with caching)
+      const deliverySettingsCacheKey = "delivery:settings";
+      let deliverySettings = await cacheHelpers.get(deliverySettingsCacheKey);
+      
+      if (!deliverySettings) {
+        deliverySettings = await DeliverySettings.findOne({ isActive: true }).lean();
+        await cacheHelpers.set(deliverySettingsCacheKey, deliverySettings, CACHE_TTL.DELIVERY_SETTINGS);
+      }
+      
       const deliveryCharge = deliverySettings
         ? calculateDeliveryCharge(distance, deliverySettings.distanceTiers)
         : 0;
@@ -193,10 +249,17 @@ export const getStoreById = asyncHandler(async (req, res) => {
     }
   }
 
-  res.status(200).json({
+  const result = {
     success: true,
     data: store,
-  });
+  };
+  
+  // Cache result if no user location provided
+  if (!userLat || !userLon) {
+    await cacheHelpers.set(cacheKey, result, CACHE_TTL.STORE_DETAIL);
+  }
+
+  res.status(200).json(result);
 });
 
 /**
