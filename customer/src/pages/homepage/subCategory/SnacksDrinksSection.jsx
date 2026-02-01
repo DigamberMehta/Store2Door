@@ -2,18 +2,22 @@ import { useState, useEffect } from "react";
 import SubCategorySection from "./SubCategorySection";
 import { categoryAPI } from "../../../services/api";
 import { SubCategoryShimmer } from "../../../components/shimmer";
+import { useQuery } from "../../../hooks/useQuery";
 
 const SnacksDrinksSection = ({ onCategoryClick }) => {
   const [snacksItems, setSnacksItems] = useState([]);
-  const [loading, setLoading] = useState(true);
+
+  // Use cached subcategories
+  const { data, loading } = useQuery(
+    () => categoryAPI.getSubcategories("snacks"),
+    "subcategories:snacks",
+    { ttl: 10 * 60 * 1000 },
+  );
 
   useEffect(() => {
     const fetchSubcategories = async () => {
+      if (!data) return;
       try {
-        setLoading(true);
-        // API service returns unwrapped data array directly
-        const data = await categoryAPI.getSubcategories("snacks");
-
         const items = (Array.isArray(data) ? data : []).map((cat) => ({
           id: cat._id,
           name: cat.name,
@@ -27,13 +31,11 @@ const SnacksDrinksSection = ({ onCategoryClick }) => {
       } catch (error) {
         console.error("Error fetching snacks subcategories:", error);
         setSnacksItems([]);
-      } finally {
-        setLoading(false);
       }
     };
 
     fetchSubcategories();
-  }, []);
+  }, [data]);
 
   if (loading) {
     return <SubCategoryShimmer />;

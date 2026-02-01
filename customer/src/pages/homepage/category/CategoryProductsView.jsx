@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { categoryAPI, productAPI, storeAPI } from "../../../services/api";
 import { useUserLocation } from "../../../hooks/useUserLocation";
+import { useQuery } from "../../../hooks/useQuery";
 
 const CategoryProductsView = ({ categoryName, onCategoryClick }) => {
   const [groupedStores, setGroupedStores] = useState([]);
@@ -9,15 +10,23 @@ const CategoryProductsView = ({ categoryName, onCategoryClick }) => {
   const { latitude, longitude } = useUserLocation();
   const navigate = useNavigate();
 
+  // Use cached categories
+  const { data: allCategoriesResponse, loading: categoriesLoading } = useQuery(
+    () => categoryAPI.getAll(),
+    "categories",
+    { ttl: 10 * 60 * 1000 },
+  );
+
   useEffect(() => {
     const fetchStores = async () => {
+      if (categoriesLoading || !allCategoriesResponse) return;
+
       try {
         setLoading(true);
 
-        // Step 1: Get all level 1 categories to find parent
-        const allCategoriesResponse = await categoryAPI.getAll();
-        const allCategories = allCategoriesResponse?.data || allCategoriesResponse;
-        
+        const allCategories =
+          allCategoriesResponse?.data || allCategoriesResponse;
+
         if (!allCategories || !Array.isArray(allCategories)) {
           setGroupedStores([]);
           setLoading(false);
@@ -26,7 +35,9 @@ const CategoryProductsView = ({ categoryName, onCategoryClick }) => {
 
         // Find parent by matching name (case-insensitive)
         const parentCategory = allCategories.find(
-          cat => cat.name && cat.name.toLowerCase().includes(categoryName.toLowerCase())
+          (cat) =>
+            cat.name &&
+            cat.name.toLowerCase().includes(categoryName.toLowerCase()),
         );
 
         if (!parentCategory) {
@@ -37,17 +48,19 @@ const CategoryProductsView = ({ categoryName, onCategoryClick }) => {
 
         // Step 2: Fetch subcategories using the dedicated subcategories endpoint
         try {
-          const subcategoriesData = await categoryAPI.getSubcategories(parentCategory.slug);
-          
+          const subcategoriesData = await categoryAPI.getSubcategories(
+            parentCategory.slug,
+          );
+
           // Handle different response formats
           const subcategories = subcategoriesData?.data || subcategoriesData;
-          
+
           if (!subcategories || !Array.isArray(subcategories)) {
             setGroupedStores([]);
             setLoading(false);
             return;
           }
-          
+
           if (subcategories.length === 0) {
             setGroupedStores([]);
             setLoading(false);
@@ -66,10 +79,13 @@ const CategoryProductsView = ({ categoryName, onCategoryClick }) => {
 
           const [productsResponse, storesResponse] = await Promise.all([
             productAPI.getAll(params),
-            storeAPI.getAll(params)
+            storeAPI.getAll(params),
           ]);
-          
-          if (!productsResponse?.data || !Array.isArray(productsResponse.data)) {
+
+          if (
+            !productsResponse?.data ||
+            !Array.isArray(productsResponse.data)
+          ) {
             setGroupedStores([]);
             setLoading(false);
             return;
@@ -78,18 +94,21 @@ const CategoryProductsView = ({ categoryName, onCategoryClick }) => {
           const stores = storesResponse?.data || storesResponse || [];
 
           // Step 4: Group stores by subcategory based on products
-          const groups = subcategories.map(subcat => {
+          const groups = subcategories.map((subcat) => {
             const subcatId = subcat._id?.toString() || subcat._id;
-            
+
             // Find products in this subcategory
-            const categoryProducts = productsResponse.data.filter(product => {
-              const productCategoryId = product.categoryId?.toString() || product.categoryId;
+            const categoryProducts = productsResponse.data.filter((product) => {
+              const productCategoryId =
+                product.categoryId?.toString() || product.categoryId;
               return productCategoryId === subcatId;
             });
 
             // Find stores that have these products
-            const storeIds = new Set(categoryProducts.map(p => p.storeId?.toString() || p.storeId));
-            const categoryStores = stores.filter(store => {
+            const storeIds = new Set(
+              categoryProducts.map((p) => p.storeId?.toString() || p.storeId),
+            );
+            const categoryStores = stores.filter((store) => {
               const storeId = store._id?.toString() || store._id;
               return storeIds.has(storeId);
             });
@@ -97,13 +116,13 @@ const CategoryProductsView = ({ categoryName, onCategoryClick }) => {
             return {
               category: subcat,
               stores: categoryStores.slice(0, 10),
-              hasMore: categoryStores.length > 10
+              hasMore: categoryStores.length > 10,
             };
           });
 
           setGroupedStores(groups);
         } catch (subcatError) {
-          console.error('Error fetching subcategories:', subcatError);
+          console.error("Error fetching subcategories:", subcatError);
           setGroupedStores([]);
           setLoading(false);
           return;
@@ -116,10 +135,10 @@ const CategoryProductsView = ({ categoryName, onCategoryClick }) => {
       }
     };
 
-    if (categoryName) {
+    if (categoryName && !categoriesLoading) {
       fetchStores();
     }
-  }, [categoryName]); // Only depend on categoryName to prevent multiple calls
+  }, [categoryName, allCategoriesResponse, categoriesLoading]);
 
   if (loading) {
     return (
@@ -129,7 +148,10 @@ const CategoryProductsView = ({ categoryName, onCategoryClick }) => {
             <div className="h-4 w-20 bg-white/10 rounded mb-2 animate-pulse"></div>
             <div className="grid grid-cols-3 gap-1.5">
               {[1, 2, 3].map((j) => (
-                <div key={j} className="bg-white/5 rounded-lg h-28 animate-pulse"></div>
+                <div
+                  key={j}
+                  className="bg-white/5 rounded-lg h-28 animate-pulse"
+                ></div>
               ))}
             </div>
           </div>
@@ -141,7 +163,9 @@ const CategoryProductsView = ({ categoryName, onCategoryClick }) => {
   if (groupedStores.length === 0) {
     return (
       <div className="px-4 py-12 text-center">
-        <p className="text-white/60 text-lg">No stores found in {categoryName}</p>
+        <p className="text-white/60 text-lg">
+          No stores found in {categoryName}
+        </p>
       </div>
     );
   }
@@ -156,7 +180,7 @@ const CategoryProductsView = ({ categoryName, onCategoryClick }) => {
               <span>{group.category.name}</span>
             </h3>
             {group.hasMore && (
-              <button 
+              <button
                 onClick={() => onCategoryClick?.(group.category)}
                 className="text-[10px] text-blue-400 hover:text-blue-300 transition-colors font-medium"
               >
@@ -173,15 +197,17 @@ const CategoryProductsView = ({ categoryName, onCategoryClick }) => {
                   key={store._id}
                   className="bg-white/5 backdrop-blur-sm rounded-lg border border-white/10 overflow-hidden cursor-pointer transition-all duration-200 hover:bg-white/10 hover:border-white/20"
                   onClick={() => {
-                    const storeName = store.slug || store.name.toLowerCase().replace(/\s+/g, '-');
+                    const storeName =
+                      store.slug ||
+                      store.name.toLowerCase().replace(/\s+/g, "-");
                     navigate(`/store/${storeName}`, {
                       state: {
                         searchContext: {
                           categoryId: group.category._id,
                           categoryName: group.category.name,
-                          query: ""
-                        }
-                      }
+                          query: "",
+                        },
+                      },
                     });
                   }}
                 >
@@ -197,7 +223,7 @@ const CategoryProductsView = ({ categoryName, onCategoryClick }) => {
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  
+
                   {/* Store Details */}
                   <div className="p-1">
                     <h4 className="text-white font-medium text-[10px] leading-tight mb-0.5 line-clamp-1">

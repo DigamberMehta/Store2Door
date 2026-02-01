@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { ChevronRight } from "lucide-react";
 import { productAPI, categoryAPI } from "../../../services/api";
 import { useUserLocation } from "../../../hooks/useUserLocation";
+import { useQuery } from "../../../hooks/useQuery";
 
 const CategoryProductsSection = ({
   parentSlug,
@@ -14,13 +15,17 @@ const CategoryProductsSection = ({
   const [loading, setLoading] = useState(true);
   const { latitude, longitude } = useUserLocation();
 
+  // Use cached categories
+  const { data: categoriesResponse, loading: categoriesLoading } = useQuery(
+    () => categoryAPI.getAll(),
+    "categories",
+    { ttl: 10 * 60 * 1000 },
+  );
+
   useEffect(() => {
     const fetchCategoryProducts = async () => {
       try {
         setLoading(true);
-
-        // Fetch all categories to get Level 2 categories under the parent
-        const categoriesResponse = await categoryAPI.getAll();
 
         if (!categoriesResponse || !Array.isArray(categoriesResponse)) {
           console.error("Invalid categories response");

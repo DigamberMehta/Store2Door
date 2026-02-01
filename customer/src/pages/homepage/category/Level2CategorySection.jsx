@@ -2,44 +2,55 @@ import { useState, useEffect } from "react";
 import { ChevronRight } from "lucide-react";
 import { productAPI, categoryAPI } from "../../../services/api";
 import { useUserLocation } from "../../../hooks/useUserLocation";
+import { useQuery } from "../../../hooks/useQuery";
 
 const Level2CategorySection = ({ parentSlug, onCategoryClick }) => {
   const [categoryGroups, setCategoryGroups] = useState([]);
   const [loading, setLoading] = useState(true);
   const { latitude, longitude } = useUserLocation();
 
-  console.log('🔍 Level2CategorySection rendering with parentSlug:', parentSlug);
+  // Use cached categories
+  const { data: categoriesResponse, loading: categoriesLoading } = useQuery(
+    () => categoryAPI.getAll(),
+    "categories",
+    { ttl: 10 * 60 * 1000 },
+  );
+
+  console.log(
+    "🔍 Level2CategorySection rendering with parentSlug:",
+    parentSlug,
+  );
 
   useEffect(() => {
     const fetchCategoryData = async () => {
       try {
         setLoading(true);
-        console.log('📦 Fetching categories for parentSlug:', parentSlug);
+        console.log("📦 Fetching categories for parentSlug:", parentSlug);
 
-        // Fetch all categories
-        const categoriesResponse = await categoryAPI.getAll();
-        
-        console.log('✅ Categories response:', categoriesResponse);
-        
+        console.log("✅ Categories response:", categoriesResponse);
+
         if (!categoriesResponse || !Array.isArray(categoriesResponse)) {
-          console.log('❌ Invalid categories response');
+          console.log("❌ Invalid categories response");
           return;
         }
 
         // Find parent category
         const parentCategory = categoriesResponse.find(
-          (cat) => cat.slug === parentSlug && cat.level === 1
+          (cat) => cat.slug === parentSlug && cat.level === 1,
         );
 
         if (!parentCategory) {
           console.log(`Parent category with slug "${parentSlug}" not found`);
-          console.log('Available level 1 categories:', categoriesResponse.filter(c => c.level === 1).map(c => c.slug));
+          console.log(
+            "Available level 1 categories:",
+            categoriesResponse.filter((c) => c.level === 1).map((c) => c.slug),
+          );
           return;
         }
 
         // Get Level 2 subcategories
         const subcategories = categoriesResponse.filter(
-          (cat) => cat.level === 2 && cat.parent?._id === parentCategory._id
+          (cat) => cat.level === 2 && cat.parent?._id === parentCategory._id,
         );
 
         // Fetch products for each subcategory
@@ -57,23 +68,28 @@ const Level2CategorySection = ({ parentSlug, onCategoryClick }) => {
               }
 
               const response = await productAPI.getAll(params);
-              
+
               return {
                 category: subcat,
                 products: response?.data || [],
               };
             } catch (error) {
-              console.error(`Error fetching products for ${subcat.name}:`, error);
+              console.error(
+                `Error fetching products for ${subcat.name}:`,
+                error,
+              );
               return {
                 category: subcat,
                 products: [],
               };
             }
-          })
+          }),
         );
 
         // Filter out categories with no products
-        const groupsWithProducts = groups.filter((group) => group.products.length > 0);
+        const groupsWithProducts = groups.filter(
+          (group) => group.products.length > 0,
+        );
         setCategoryGroups(groupsWithProducts);
       } catch (error) {
         console.error("Error fetching category data:", error);
@@ -93,7 +109,10 @@ const Level2CategorySection = ({ parentSlug, onCategoryClick }) => {
             <div className="h-32 bg-white/5 rounded-lg mb-3 animate-pulse"></div>
             <div className="grid grid-cols-2 gap-3">
               {[1, 2].map((j) => (
-                <div key={j} className="h-40 bg-white/5 rounded-lg animate-pulse"></div>
+                <div
+                  key={j}
+                  className="h-40 bg-white/5 rounded-lg animate-pulse"
+                ></div>
               ))}
             </div>
           </div>
@@ -115,11 +134,11 @@ const Level2CategorySection = ({ parentSlug, onCategoryClick }) => {
       {categoryGroups.map((group) => (
         <div key={group.category._id} className="mb-6">
           {/* Level 2 Category Card */}
-          <div 
+          <div
             onClick={() => onCategoryClick?.(group.category)}
             className="mx-3 mb-4 rounded-2xl overflow-hidden relative cursor-pointer active:scale-98 transition-transform"
             style={{
-              background: `linear-gradient(135deg, ${group.category.color || '#3b82f6'} 0%, ${group.category.color || '#3b82f6'}dd 100%)`
+              background: `linear-gradient(135deg, ${group.category.color || "#3b82f6"} 0%, ${group.category.color || "#3b82f6"}dd 100%)`,
             }}
           >
             <div className="p-4 flex items-center justify-between">
