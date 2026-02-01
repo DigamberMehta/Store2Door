@@ -509,7 +509,6 @@ const deliveryRiderProfileSchema = new mongoose.Schema(
     isAvailable: {
       type: Boolean,
       default: false,
-      index: true,
     },
 
     // Current Location
