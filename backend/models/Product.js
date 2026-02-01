@@ -739,6 +739,11 @@ productSchema.statics.getSpecificationsByCategory = function (categoryId) {
   ]);
 };
 
+// Composite indexes for optimized queries
+productSchema.index({ isActive: 1, isAvailable: 1 });
+productSchema.index({ isOnSale: 1, saleEndDate: 1 });
+productSchema.index({ isFeatured: 1, storeId: 1 });
+
 const Product = mongoose.model("Product", productSchema);
 
 export default Product;
