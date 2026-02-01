@@ -1,4 +1,7 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
+
+// Module-level cache - shared across ALL components
+const queryCache = new Map();
 
 /**
  * Custom hook for caching API query results
@@ -19,10 +22,6 @@ export const useQuery = (queryFn, key, options = {}) => {
     error: null,
   });
 
-  // Use a module-level cache to persist across component remounts
-  const cacheRef = useRef(useQuery.cache || new Map());
-  useQuery.cache = cacheRef.current;
-
   const refetch = async () => {
     setState((prev) => ({ ...prev, loading: true, error: null }));
     try {
@@ -30,7 +29,7 @@ export const useQuery = (queryFn, key, options = {}) => {
       const now = Date.now();
 
       // Store in cache with timestamp
-      cacheRef.current.set(key, {
+      queryCache.set(key, {
         data: result,
         timestamp: now,
       });
@@ -52,7 +51,7 @@ export const useQuery = (queryFn, key, options = {}) => {
   useEffect(() => {
     if (!enabled) return;
 
-    const cached = cacheRef.current.get(key);
+    const cached = queryCache.get(key);
     const now = Date.now();
 
     // If cache exists and is fresh, use it
