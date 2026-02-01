@@ -12,6 +12,7 @@ import { StoreList } from "./store";
 import { storeAPI, categoryAPI } from "../../services/api";
 import { StoreListShimmer } from "../../components/shimmer";
 import { useUserLocation } from "../../hooks/useUserLocation";
+import { useQuery } from "../../hooks/useQuery";
 
 const HomePage = ({ onStoreClick, onCategoryClick }) => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -19,9 +20,30 @@ const HomePage = ({ onStoreClick, onCategoryClick }) => {
     searchParams.get("category") || "All",
   );
   const [stores, setStores] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
   const { latitude, longitude, loading: locationLoading } = useUserLocation();
+
+  // Use caching hook for categories (stable data, 10 min TTL)
+  const { data: categories, loading: categoriesLoading } = useQuery(
+    () => categoryAPI.getAll(),
+    "categories",
+    { ttl: 10 * 60 * 1000 }, // Cache for 10 minutes
+  );
+
+  // Use caching hook for stores (varies by location, 5 min TTL)
+  const { data: storesData, loading: storesLoading } = useQuery(
+    async () => {
+      const params = { limit: 50 };
+      if (latitude && longitude) {
+        params.userLat = latitude;
+        params.userLon = longitude;
+      }
+      return storeAPI.getAll(params);
+    },
+    `stores:${latitude}:${longitude}`,
+    { ttl: 5 * 60 * 1000 }, // Cache for 5 minutes
+  );
+
+  const loading = categoriesLoading || storesLoading || locationLoading;
 
   // Update URL when category changes
   useEffect(() => {
@@ -41,45 +63,12 @@ const HomePage = ({ onStoreClick, onCategoryClick }) => {
     }
   }, []);
 
-  // Fetch stores and categories on mount
+  // Extract stores from response
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-
-        // Build params with user location if available
-        const params = { limit: 50 };
-        if (latitude && longitude) {
-          params.userLat = latitude;
-          params.userLon = longitude;
-        }
-
-        // Fetch stores and categories separately to prevent one failure from affecting the other
-        const storesResponse = await storeAPI.getAll(params);
-        if (storesResponse?.data && Array.isArray(storesResponse.data)) {
-          setStores(storesResponse.data);
-        }
-
-        // Fetch categories separately with its own error handling
-        try {
-          const categoriesResponse = await categoryAPI.getAll();
-          if (categoriesResponse && Array.isArray(categoriesResponse)) {
-            setCategories(categoriesResponse);
-          }
-        } catch (categoryError) {
-          console.error("Error fetching categories:", categoryError);
-          setCategories([]);
-        }
-      } catch (error) {
-        console.error("Error fetching stores:", error);
-        setStores([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [latitude, longitude]); // Re-fetch when location changes
+    if (storesData?.data && Array.isArray(storesData.data)) {
+      setStores(storesData.data);
+    }
+  }, [storesData]);
 
   // Filter stores based on category
   const filteredStores = stores.filter((store) => {
