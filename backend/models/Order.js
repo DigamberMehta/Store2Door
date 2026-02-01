@@ -710,7 +710,14 @@ orderSchema.statics.findNearbyOrders = function (
     },
   });
 };
-
+// Database indexes for query optimization
+orderSchema.index({ customerId: 1 }); // For customer order lookups
+orderSchema.index({ storeId: 1 }); // For store order lookups
+orderSchema.index({ status: 1 }); // For order status filtering
+orderSchema.index({ paymentStatus: 1 }); // For payment status filtering
+orderSchema.index({ customerId: 1, createdAt: -1 }); // For customer order history
+orderSchema.index({ storeId: 1, createdAt: -1 }); // For store order history
+orderSchema.index({ paymentId: 1 }); // For payment lookups
 // Remove sensitive data when converting to JSON
 orderSchema.methods.toJSON = function () {
   const order = this.toObject();
