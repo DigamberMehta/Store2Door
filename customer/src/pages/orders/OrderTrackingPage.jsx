@@ -23,7 +23,8 @@ const OrderTrackingPage = () => {
 
   // Update route on map
   const updateRoute = async (driverLoc) => {
-    if (!map.current || !order) return;
+    if (!map.current?.getSource || !map.current?.isStyleLoaded() || !order)
+      return;
 
     const storeCoords = [
       order.storeId?.address?.longitude || 0,
@@ -63,38 +64,36 @@ const OrderTrackingPage = () => {
       if (data.routes && data.routes.length > 0) {
         const route = data.routes[0].geometry;
 
-        // Remove old route layer and source if exists
-        if (map.current.getLayer("route")) {
-          map.current.removeLayer("route");
-        }
+        const geoJson = {
+          type: "Feature",
+          properties: {},
+          geometry: route,
+        };
+
+        // Update or create route
         if (map.current.getSource("route")) {
-          map.current.removeSource("route");
+          map.current.getSource("route").setData(geoJson);
+        } else {
+          map.current.addSource("route", {
+            type: "geojson",
+            data: geoJson,
+          });
+
+          map.current.addLayer({
+            id: "route",
+            type: "line",
+            source: "route",
+            layout: {
+              "line-join": "round",
+              "line-cap": "round",
+            },
+            paint: {
+              "line-color": "#3b82f6",
+              "line-width": 5,
+              "line-opacity": 0.8,
+            },
+          });
         }
-
-        // Add new route
-        map.current.addSource("route", {
-          type: "geojson",
-          data: {
-            type: "Feature",
-            properties: {},
-            geometry: route,
-          },
-        });
-
-        map.current.addLayer({
-          id: "route",
-          type: "line",
-          source: "route",
-          layout: {
-            "line-join": "round",
-            "line-cap": "round",
-          },
-          paint: {
-            "line-color": "#3b82f6",
-            "line-width": 4,
-            "line-opacity": 0.8,
-          },
-        });
       }
     } catch (error) {
       console.error("Error fetching route:", error);
@@ -240,6 +239,17 @@ const OrderTrackingPage = () => {
             ),
           )
           .addTo(map.current);
+
+        // Draw initial route when map is loaded
+        const drawInitialRoute = () => {
+          updateRoute([longitude, latitude]);
+        };
+
+        if (map.current.isStyleLoaded()) {
+          drawInitialRoute();
+        } else {
+          map.current.on("load", drawInitialRoute);
+        }
 
         // Fit bounds to show all markers
         const bounds = new mapboxgl.LngLatBounds();
