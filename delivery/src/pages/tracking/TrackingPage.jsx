@@ -358,18 +358,18 @@ const TrackingPage = () => {
       </div>
 
       {/* Order Details Section - 40% */}
-      <div className="h-[40%] w-full bg-gray-800 shadow-lg rounded-t-2xl -mt-4 relative z-20 flex flex-col border-t border-gray-700">
+      <div className="h-[40%] w-full bg-black shadow-lg rounded-t-2xl -mt-4 relative z-20 flex flex-col border-t border-white/10">
         {/* Drag Handle */}
-        <div className="flex justify-center pt-3 pb-2">
-          <div className="w-12 h-1.5 bg-gray-600 rounded-full" />
+        <div className="flex justify-center pt-2 pb-1.5">
+          <div className="w-10 h-1 bg-zinc-700 rounded-full" />
         </div>
 
         {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto px-6 pb-6 space-y-6">
+        <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-3">
           {/* Route Details */}
-          <div className="space-y-3">
-            <h2 className="text-lg font-bold text-gray-100 flex items-center">
-              <Navigation className="w-5 h-5 mr-2 text-blue-400" />
+          <div className="space-y-2">
+            <h2 className="text-sm font-bold text-white flex items-center">
+              <Navigation className="w-4 h-4 mr-1.5 text-blue-400" />
               Route Details
             </h2>
             <RouteCards order={order} />
