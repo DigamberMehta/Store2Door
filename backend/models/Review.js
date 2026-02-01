@@ -25,7 +25,7 @@ const reviewMediaSchema = new mongoose.Schema(
   },
   {
     _id: false,
-  }
+  },
 );
 
 // Review response sub-schema (for store/rider responses)
@@ -49,7 +49,7 @@ const responseSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // Main review schema
@@ -282,7 +282,7 @@ const reviewSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // Compound indexes for performance
@@ -317,7 +317,7 @@ reviewSchema.pre("save", function (next) {
   // Calculate helpfulness score
   if (this.totalVotes > 0) {
     this.helpfulnessScore = Math.round(
-      (this.helpfulVotes / this.totalVotes) * 100
+      (this.helpfulVotes / this.totalVotes) * 100,
     );
   }
 
@@ -340,7 +340,7 @@ reviewSchema.methods.addHelpfulVote = function (userId) {
   this.helpfulVotes += 1;
   this.totalVotes += 1;
   this.helpfulnessScore = Math.round(
-    (this.helpfulVotes / this.totalVotes) * 100
+    (this.helpfulVotes / this.totalVotes) * 100,
   );
   return this.save();
 };
@@ -349,7 +349,7 @@ reviewSchema.methods.addUnhelpfulVote = function (userId) {
   this.unhelpfulVotes += 1;
   this.totalVotes += 1;
   this.helpfulnessScore = Math.round(
-    (this.helpfulVotes / this.totalVotes) * 100
+    (this.helpfulVotes / this.totalVotes) * 100,
   );
   return this.save();
 };
@@ -409,7 +409,7 @@ reviewSchema.statics.getReviewsByProduct = function (
   productId,
   page = 1,
   limit = 10,
-  sortBy = "createdAt"
+  sortBy = "createdAt",
 ) {
   const skip = (page - 1) * limit;
   const sortOption = {};
@@ -450,7 +450,7 @@ reviewSchema.statics.getReviewsByProduct = function (
 reviewSchema.statics.getReviewsByStore = function (
   storeId,
   page = 1,
-  limit = 10
+  limit = 10,
 ) {
   const skip = (page - 1) * limit;
   return this.find({
@@ -468,7 +468,7 @@ reviewSchema.statics.getReviewsByStore = function (
 reviewSchema.statics.getReviewsByRider = function (
   riderId,
   page = 1,
-  limit = 10
+  limit = 10,
 ) {
   const skip = (page - 1) * limit;
   return this.find({
@@ -520,15 +520,19 @@ reviewSchema.statics.getReviewStats = function (targetType, targetId) {
     reviewType: targetType,
     status: "approved",
   };
-  
+
   // Convert to ObjectId if it's a string
-  const objectIdValue = typeof targetId === 'string' 
-    ? new mongoose.Types.ObjectId(targetId)
-    : targetId;
-    
+  const objectIdValue =
+    typeof targetId === "string"
+      ? new mongoose.Types.ObjectId(targetId)
+      : targetId;
+
   matchQuery[`${targetType}Id`] = objectIdValue;
 
-  console.log("📊 getReviewStats matchQuery:", JSON.stringify(matchQuery, null, 2));
+  console.log(
+    "📊 getReviewStats matchQuery:",
+    JSON.stringify(matchQuery, null, 2),
+  );
 
   return this.aggregate([
     { $match: matchQuery },
@@ -548,10 +552,7 @@ reviewSchema.statics.getReviewStats = function (targetType, targetId) {
             $multiply: [
               -0.00385, // decay constant (ln(0.5)/180)
               {
-                $divide: [
-                  { $subtract: ["$$NOW", "$createdAt"] },
-                  86400000,
-                ],
+                $divide: [{ $subtract: ["$$NOW", "$createdAt"] }, 86400000],
               },
             ],
           },
@@ -636,10 +637,7 @@ reviewSchema.statics.getReviewStats = function (targetType, targetId) {
       $project: {
         _id: 0,
         averageRating: {
-          $round: [
-            { $divide: ["$totalWeightedRating", "$totalWeight"] },
-            1,
-          ],
+          $round: [{ $divide: ["$totalWeightedRating", "$totalWeight"] }, 1],
         },
         simpleAverage: { $round: ["$simpleAverage", 1] },
         totalReviews: 1,
@@ -662,7 +660,7 @@ reviewSchema.statics.searchReviews = function (
   searchTerm,
   filters = {},
   page = 1,
-  limit = 10
+  limit = 10,
 ) {
   const skip = (page - 1) * limit;
 
@@ -721,6 +719,14 @@ reviewSchema.methods.toJSON = function () {
 
   return review;
 };
+
+// Database indexes for query optimization
+reviewSchema.index({ storeId: 1 }); // For store review aggregation
+reviewSchema.index({ productId: 1 }); // For product review lookups
+reviewSchema.index({ customerId: 1 }); // For customer review history
+reviewSchema.index({ storeId: 1, rating: -1 }); // For store reviews sorted by rating
+reviewSchema.index({ productId: 1, rating: -1 }); // For product reviews sorted by rating
+reviewSchema.index({ createdAt: -1 }); // For recent reviews
 
 const Review = mongoose.model("Review", reviewSchema);
 
