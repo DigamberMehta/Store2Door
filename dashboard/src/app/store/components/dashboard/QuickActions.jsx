@@ -1,4 +1,4 @@
-import { Plus, Package, Store, Settings } from "lucide-react";
+import { Plus, Package, Clock, DollarSign } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const QuickActions = () => {
@@ -20,18 +20,18 @@ const QuickActions = () => {
       path: "/store/orders",
     },
     {
-      icon: Store,
-      label: "Store Settings",
-      description: "Update store info",
+      icon: Clock,
+      label: "Operating Hours",
+      description: "Update store hours",
       color: "bg-purple-500",
-      path: "/store/settings",
+      path: "/store/settings/operating-hours",
     },
     {
-      icon: Settings,
-      label: "Preferences",
-      description: "Account settings",
+      icon: DollarSign,
+      label: "Finance",
+      description: "View earnings",
       color: "bg-orange-500",
-      path: "/store/settings",
+      path: "/store/finance",
     },
   ];
 
