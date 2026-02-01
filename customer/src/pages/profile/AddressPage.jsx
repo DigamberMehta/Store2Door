@@ -13,6 +13,7 @@ import {
   Navigation,
 } from "lucide-react";
 import { customerProfileAPI } from "../../services/api";
+import LocationPicker from "../../components/LocationPicker";
 
 const AddressPage = () => {
   const navigate = useNavigate();
@@ -23,6 +24,7 @@ const AddressPage = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [gettingLocation, setGettingLocation] = useState(false);
+  const [showMapPicker, setShowMapPicker] = useState(false);
 
   const [formData, setFormData] = useState({
     label: "",
@@ -141,10 +143,19 @@ const AddressPage = () => {
 
   const handleAddNew = () => {
     setShowAddForm(true);
-    // Automatically request location when opening add form
+    // Open map picker instead of auto-getting location
     if (!editingId) {
-      getCurrentLocation();
+      setShowMapPicker(true);
     }
+  };
+
+  const handleLocationSelected = (lat, lng) => {
+    setFormData((prev) => ({
+      ...prev,
+      latitude: lat,
+      longitude: lng,
+    }));
+    setShowMapPicker(false);
   };
 
   const handleSubmit = async (e) => {
@@ -297,6 +308,34 @@ const AddressPage = () => {
                   placeholder="Street address"
                 />
               </div>
+
+              {/* Pick Location on Map Button */}
+              <button
+                type="button"
+                onClick={() => setShowMapPicker(true)}
+                className="w-full bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 text-blue-400 rounded-lg px-4 py-3 flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+              >
+                <MapPin className="w-4 h-4" />
+                <span className="text-sm font-medium">
+                  {formData.latitude && formData.longitude
+                    ? "Update Location on Map"
+                    : "Pick Location on Map"}
+                </span>
+              </button>
+
+              {/* Location Coordinates Display */}
+              {formData.latitude !== 0 && formData.longitude !== 0 && (
+                <div className="px-3 py-2 bg-green-500/10 border border-green-500/20 rounded-lg text-green-400 text-xs">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Check className="w-3 h-3" />
+                    <span className="font-medium">Location Set</span>
+                  </div>
+                  <div className="text-white/40">
+                    Lat: {formData.latitude.toFixed(6)}, Lng:{" "}
+                    {formData.longitude.toFixed(6)}
+                  </div>
+                </div>
+              )}
 
               {/* Location Status */}
               {gettingLocation && (
@@ -494,6 +533,16 @@ const AddressPage = () => {
           </div>
         )}
       </div>
+
+      {/* Map Picker Modal */}
+      {showMapPicker && (
+        <LocationPicker
+          initialLat={formData.latitude || 31.2552}
+          initialLng={formData.longitude || 75.7009}
+          onLocationSelect={handleLocationSelected}
+          onClose={() => setShowMapPicker(false)}
+        />
+      )}
     </div>
   );
 };

@@ -26,16 +26,6 @@ const StoreCard = ({ store, onStoreClick }) => {
           {store.name}
         </h3>
 
-        <div className="flex items-center gap-1.5 text-[11px] mb-1">
-          <div className="flex items-center gap-0.5 bg-[rgb(49,134,22)] px-1 py-0.5 rounded text-white text-[10px] font-bold">
-            <MdStar className="text-[10px]" />
-            <span>{store.stats?.averageRating || store.rating || "4.0"}</span>
-          </div>
-          <span className="text-zinc-500 font-normal">
-            ({store.stats?.totalReviews || store.reviewCount || "1K+"})
-          </span>
-        </div>
-
         <p className="text-zinc-400 text-[11px] truncate mb-0.5 font-medium">
           {store.categories?.slice(0, 3).join(", ") ||
             store.tags?.join(", ") ||
@@ -46,7 +36,7 @@ const StoreCard = ({ store, onStoreClick }) => {
           <span className="text-zinc-500 truncate">
             {store.address?.city || store.location || "Near Market"}
           </span>
-          {store.distance && (
+          {store.distance && store.distance !== 0 && (
             <>
               <span className="text-zinc-600">•</span>
               <span className="text-blue-400 font-semibold">

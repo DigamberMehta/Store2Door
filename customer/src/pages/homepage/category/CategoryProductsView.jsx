@@ -138,7 +138,7 @@ const CategoryProductsView = ({ categoryName, onCategoryClick }) => {
     if (categoryName && !categoriesLoading) {
       fetchStores();
     }
-  }, [categoryName, allCategoriesResponse, categoriesLoading]);
+  }, [categoryName, categoriesLoading]);
 
   if (loading) {
     return (

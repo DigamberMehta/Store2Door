@@ -58,13 +58,13 @@ const Header = ({
             className="flex items-center gap-2 text-xs md:text-sm cursor-pointer transition-all duration-300 hover:text-blue-300 group"
             onClick={() => navigate("/profile/addresses")}
           >
-            <HiOutlineLocationMarker className="text-lg text-blue-400 group-hover:text-blue-300 transition-colors duration-300" />
+            <HiOutlineLocationMarker className="text-lg text-blue-400 group-hover:text-blue-300 transition-colors duration-300 flex-shrink-0" />
             {addressData.label && addressData.address ? (
               <>
                 <span className="font-bold text-xs uppercase">
                   {addressData.label} -{" "}
                 </span>
-                <span className="font-normal text-xs truncate max-w-[200px]">
+                <span className="font-normal text-xs break-words max-w-[200px] line-clamp-2">
                   {addressData.address}
                 </span>
               </>
@@ -73,7 +73,7 @@ const Header = ({
                 Add delivery address
               </span>
             )}
-            <HiChevronDown className="text-base ml-0.5 transition-transform duration-300 group-hover:rotate-180" />
+ 
           </div>
         </div>
         <div className="flex gap-2">
