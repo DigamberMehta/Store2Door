@@ -60,7 +60,6 @@ const reviewSchema = new mongoose.Schema(
       type: String,
       enum: ["product", "store", "rider", "order"],
       required: [true, "Review type is required"],
-      index: true,
     },
 
     // References
@@ -68,29 +67,24 @@ const reviewSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: [true, "Reviewer ID is required"],
-      index: true,
     },
     orderId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Order",
-      index: true,
     },
 
     // Target references (what is being reviewed)
     productId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Product",
-      index: true,
     },
     storeId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Store",
-      index: true,
     },
     riderId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      index: true,
     },
 
     // Review content
@@ -99,7 +93,6 @@ const reviewSchema = new mongoose.Schema(
       required: [true, "Rating is required"],
       min: [1, "Rating must be at least 1"],
       max: [5, "Rating cannot exceed 5"],
-      index: true,
     },
     title: {
       type: String,
@@ -169,7 +162,6 @@ const reviewSchema = new mongoose.Schema(
     isVerifiedPurchase: {
       type: Boolean,
       default: true,
-      index: true,
     },
     isAnonymous: {
       type: Boolean,
@@ -181,7 +173,6 @@ const reviewSchema = new mongoose.Schema(
       type: String,
       enum: ["pending", "approved", "rejected", "hidden"],
       default: "approved",
-      index: true,
     },
     moderatedBy: {
       type: mongoose.Schema.Types.ObjectId,
@@ -226,7 +217,6 @@ const reviewSchema = new mongoose.Schema(
     isReported: {
       type: Boolean,
       default: false,
-      index: true,
     },
     reportCount: {
       type: Number,
@@ -721,8 +711,7 @@ reviewSchema.methods.toJSON = function () {
 };
 
 // Database indexes for query optimization
-reviewSchema.index({ storeId: 1 }); // For store review aggregation
-reviewSchema.index({ productId: 1 }); // For product review lookups
+// Duplicate indexes removed - already defined in schema field indexes
 reviewSchema.index({ customerId: 1 }); // For customer review history
 reviewSchema.index({ storeId: 1, rating: -1 }); // For store reviews sorted by rating
 reviewSchema.index({ productId: 1, rating: -1 }); // For product reviews sorted by rating

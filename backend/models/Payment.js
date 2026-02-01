@@ -82,13 +82,11 @@ const paymentSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Order",
       required: [true, "Order ID is required"],
-      index: true,
     },
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: [true, "User ID is required"],
-      index: true,
     },
 
     // Payment identification
@@ -96,7 +94,6 @@ const paymentSchema = new mongoose.Schema(
       type: String,
       unique: true,
       trim: true,
-      index: true,
     },
 
     // Payment method
@@ -120,7 +117,6 @@ const paymentSchema = new mongoose.Schema(
         "partially_refunded",
       ],
       default: "pending",
-      index: true,
     },
 
     // Amount details
@@ -252,7 +248,6 @@ const paymentSchema = new mongoose.Schema(
       type: String,
       trim: true,
       sparse: true,
-      index: true,
     },
 
     // IP and user agent for fraud detection
@@ -455,12 +450,7 @@ paymentSchema.set("toJSON", { virtuals: true });
 paymentSchema.set("toObject", { virtuals: true });
 
 // Database indexes for query optimization
-paymentSchema.index({ orderId: 1 }); // For order-payment lookups
-paymentSchema.index({ yocoCheckoutId: 1 }); // For webhook verification (CRITICAL)
-paymentSchema.index({ status: 1 }); // For payment status filtering
-paymentSchema.index({ customerId: 1 }); // For customer payment history
-paymentSchema.index({ storeId: 1 }); // For store payment tracking
-paymentSchema.index({ createdAt: -1 }); // For payment history sorting
+// Duplicate indexes removed - already defined in schema field indexes
 
 const Payment = mongoose.model("Payment", paymentSchema);
 

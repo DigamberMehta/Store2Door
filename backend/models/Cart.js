@@ -117,7 +117,6 @@ const cartItemSchema = new mongoose.Schema(
     addedAt: {
       type: Date,
       default: Date.now,
-      index: true,
     },
     lastUpdated: {
       type: Date,
@@ -138,7 +137,6 @@ const cartSchema = new mongoose.Schema(
       ref: "User",
       required: [true, "User ID is required"],
       unique: true,
-      index: true,
     },
     items: [cartItemSchema],
     // Summary fields
@@ -186,13 +184,11 @@ const cartSchema = new mongoose.Schema(
       type: String,
       enum: ["active", "abandoned", "converted", "merged"],
       default: "active",
-      index: true,
     },
     // Session tracking
     sessionId: {
       type: String,
       trim: true,
-      index: true,
     },
     deviceInfo: {
       type: {
@@ -206,7 +202,6 @@ const cartSchema = new mongoose.Schema(
     lastActivityAt: {
       type: Date,
       default: Date.now,
-      index: true,
     },
     abandonedAt: {
       type: Date,
@@ -222,7 +217,6 @@ const cartSchema = new mongoose.Schema(
     storeId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Store",
-      index: true,
     },
     storeName: {
       type: String,

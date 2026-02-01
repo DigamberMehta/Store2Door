@@ -218,7 +218,6 @@ const productSchema = new mongoose.Schema(
       required: [true, "Product name is required"],
       trim: true,
       maxlength: 200,
-      index: true,
     },
     description: {
       type: String,
@@ -237,7 +236,6 @@ const productSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Store",
       required: [true, "Store ID is required"],
-      index: true,
     },
 
     // Categorization
@@ -245,20 +243,17 @@ const productSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Category",
       required: [true, "Category ID is required"],
-      index: true,
     },
     category: {
       type: String,
       required: [true, "Category is required"],
       trim: true,
       maxlength: 100,
-      index: true,
     },
     subcategory: {
       type: String,
       trim: true,
       maxlength: 100,
-      index: true,
     },
     tags: [
       {
@@ -274,7 +269,6 @@ const productSchema = new mongoose.Schema(
       type: Number,
       // Optional - can be provided directly or populated from 'price' field for backward compatibility
       min: [0, "Wholesale price cannot be negative"],
-      index: true,
     },
     retailPrice: {
       type: Number,
@@ -411,12 +405,10 @@ const productSchema = new mongoose.Schema(
     isActive: {
       type: Boolean,
       default: true,
-      index: true,
     },
     isAvailable: {
       type: Boolean,
       default: true,
-      index: true,
     },
     availableFrom: {
       type: Date,
@@ -738,11 +730,6 @@ productSchema.statics.getSpecificationsByCategory = function (categoryId) {
     { $sort: { count: -1 } },
   ]);
 };
-
-// Composite indexes for optimized queries
-productSchema.index({ isActive: 1, isAvailable: 1 });
-productSchema.index({ isOnSale: 1, saleEndDate: 1 });
-productSchema.index({ isFeatured: 1, storeId: 1 });
 
 const Product = mongoose.model("Product", productSchema);
 

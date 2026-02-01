@@ -223,18 +223,15 @@ const orderSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: [true, "Customer ID is required"],
-      index: true,
     },
     storeId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Store",
       required: [true, "Store ID is required"],
-      index: true,
     },
     riderId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      index: true,
     },
 
     // Order details
@@ -337,7 +334,6 @@ const orderSchema = new mongoose.Schema(
     deliveryAddress: deliveryAddressSchema,
     estimatedDeliveryTime: {
       type: Date,
-      index: true,
     },
     actualDeliveryTime: {
       type: Date,
@@ -363,7 +359,6 @@ const orderSchema = new mongoose.Schema(
         "cancelled",
       ],
       default: "pending",
-      index: true,
     },
     trackingHistory: [trackingInfoSchema],
 
@@ -711,13 +706,7 @@ orderSchema.statics.findNearbyOrders = function (
   });
 };
 // Database indexes for query optimization
-orderSchema.index({ customerId: 1 }); // For customer order lookups
-orderSchema.index({ storeId: 1 }); // For store order lookups
-orderSchema.index({ status: 1 }); // For order status filtering
-orderSchema.index({ paymentStatus: 1 }); // For payment status filtering
-orderSchema.index({ customerId: 1, createdAt: -1 }); // For customer order history
-orderSchema.index({ storeId: 1, createdAt: -1 }); // For store order history
-orderSchema.index({ paymentId: 1 }); // For payment lookups
+// Duplicate indexes removed - already defined in schema field indexes and compound indexes above
 // Remove sensitive data when converting to JSON
 orderSchema.methods.toJSON = function () {
   const order = this.toObject();
