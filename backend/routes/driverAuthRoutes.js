@@ -1,6 +1,5 @@
 import express from "express";
 import {
-  registerDriver,
   loginDriver,
   refreshToken,
   logoutDriver,
@@ -10,26 +9,22 @@ import {
   forgotPassword,
   resetPassword,
 } from "../controllers/driverAuthController.js";
-import {
-  authenticate,
-  rateLimitByUser,
-} from "../middleware/auth.js";
+import { authenticate, rateLimitByUser } from "../middleware/auth.js";
 
 const router = express.Router();
 
 // Public routes
-router.post("/register", rateLimitByUser(15 * 60 * 1000, 5), registerDriver);
 router.post("/login", rateLimitByUser(15 * 60 * 1000, 10), loginDriver);
 router.post("/refresh", rateLimitByUser(15 * 60 * 1000, 20), refreshToken);
 router.post(
   "/forgot-password",
   rateLimitByUser(15 * 60 * 1000, 3),
-  forgotPassword
+  forgotPassword,
 );
 router.put(
   "/reset-password",
   rateLimitByUser(15 * 60 * 1000, 5),
-  resetPassword
+  resetPassword,
 );
 
 // Private routes (authenticated users)
