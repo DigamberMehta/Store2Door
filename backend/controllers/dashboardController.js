@@ -3,6 +3,7 @@ import Order from "../models/Order.js";
 import Product from "../models/Product.js";
 import Review from "../models/Review.js";
 import Store from "../models/Store.js";
+import Transaction from "../models/Transaction.js";
 
 // Get dashboard statistics for store manager
 export const getStoreDashboardStats = async (req, res) => {
@@ -40,6 +41,7 @@ export const getStoreDashboardStats = async (req, res) => {
       last7DaysSales,
       recentReviews,
       totalProducts,
+      storeTransactions,
     ] = await Promise.all([
       // Today's orders (only succeeded payments)
       Order.aggregate([
@@ -53,7 +55,7 @@ export const getStoreDashboardStats = async (req, res) => {
         {
           $group: {
             _id: null,
-            totalSales: { $sum: "$total" },
+            totalSales: { $sum: "$paymentSplit.storeAmount" }, // Use store's portion only
             totalOrders: { $sum: 1 },
             totalItems: { $sum: { $size: "$items" } },
           },
@@ -72,7 +74,7 @@ export const getStoreDashboardStats = async (req, res) => {
         {
           $group: {
             _id: null,
-            totalSales: { $sum: "$total" },
+            totalSales: { $sum: "$paymentSplit.storeAmount" }, // Use store's portion only
             totalOrders: { $sum: 1 },
             totalItems: { $sum: { $size: "$items" } },
           },
@@ -84,7 +86,9 @@ export const getStoreDashboardStats = async (req, res) => {
         .sort({ createdAt: -1 })
         .limit(10)
         .populate("customerId", "name email")
-        .select("orderNumber customerId total items status createdAt"),
+        .select(
+          "orderNumber customerId total items status createdAt paymentSplit",
+        ),
 
       // Top selling products (only succeeded payments)
       Order.aggregate([
@@ -151,7 +155,7 @@ export const getStoreDashboardStats = async (req, res) => {
             _id: {
               $dateToString: { format: "%Y-%m-%d", date: "$createdAt" },
             },
-            totalSales: { $sum: "$total" },
+            totalSales: { $sum: "$paymentSplit.storeAmount" }, // Use store's portion only
             totalOrders: { $sum: 1 },
           },
         },
@@ -168,6 +172,23 @@ export const getStoreDashboardStats = async (req, res) => {
 
       // Total products count
       Product.countDocuments({ storeId, isActive: true }),
+
+      // Store transactions for earnings (all-time)
+      Transaction.aggregate([
+        {
+          $match: {
+            storeId: new mongoose.Types.ObjectId(storeId),
+            userType: "store",
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            totalEarnings: { $sum: "$amount" },
+            currentBalance: { $max: "$balanceAfter" },
+          },
+        },
+      ]),
     ]);
 
     // Calculate stats with change percentages
@@ -180,6 +201,11 @@ export const getStoreDashboardStats = async (req, res) => {
       totalSales: 0,
       totalOrders: 0,
       totalItems: 0,
+    };
+
+    const storeTransactionStats = storeTransactions[0] || {
+      totalEarnings: 0,
+      currentBalance: 0,
     };
 
     const calculateChange = (today, yesterday) => {
@@ -201,7 +227,7 @@ export const getStoreDashboardStats = async (req, res) => {
       productsSoldChange: parseFloat(
         calculateChange(todayStats.totalItems, yesterdayStats.totalItems),
       ),
-      revenue: store?.stats?.totalRevenue || 0,
+      revenue: storeTransactionStats.totalEarnings, // Use actual transaction total
       revenueChange: 10.8, // Could calculate month-over-month if needed
     };
 
@@ -209,7 +235,7 @@ export const getStoreDashboardStats = async (req, res) => {
     const formattedOrders = recentOrders.map((order) => ({
       id: order.orderNumber,
       customer: order.customerId?.name || "Unknown Customer",
-      amount: order.total,
+      amount: order.paymentSplit?.storeAmount || 0, // Use store's portion only
       items: order.items.length,
       status: order.status,
       time: formatTimeAgo(order.createdAt),
@@ -246,9 +272,9 @@ export const getStoreDashboardStats = async (req, res) => {
 
     // Format earnings overview
     const earnings = {
-      total: store?.earnings?.totalEarnings || 0,
-      pending: store?.earnings?.pendingEarnings || 0,
-      paid: store?.earnings?.paidEarnings || 0,
+      total: storeTransactionStats.totalEarnings,
+      pending: 0, // TODO: Calculate pending withdrawals
+      paid: 0, // TODO: Calculate completed withdrawals
       nextPayout: getNextPayoutDate(),
     };
 
