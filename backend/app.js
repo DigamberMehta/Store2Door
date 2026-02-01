@@ -41,8 +41,8 @@ app.use(
       "http://localhost:5174", // Delivery rider app
       "http://localhost:5175",
       "http://localhost:5176", // Admin/Store app (future)
-      "https://door2door-one.vercel.app", // Production customer app
-      "https://door2door-dashboard.vercel.app", // Production dashboard
+      "https://store2door-one.vercel.app", // Production customer app
+      "https://store2door-dashboard.vercel.app", // Production dashboard
       "https://store2doordelivery.co.za", // Production domain
       "https://www.store2doordelivery.co.za", // Production domain with www
       "https://dashboard.store2doordelivery.co.za", // admin and store manager
@@ -127,7 +127,7 @@ app.use(errorHandler);
 const connectDB = async () => {
   try {
     const conn = await mongoose.connect(
-      process.env.MONGODB_URI || "mongodb://localhost:27017/door2door",
+      process.env.MONGODB_URI || "mongodb://localhost:27017/store2door",
     );
     console.log(`MongoDB Connected: ${conn.connection.host}`);
   } catch (error) {
@@ -150,7 +150,7 @@ const startServer = async () => {
 
     httpServer.listen(PORT, () => {
       console.log(`
- Door2Door API Server Running
+ Store2Door API Server Running
  Port: ${PORT}
  Environment: ${process.env.NODE_ENV || "development"}
  API Docs: http://localhost:${PORT}/api
