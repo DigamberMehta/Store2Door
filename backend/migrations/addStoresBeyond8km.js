@@ -25,7 +25,7 @@ const updateStoresBeyondRange = async () => {
     await mongoose.connect(
       process.env.MONGO_URI ||
         process.env.MONGODB_URI ||
-        "mongodb://localhost:27017/door2door",
+        "mongodb://localhost:27017/store2door",
     );
     console.log("✅ Connected to MongoDB");
 
