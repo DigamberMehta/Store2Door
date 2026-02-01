@@ -454,6 +454,14 @@ paymentSchema.virtual("totalRefunded").get(function () {
 paymentSchema.set("toJSON", { virtuals: true });
 paymentSchema.set("toObject", { virtuals: true });
 
+// Database indexes for query optimization
+paymentSchema.index({ orderId: 1 }); // For order-payment lookups
+paymentSchema.index({ yocoCheckoutId: 1 }); // For webhook verification (CRITICAL)
+paymentSchema.index({ status: 1 }); // For payment status filtering
+paymentSchema.index({ customerId: 1 }); // For customer payment history
+paymentSchema.index({ storeId: 1 }); // For store payment tracking
+paymentSchema.index({ createdAt: -1 }); // For payment history sorting
+
 const Payment = mongoose.model("Payment", paymentSchema);
 
 export default Payment;
