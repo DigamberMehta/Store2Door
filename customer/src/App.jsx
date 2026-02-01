@@ -15,6 +15,7 @@ import CheckoutPage from "./pages/checkout/CheckoutPage";
 import ProfilePage from "./pages/profile/ProfilePage";
 import SearchPage from "./pages/search/SearchPage";
 import ProductDetailPage from "./pages/product/ProductDetailPage";
+import AllReviewsPage from "./pages/product/AllReviewsPage";
 import Login from "./pages/auth/Login";
 import SignUp from "./pages/auth/SignUp";
 import ProfileDetailsPage from "./pages/profile/ProfileDetailsPage";
@@ -191,6 +192,7 @@ function AppContent() {
         />
         <Route path="/search" element={<SearchPage />} />
         <Route path="/product/:id/:slug" element={<ProductDetailPage />} />
+        <Route path="/product/reviews" element={<AllReviewsPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />
 

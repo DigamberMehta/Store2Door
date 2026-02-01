@@ -1,9 +1,11 @@
 import { apiClient } from "./client";
 
 export const reviewAPI = {
-  // Get reviews for a product
-  getProductReviews: (productId, params = {}) =>
-    apiClient.get(`/reviews/product/${productId}`, { params }),
+  // Get reviews for a product with pagination
+  getProductReviews: (productId, page = 1, limit = 10, sortBy = "createdAt") =>
+    apiClient.get(`/reviews/product/${productId}`, { 
+      params: { page, limit, sortBy } 
+    }),
 
   // Get reviews for a store
   getStoreReviews: (storeId, params = {}) =>

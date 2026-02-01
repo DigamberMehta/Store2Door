@@ -21,7 +21,8 @@ export const createReview = async (req, res) => {
     if (existingReview) {
       return res.status(400).json({
         success: false,
-        message: "You have already reviewed this item. You can only submit one review per item.",
+        message:
+          "You have already reviewed this item. You can only submit one review per item.",
       });
     }
 
@@ -41,7 +42,8 @@ export const createReview = async (req, res) => {
         // User hasn't purchased - reject the review
         return res.status(403).json({
           success: false,
-          message: "You can only review products you have purchased and received.",
+          message:
+            "You can only review products you have purchased and received.",
         });
       }
     }

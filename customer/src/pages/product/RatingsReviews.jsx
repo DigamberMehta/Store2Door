@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { MdStar, MdVerified, MdClose } from "react-icons/md";
 import { ThumbsUp, ThumbsDown, MessageSquare } from "lucide-react";
 import reviewAPI from "../../services/api/review.api";
 import { formatDateOnly } from "../../utils/date";
 
 const RatingsReviews = ({ product, avgRating, totalReviews }) => {
+  const navigate = useNavigate();
   const [reviews, setReviews] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -14,6 +16,8 @@ const RatingsReviews = ({ product, avgRating, totalReviews }) => {
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+
+  const PREVIEW_LIMIT = 3; // Show only 3 reviews initially
 
   useEffect(() => {
     fetchReviews();
@@ -115,6 +119,15 @@ const RatingsReviews = ({ product, avgRating, totalReviews }) => {
       console.error("Vote failed:", err);
     }
   };
+
+  const handleViewAllReviews = () => {
+    navigate("/product/reviews", {
+      state: { product, stats },
+    });
+  };
+
+  // Display only preview limit of reviews
+  const displayedReviews = reviews.slice(0, PREVIEW_LIMIT);
 
   return (
     <div className="bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/5 mx-3 mb-6">
@@ -289,8 +302,8 @@ const RatingsReviews = ({ product, avgRating, totalReviews }) => {
             <div className="animate-spin w-5 h-5 border-2 border-[rgb(49,134,22)] border-t-transparent rounded-full mx-auto mb-2"></div>
             <p className="text-white/40 text-[10px]">Loading reviews...</p>
           </div>
-        ) : reviews.length > 0 ? (
-          reviews.map((review) => (
+        ) : displayedReviews.length > 0 ? (
+          displayedReviews.map((review) => (
             <div
               key={review._id}
               className="bg-white/5 rounded-lg p-3 border border-white/5"
@@ -358,8 +371,11 @@ const RatingsReviews = ({ product, avgRating, totalReviews }) => {
           </div>
         )}
 
-        {reviews.length > 3 && (
-          <button className="w-full py-2.5 bg-white/5 border border-white/10 rounded-lg text-xs font-medium text-white/70 active:bg-white/10 transition-all">
+        {reviews.length > PREVIEW_LIMIT && (
+          <button
+            onClick={handleViewAllReviews}
+            className="w-full py-2.5 bg-white/5 border border-white/10 rounded-lg text-xs font-medium text-white/70 active:bg-white/10 transition-all"
+          >
             View all {reviews.length} reviews
           </button>
         )}
