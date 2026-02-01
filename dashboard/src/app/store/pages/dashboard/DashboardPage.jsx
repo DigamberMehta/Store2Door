@@ -69,7 +69,10 @@ const DashboardPage = () => {
             fetchDashboardData();
 
             // Show notification
-            if (Notification.permission === "granted") {
+            if (
+              typeof Notification !== "undefined" &&
+              Notification.permission === "granted"
+            ) {
               new Notification("New Order!", {
                 body: `Order ${data.order.orderNumber} received`,
                 icon: "/logo.png",
@@ -89,7 +92,10 @@ const DashboardPage = () => {
     }
 
     // Request notification permission
-    if (Notification.permission === "default") {
+    if (
+      typeof Notification !== "undefined" &&
+      Notification.permission === "default"
+    ) {
       Notification.requestPermission();
     }
 
