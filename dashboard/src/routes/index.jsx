@@ -38,17 +38,12 @@ import BankAccountSettings from "../app/store/pages/settings/BankAccountPage";
 import OperatingHoursSettings from "../app/store/pages/settings/OperatingHoursPage";
 import DeliverySettings from "../app/store/pages/settings/DeliverySettingsPage";
 
+// Admin Pages
+import AdminDashboard from "../app/admin/pages/dashboard/DashboardPage";
+import UsersPage from "../app/admin/pages/users/UsersPage";
+import UserDetailPage from "../app/admin/pages/users/detail/UserDetailPage";
+
 // Admin Pages (placeholders - will be created later)
-const AdminDashboard = () => (
-  <div className="p-8">
-    <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-  </div>
-);
-const AdminUsers = () => (
-  <div className="p-8">
-    <h1 className="text-2xl font-bold">Users Management</h1>
-  </div>
-);
 const AdminStores = () => (
   <div className="p-8">
     <h1 className="text-2xl font-bold">Stores Management</h1>
@@ -210,7 +205,11 @@ export const router = createBrowserRouter([
       },
       {
         path: "users",
-        element: <AdminUsers />,
+        element: <UsersPage />,
+      },
+      {
+        path: "users/:id",
+        element: <UserDetailPage />,
       },
       {
         path: "stores",

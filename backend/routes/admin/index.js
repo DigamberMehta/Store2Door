@@ -11,6 +11,7 @@ import adminPaymentRoutes from "./paymentRoutes.js";
 import adminRiderRoutes from "./riderRoutes.js";
 import adminAnalyticsRoutes from "./analyticsRoutes.js";
 import adminDeliverySettingsRoutes from "./deliverySettingsRoutes.js";
+import adminDashboardRoutes from "./dashboardRoutes.js";
 
 const router = express.Router();
 
@@ -19,6 +20,7 @@ router.use(authenticate);
 router.use(authorize("admin"));
 
 // Mount sub-routes
+router.use("/dashboard", adminDashboardRoutes);
 router.use("/users", adminUserRoutes);
 router.use("/stores", adminStoreRoutes);
 router.use("/products", adminProductRoutes);

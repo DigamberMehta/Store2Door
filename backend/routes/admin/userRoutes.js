@@ -1,52 +1,35 @@
 import express from "express";
-import { authenticate, authorize } from "../../middleware/auth.js";
+import {
+  getAllUsers,
+  getUserById,
+  updateUser,
+  deleteUser,
+  toggleUserStatus,
+  getUserStatsSummary,
+  bulkUpdateUsers,
+} from "../../controllers/adminUserController.js";
 
 const router = express.Router();
 
-// All routes require authentication and admin role
-router.use(authenticate);
-router.use(authorize("admin"));
+// Get user statistics summary (must be before /:id route)
+router.get("/stats/summary", getUserStatsSummary);
 
-// Get all users
-router.get("/", async (req, res) => {
-  // TODO: Implement get all users
-  res.json({ success: true, message: "Get all users endpoint" });
-});
+// Get all users with filters and pagination
+router.get("/", getAllUsers);
 
 // Get user by ID
-router.get("/:id", async (req, res) => {
-  // TODO: Implement get user by ID
-  res.json({ success: true, message: "Get user by ID endpoint" });
-});
-
-// Create user
-router.post("/", async (req, res) => {
-  // TODO: Implement create user
-  res.json({ success: true, message: "Create user endpoint" });
-});
+router.get("/:id", getUserById);
 
 // Update user
-router.put("/:id", async (req, res) => {
-  // TODO: Implement update user
-  res.json({ success: true, message: "Update user endpoint" });
-});
+router.put("/:id", updateUser);
 
-// Delete user
-router.delete("/:id", async (req, res) => {
-  // TODO: Implement delete user
-  res.json({ success: true, message: "Delete user endpoint" });
-});
+// Delete user (soft delete)
+router.delete("/:id", deleteUser);
 
 // Toggle user active status
-router.patch("/:id/toggle-active", async (req, res) => {
-  // TODO: Implement toggle active
-  res.json({ success: true, message: "Toggle user active endpoint" });
-});
+router.patch("/:id/toggle-status", toggleUserStatus);
 
-// Get user statistics
-router.get("/stats/summary", async (req, res) => {
-  // TODO: Implement get user stats
-  res.json({ success: true, message: "Get user stats endpoint" });
-});
+// Bulk actions
+router.post("/bulk-update", bulkUpdateUsers);
 
 export default router;
