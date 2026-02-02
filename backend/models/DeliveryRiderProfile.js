@@ -409,7 +409,8 @@ const deliveryStatsSchema = new mongoose.Schema(
     },
     averageRating: {
       type: Number,
-      min: 1,
+      default: 0,
+      min: 0,
       max: 5,
     },
     totalRatings: {
