@@ -7,6 +7,7 @@ export {
   clearAuthData,
   isAuthenticated,
 } from "./auth.api";
+export { dashboardAPI } from "./dashboard.api";
 export { userAPI } from "./user.api";
 export { storeAPI } from "./store.api";
 export { productAPI } from "./product.api";
