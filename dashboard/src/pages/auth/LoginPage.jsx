@@ -37,20 +37,33 @@ const LoginPage = () => {
           ? { email: formData.email, password: formData.password }
           : { phone: formData.phone, password: formData.password };
 
-      // Import to check user role first
-      const { authAPI } = await import("../../services/store/api");
-      const response = await authAPI.login(credentials);
+      // Try admin login first
+      try {
+        const { authAPI: adminAuthAPI } =
+          await import("../../services/admin/api");
+        const adminResponse = await adminAuthAPI.login(credentials);
 
-      if (response.success) {
-        const { user } = response.data;
-
-        // Use appropriate context based on role
-        if (user.role === "admin") {
+        if (adminResponse.success && adminResponse.data.user.role === "admin") {
           await adminLogin(credentials);
           setTimeout(() => {
             navigate("/admin/dashboard", { replace: true });
           }, 100);
-        } else if (user.role === "store_manager") {
+          return;
+        }
+      } catch (adminError) {
+        // If admin login fails, try store login
+        console.log("Not an admin, trying store login...");
+      }
+
+      // Try store login
+      const { authAPI: storeAuthAPI } =
+        await import("../../services/store/api");
+      const storeResponse = await storeAuthAPI.login(credentials);
+
+      if (storeResponse.success) {
+        const { user } = storeResponse.data;
+
+        if (user.role === "store_manager") {
           await storeLogin(credentials);
           setTimeout(() => {
             navigate("/store/dashboard", { replace: true });
