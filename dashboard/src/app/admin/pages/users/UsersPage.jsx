@@ -7,6 +7,8 @@ import UserFilters from "../../components/users/UserFilters";
 import UserTable from "../../components/users/UserTable";
 import Pagination from "../../components/users/Pagination";
 import TableSkeleton from "../../components/users/TableSkeleton";
+import { EditUserModal } from "../../components/users/edit";
+import { DeleteConfirmModal } from "../../components/users/delete";
 
 const UsersPage = () => {
   const [loading, setLoading] = useState(true);
@@ -15,6 +17,11 @@ const UsersPage = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
+  const [deletingUser, setDeletingUser] = useState(false);
   const [pagination, setPagination] = useState({
     currentPage: 1,
     totalPages: 1,
@@ -122,25 +129,38 @@ const UsersPage = () => {
   };
 
   const handleEdit = (user) => {
-    // TODO: Implement edit modal
-    toast.info("Edit functionality coming soon");
+    setSelectedUser(user);
+    setEditModalOpen(true);
   };
 
-  const handleDelete = async (userId) => {
-    if (!window.confirm("Are you sure you want to deactivate this user?")) {
-      return;
-    }
+  const handleEditSuccess = () => {
+    fetchUsers();
+    fetchStats();
+  };
+
+  const handleDelete = (user) => {
+    setUserToDelete(user);
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!userToDelete) return;
 
     try {
-      const response = await userAPI.delete(userId);
+      setDeletingUser(true);
+      const response = await userAPI.delete(userToDelete._id);
       if (response.success) {
         toast.success("User deactivated successfully");
+        setDeleteModalOpen(false);
+        setUserToDelete(null);
         fetchUsers();
         fetchStats();
       }
     } catch (error) {
       console.error("Error deleting user:", error);
       toast.error("Failed to deactivate user");
+    } finally {
+      setDeletingUser(false);
     }
   };
 
@@ -304,6 +324,32 @@ const UsersPage = () => {
           </>
         )}
       </div>
+
+      {/* Edit User Modal */}
+      <EditUserModal
+        isOpen={editModalOpen}
+        onClose={() => setEditModalOpen(false)}
+        user={selectedUser}
+        onSuccess={handleEditSuccess}
+      />
+
+      {/* Delete Confirm Modal */}
+      <DeleteConfirmModal
+        isOpen={deleteModalOpen}
+        onClose={() => {
+          if (!deletingUser) {
+            setDeleteModalOpen(false);
+            setUserToDelete(null);
+          }
+        }}
+        onConfirm={handleConfirmDelete}
+        title="Deactivate User"
+        message="Are you sure you want to deactivate this user? They will no longer be able to access the platform."
+        itemName={
+          userToDelete ? `${userToDelete.name} (${userToDelete.email})` : ""
+        }
+        loading={deletingUser}
+      />
     </div>
   );
 };

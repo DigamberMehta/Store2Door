@@ -1,6 +1,19 @@
-import { Package, Clock, DollarSign, Store as StoreIcon } from "lucide-react";
+import {
+  Package,
+  Clock,
+  DollarSign,
+  Store as StoreIcon,
+  ExternalLink,
+} from "lucide-react";
+import { Link } from "react-router-dom";
 
-const RecentActivitySection = ({ orders, deliveries, storeOrders, role }) => {
+const RecentActivitySection = ({
+  orders,
+  deliveries,
+  storeOrders,
+  role,
+  userId,
+}) => {
   const formatDate = (date) => {
     return new Date(date).toLocaleDateString("en-US", {
       year: "numeric",
@@ -42,26 +55,40 @@ const RecentActivitySection = ({ orders, deliveries, storeOrders, role }) => {
 
   // Render for customers
   if (role === "customer" && orders) {
+    const displayedOrders = orders.slice(0, 5);
+    const hasMoreOrders = orders.length > 5;
+
     return (
       <div className="bg-white rounded-lg border border-gray-200 p-4">
-        <h2 className="text-base font-semibold text-gray-900 mb-3">
-          Recent Orders
-        </h2>
-        {orders.length === 0 ? (
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-base font-semibold text-gray-900">
+            Recent Orders ({orders.length})
+          </h2>
+          {orders.length > 0 && (
+            <Link
+              to={`/admin/users/${userId}/orders`}
+              className="text-xs font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1"
+            >
+              View All
+              <ExternalLink className="w-3 h-3" />
+            </Link>
+          )}
+        </div>
+        {displayedOrders.length === 0 ? (
           <p className="text-sm text-gray-500">No orders yet</p>
         ) : (
-          <div className="space-y-2">
-            {orders.map((order) => (
+          <div className="divide-y divide-gray-200">
+            {displayedOrders.map((order) => (
               <div
                 key={order._id}
-                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                className="flex items-center justify-between py-3 first:pt-0 hover:bg-gray-50 transition-colors px-2 -mx-2 rounded"
               >
                 <div className="flex items-start gap-2 flex-1">
-                  <Package className="w-4 h-4 text-gray-400 mt-0.5" />
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-0.5">
+                  <Package className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                       <span className="text-sm font-semibold text-gray-900">
-                        Order #{order._id.slice(-6).toUpperCase()}
+                        #{order._id.slice(-6).toUpperCase()}
                       </span>
                       {getStatusBadge(order.status)}
                     </div>

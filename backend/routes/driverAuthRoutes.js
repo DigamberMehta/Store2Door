@@ -1,5 +1,6 @@
 import express from "express";
 import {
+  registerDriver,
   loginDriver,
   refreshToken,
   logoutDriver,
@@ -14,6 +15,7 @@ import { authenticate, rateLimitByUser } from "../middleware/auth.js";
 const router = express.Router();
 
 // Public routes
+router.post("/register", rateLimitByUser(15 * 60 * 1000, 5), registerDriver);
 router.post("/login", rateLimitByUser(15 * 60 * 1000, 10), loginDriver);
 router.post("/refresh", rateLimitByUser(15 * 60 * 1000, 20), refreshToken);
 router.post(

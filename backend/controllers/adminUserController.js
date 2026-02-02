@@ -173,7 +173,7 @@ const getUserStats = async (userId, role) => {
   try {
     if (role === "customer") {
       const orderStats = await Order.aggregate([
-        { $match: { customerId: userId } },
+        { $match: { customerId: new mongoose.Types.ObjectId(userId) } },
         {
           $group: {
             _id: null,
@@ -202,7 +202,9 @@ const getUserStats = async (userId, role) => {
         stats.totalSpent = orderStats[0].totalSpent;
       }
 
-      const lastOrder = await Order.findOne({ customerId: userId })
+      const lastOrder = await Order.findOne({
+        customerId: new mongoose.Types.ObjectId(userId),
+      })
         .sort({ createdAt: -1 })
         .select("createdAt")
         .lean();
@@ -234,7 +236,9 @@ const getUserStats = async (userId, role) => {
       }
 
       // Get last delivery date
-      const lastDelivery = await Order.findOne({ riderId: userId })
+      const lastDelivery = await Order.findOne({
+        riderId: new mongoose.Types.ObjectId(userId),
+      })
         .sort({ createdAt: -1 })
         .select("createdAt")
         .lean();

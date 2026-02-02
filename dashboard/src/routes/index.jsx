@@ -42,6 +42,7 @@ import DeliverySettings from "../app/store/pages/settings/DeliverySettingsPage";
 import AdminDashboard from "../app/admin/pages/dashboard/DashboardPage";
 import UsersPage from "../app/admin/pages/users/UsersPage";
 import UserDetailPage from "../app/admin/pages/users/detail/UserDetailPage";
+import UserOrdersPage from "../app/admin/pages/users/UserOrdersPage";
 
 // Admin Pages (placeholders - will be created later)
 const AdminStores = () => (
@@ -210,6 +211,10 @@ export const router = createBrowserRouter([
       {
         path: "users/:id",
         element: <UserDetailPage />,
+      },
+      {
+        path: "users/:id/orders",
+        element: <UserOrdersPage />,
       },
       {
         path: "stores",

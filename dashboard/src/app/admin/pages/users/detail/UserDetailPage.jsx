@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { ArrowLeft, Edit, Trash2, ToggleLeft, ToggleRight } from "lucide-react";
 import { userAPI } from "../../../../../services/admin/api";
+import { DeleteConfirmModal } from "../../../components/users/delete";
 import UserBasicInfo from "../../../components/users/detail/UserBasicInfo";
 import UserStatsCard from "../../../components/users/detail/UserStatsCard";
 import CustomerProfileSection from "../../../components/users/detail/CustomerProfileSection";
@@ -15,6 +16,8 @@ const UserDetailPage = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deletingUser, setDeletingUser] = useState(false);
 
   useEffect(() => {
     fetchUserDetails();
@@ -49,12 +52,13 @@ const UserDetailPage = () => {
     }
   };
 
-  const handleDelete = async () => {
-    if (!window.confirm("Are you sure you want to deactivate this user?")) {
-      return;
-    }
+  const handleDelete = () => {
+    setDeleteModalOpen(true);
+  };
 
+  const handleConfirmDelete = async () => {
     try {
+      setDeletingUser(true);
       const response = await userAPI.delete(id);
       if (response.success) {
         toast.success("User deactivated successfully");
@@ -63,6 +67,8 @@ const UserDetailPage = () => {
     } catch (error) {
       console.error("Error deleting user:", error);
       toast.error("Failed to deactivate user");
+    } finally {
+      setDeletingUser(false);
     }
   };
 
@@ -191,8 +197,26 @@ const UserDetailPage = () => {
           deliveries={recentDeliveries}
           storeOrders={recentStoreOrders}
           role={user.role}
+          userId={id}
         />
       </div>
+
+      {/* Delete Confirm Modal */}
+      <DeleteConfirmModal
+        isOpen={deleteModalOpen}
+        onClose={() => {
+          if (!deletingUser) {
+            setDeleteModalOpen(false);
+          }
+        }}
+        onConfirm={handleConfirmDelete}
+        title="Deactivate User"
+        message="Are you sure you want to deactivate this user? They will no longer be able to access the platform."
+        itemName={
+          userData?.user ? `${userData.user.name} (${userData.user.email})` : ""
+        }
+        loading={deletingUser}
+      />
     </div>
   );
 };
