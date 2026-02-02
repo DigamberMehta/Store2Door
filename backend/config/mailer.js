@@ -1,14 +1,33 @@
-import nodemailer from 'nodemailer';
-import { google } from 'googleapis';
+import nodemailer from "nodemailer";
+import { google } from "googleapis";
 
 // OAuth2 Configuration
 const OAuth2 = google.auth.OAuth2;
 
 const createTransporter = async () => {
+  // Validate required environment variables
+  const requiredEnvVars = [
+    "GMAIL_CLIENT_ID",
+    "GMAIL_CLIENT_SECRET",
+    "GMAIL_REDIRECT_URI",
+    "GMAIL_REFRESH_TOKEN",
+    "GMAIL_USER",
+  ];
+
+  const missingVars = requiredEnvVars.filter(
+    (varName) => !process.env[varName],
+  );
+
+  if (missingVars.length > 0) {
+    throw new Error(
+      `Missing required email environment variables: ${missingVars.join(", ")}`,
+    );
+  }
+
   const oauth2Client = new OAuth2(
     process.env.GMAIL_CLIENT_ID,
     process.env.GMAIL_CLIENT_SECRET,
-    process.env.GMAIL_REDIRECT_URI
+    process.env.GMAIL_REDIRECT_URI,
   );
 
   oauth2Client.setCredentials({
@@ -19,9 +38,9 @@ const createTransporter = async () => {
     const accessToken = await oauth2Client.getAccessToken();
 
     const transporter = nodemailer.createTransport({
-      service: 'gmail',
+      service: "gmail",
       auth: {
-        type: 'OAuth2',
+        type: "OAuth2",
         user: process.env.GMAIL_USER,
         clientId: process.env.GMAIL_CLIENT_ID,
         clientSecret: process.env.GMAIL_CLIENT_SECRET,
@@ -32,32 +51,56 @@ const createTransporter = async () => {
 
     return transporter;
   } catch (error) {
-    console.error('Error creating email transporter:', error);
+    console.error("Error creating email transporter:", error);
     throw error;
   }
 };
 
-// Initialize transporter
-let transporter;
-createTransporter()
-  .then((t) => {
-    transporter = t;
-    console.log('Email server is ready to send messages');
-  })
-  .catch((error) => {
-    console.error('Email transporter initialization failed:', error);
-  });
+// Initialize transporter - LAZY INITIALIZATION
+// Don't create transporter immediately, wait for first email send
+let transporter = null;
+let initializationPromise = null;
+
+// Function to ensure transporter is initialized
+const ensureTransporter = async () => {
+  if (transporter) {
+    return transporter;
+  }
+
+  // If already initializing, wait for that promise
+  if (initializationPromise) {
+    return initializationPromise;
+  }
+
+  // Start initialization
+  initializationPromise = createTransporter()
+    .then((t) => {
+      transporter = t;
+      console.log("✅ Email server is ready to send messages");
+      return t;
+    })
+    .catch((error) => {
+      console.error(
+        "❌ Email transporter initialization failed:",
+        error.message,
+      );
+      initializationPromise = null; // Allow retry
+      throw error;
+    });
+
+  return initializationPromise;
+};
 
 // Helper function to send email
 const sendEmail = async (options) => {
   try {
     // Ensure transporter is initialized
-    if (!transporter) {
-      transporter = await createTransporter();
-    }
+    const emailTransporter = await ensureTransporter();
 
     const mailOptions = {
-      from: options.from || `"${process.env.EMAIL_FROM_NAME || 'Store2Door'}" <${process.env.EMAIL_FROM || 'noreply@store2doordelivery.co.za'}>`,
+      from:
+        options.from ||
+        `"${process.env.EMAIL_FROM_NAME || "Store2Door"}" <${process.env.EMAIL_FROM || "noreply@store2doordelivery.co.za"}>`,
       to: options.to,
       subject: options.subject,
       text: options.text,
@@ -65,22 +108,26 @@ const sendEmail = async (options) => {
       attachments: options.attachments,
     };
 
-    const info = await transporter.sendMail(mailOptions);
-    console.log('Email sent successfully:', info.messageId);
+    const info = await emailTransporter.sendMail(mailOptions);
+    console.log("✅ Email sent successfully:", info.messageId);
     return { success: true, messageId: info.messageId };
   } catch (error) {
-    console.error('Error sending email:', error);
+    console.error("❌ Error sending email:", error);
     return { success: false, error: error.message };
   }
 };
 
 // Template for order confirmation email
-const sendOrderConfirmationEmail = async (order, customerEmail, customerName) => {
+const sendOrderConfirmationEmail = async (
+  order,
+  customerEmail,
+  customerName,
+) => {
   const subject = `Order Confirmation - #${order.orderNumber}`;
   const total = order.total || order.totalAmount || 0;
-  
+
   // Format items table
-  let itemsHtml = '';
+  let itemsHtml = "";
   if (order.items && order.items.length > 0) {
     itemsHtml = `
       <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
@@ -92,37 +139,53 @@ const sendOrderConfirmationEmail = async (order, customerEmail, customerName) =>
           </tr>
         </thead>
         <tbody>
-          ${order.items.map(item => `
+          ${order.items
+            .map(
+              (item) => `
             <tr>
               <td style="padding: 10px; border-bottom: 1px solid #ddd;">
                 ${item.name}
-                ${item.selectedVariant ? `<br><small style="color: #666;">Variant: ${item.selectedVariant.value}</small>` : ''}
+                ${item.selectedVariant ? `<br><small style="color: #666;">Variant: ${item.selectedVariant.value}</small>` : ""}
               </td>
               <td style="padding: 10px; border-bottom: 1px solid #ddd; text-align: center;">${item.quantity}</td>
               <td style="padding: 10px; border-bottom: 1px solid #ddd; text-align: right;">R ${item.totalPrice.toFixed(2)}</td>
             </tr>
-          `).join('')}
+          `,
+            )
+            .join("")}
         </tbody>
         <tfoot>
           <tr>
             <td colspan="2" style="padding: 10px; text-align: right; font-weight: bold;">Subtotal:</td>
             <td style="padding: 10px; text-align: right;">R ${order.subtotal.toFixed(2)}</td>
           </tr>
-          ${order.deliveryFee ? `
+          ${
+            order.deliveryFee
+              ? `
           <tr>
             <td colspan="2" style="padding: 10px; text-align: right; font-weight: bold;">Delivery Fee:</td>
             <td style="padding: 10px; text-align: right;">R ${order.deliveryFee.toFixed(2)}</td>
-          </tr>` : ''}
-          ${order.tip ? `
+          </tr>`
+              : ""
+          }
+          ${
+            order.tip
+              ? `
           <tr>
             <td colspan="2" style="padding: 10px; text-align: right; font-weight: bold;">Tip:</td>
             <td style="padding: 10px; text-align: right;">R ${order.tip.toFixed(2)}</td>
-          </tr>` : ''}
-          ${order.discount ? `
+          </tr>`
+              : ""
+          }
+          ${
+            order.discount
+              ? `
           <tr>
             <td colspan="2" style="padding: 10px; text-align: right; font-weight: bold; color: #d32f2f;">Discount:</td>
             <td style="padding: 10px; text-align: right; color: #d32f2f;">- R ${order.discount.toFixed(2)}</td>
-          </tr>` : ''}
+          </tr>`
+              : ""
+          }
           <tr style="background-color: #f9f9f9;">
             <td colspan="2" style="padding: 10px; text-align: right; font-weight: bold; font-size: 16px;">Total:</td>
             <td style="padding: 10px; text-align: right; font-weight: bold; font-size: 16px; color: rgb(49, 134, 22);">R ${total.toFixed(2)}</td>
@@ -162,7 +225,7 @@ const sendOrderConfirmationEmail = async (order, customerEmail, customerName) =>
       </div>
     </div>
   `;
-  
+
   return await sendEmail({
     to: customerEmail,
     subject,
@@ -171,9 +234,16 @@ const sendOrderConfirmationEmail = async (order, customerEmail, customerName) =>
 };
 
 // Template for order status update email
-const sendOrderStatusEmail = async (order, customerEmail, customerName, newStatus) => {
+const sendOrderStatusEmail = async (
+  order,
+  customerEmail,
+  customerName,
+  newStatus,
+) => {
   const subject = `Order Update - #${order.orderNumber}`;
-  const statusDisplay = newStatus.replace(/_/g, ' ').charAt(0).toUpperCase() + newStatus.replace(/_/g, ' ').slice(1);
+  const statusDisplay =
+    newStatus.replace(/_/g, " ").charAt(0).toUpperCase() +
+    newStatus.replace(/_/g, " ").slice(1);
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
       <div style="background-color: rgb(49, 134, 22); padding: 20px; text-align: center;">
@@ -201,7 +271,7 @@ const sendOrderStatusEmail = async (order, customerEmail, customerName, newStatu
       </div>
     </div>
   `;
-  
+
   return await sendEmail({
     to: customerEmail,
     subject,
@@ -212,23 +282,41 @@ const sendOrderStatusEmail = async (order, customerEmail, customerName, newStatu
 // Template for password reset email
 const sendPasswordResetEmail = async (email, resetToken, userName) => {
   const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
-  const subject = 'Password Reset Request';
+  const subject = "Password Reset Request - Store2Door";
   const html = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <h2>Password Reset Request</h2>
-      <p>Dear ${userName},</p>
-      <p>You requested to reset your password. Click the button below to reset it:</p>
-      <div style="text-align: center; margin: 30px 0;">
-        <a href="${resetUrl}" style="background-color: #4CAF50; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">Reset Password</a>
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0;">
+      <div style="background-color: rgb(49, 134, 22); padding: 20px; text-align: center;">
+        <h1 style="color: white; margin: 0;">Store2Door</h1>
       </div>
-      <p>Or copy and paste this link into your browser:</p>
-      <p style="word-break: break-all;">${resetUrl}</p>
-      <p>This link will expire in 1 hour.</p>
-      <p>If you didn't request this, please ignore this email.</p>
+      <div style="padding: 30px;">
+        <h2 style="color: #333;">Password Reset Request</h2>
+        <p>Dear ${userName},</p>
+        <p>We received a request to reset your password. Click the button below to create a new password:</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${resetUrl}" style="background-color: rgb(49, 134, 22); color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold; font-size: 16px;">Reset Password</a>
+        </div>
+        <div style="background-color: #f9f9f9; padding: 15px; border-radius: 6px; border-left: 4px solid rgb(49, 134, 22); margin: 20px 0;">
+          <p style="margin: 5px 0; font-size: 14px;"><strong>Security Information:</strong></p>
+          <ul style="margin: 10px 0; padding-left: 20px; font-size: 14px;">
+            <li>This link will expire in <strong>1 hour</strong></li>
+            <li>If you didn't request this, please ignore this email</li>
+            <li>Your password won't change until you create a new one</li>
+          </ul>
+        </div>
+        <p style="font-size: 14px; color: #666;">Or copy and paste this link into your browser:</p>
+        <p style="word-break: break-all; font-size: 12px; color: #0066cc; background-color: #f5f5f5; padding: 10px; border-radius: 4px;">${resetUrl}</p>
+        <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 30px 0;">
+        <p style="font-size: 13px; color: #888;">Need help? Contact us at <a href="mailto:support@store2doordelivery.co.za" style="color: rgb(49, 134, 22);">support@store2doordelivery.co.za</a></p>
+      </div>
+      <div style="background-color: #f1f1f1; padding: 20px; text-align: center; font-size: 12px; color: #666;">
+        <p>&copy; ${new Date().getFullYear()} Store2Door Delivery. All rights reserved.</p>
+        <p>This is an automated message, please do not reply to this email.</p>
+      </div>
     </div>
   `;
-  
+
   return await sendEmail({
+    from: `"Store2Door Support" <support@store2doordelivery.co.za>`,
     to: email,
     subject,
     html,
@@ -237,7 +325,7 @@ const sendPasswordResetEmail = async (email, resetToken, userName) => {
 
 // Template for welcome email
 const sendWelcomeEmail = async (email, userName) => {
-  const subject = 'Welcome to Store2Door!';
+  const subject = "Welcome to Store2Door!";
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <h2>Welcome to Store2Door!</h2>
@@ -249,7 +337,7 @@ const sendWelcomeEmail = async (email, userName) => {
       <p>The Store2Door Team</p>
     </div>
   `;
-  
+
   return await sendEmail({
     to: email,
     subject,

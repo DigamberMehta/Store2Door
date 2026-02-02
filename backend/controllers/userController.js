@@ -296,13 +296,17 @@ export const forgotPassword = asyncHandler(async (req, res) => {
     });
   }
 
-  const user = await User.findOne({ email: email.toLowerCase(), isActive: true });
+  const user = await User.findOne({
+    email: email.toLowerCase(),
+    isActive: true,
+  });
 
   if (!user) {
     // Don't reveal if user exists for security
     return res.json({
       success: true,
-      message: "If an account exists with this email, you will receive a password reset link",
+      message:
+        "If an account exists with this email, you will receive a password reset link",
     });
   }
 
@@ -321,7 +325,7 @@ export const forgotPassword = asyncHandler(async (req, res) => {
   // Send reset email
   try {
     await sendPasswordResetEmail(user.email, resetToken, user.name);
-    
+
     res.json({
       success: true,
       message: "Password reset link has been sent to your email",
@@ -396,10 +400,24 @@ export const resetPassword = asyncHandler(async (req, res) => {
     });
   }
 
-  if (newPassword.length < 6) {
+  // Enhanced password validation
+  if (newPassword.length < 8) {
     return res.status(400).json({
       success: false,
-      message: "Password must be at least 6 characters long",
+      message: "Password must be at least 8 characters long",
+    });
+  }
+
+  // Check for common patterns
+  const hasUpperCase = /[A-Z]/.test(newPassword);
+  const hasLowerCase = /[a-z]/.test(newPassword);
+  const hasNumbers = /\d/.test(newPassword);
+
+  if (!hasUpperCase || !hasLowerCase || !hasNumbers) {
+    return res.status(400).json({
+      success: false,
+      message:
+        "Password must contain at least one uppercase letter, one lowercase letter, and one number",
     });
   }
 
@@ -421,23 +439,23 @@ export const resetPassword = asyncHandler(async (req, res) => {
 
   // Update password
   user.password = newPassword;
-  
+
   // Invalidate reset token
   user.passwordResetToken = undefined;
   user.passwordResetExpires = undefined;
-  
+
   // Invalidate all existing sessions (refresh tokens)
   user.refreshToken = undefined;
-  
+
   // Update last login
   user.lastLogin = new Date();
-  
+
   await user.save();
 
   // Generate new tokens for immediate login
   const accessToken = generateToken(user._id);
   const refreshToken = generateRefreshToken();
-  
+
   // Store new refresh token
   user.refreshToken = refreshToken;
   await user.save();
