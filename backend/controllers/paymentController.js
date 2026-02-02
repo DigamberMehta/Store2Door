@@ -2,7 +2,9 @@ import Payment from "../models/Payment.js";
 import Order from "../models/Order.js";
 import Cart from "../models/Cart.js";
 import Coupon from "../models/Coupon.js";
+import User from "../models/User.js";
 import yocoService from "../config/yoco.js";
+import { sendOrderConfirmationEmail } from "../config/mailer.js";
 
 /**
  * Create checkout session
@@ -258,6 +260,17 @@ export const createPayment = async (req, res) => {
     order.status = "placed"; // Changed from "confirmed" to "placed" - store needs to confirm manually
     await order.save();
 
+    // Send order confirmation email
+    try {
+      const user = await User.findById(userId);
+      if (user) {
+        await sendOrderConfirmationEmail(order, user.email, user.name);
+        console.log(`Confirmation email sent for order ${order.orderNumber}`);
+      }
+    } catch (emailError) {
+      console.error("Error sending confirmation email:", emailError);
+    }
+
     // Mark coupon as used if applied
     if (order.appliedCoupon?.couponId) {
       await Coupon.findByIdAndUpdate(order.appliedCoupon.couponId, {
@@ -364,6 +377,17 @@ export const confirmPayment = async (req, res) => {
             order.status = "placed"; // Changed from "confirmed" to "placed" - store needs to confirm manually
             await order.save();
             console.log("Order updated:", order.orderNumber);
+
+            // Send confirmation email
+            try {
+              const user = await User.findById(payment.userId);
+              if (user) {
+                await sendOrderConfirmationEmail(order, user.email, user.name);
+                console.log(`Confirmation email sent for order ${order.orderNumber}`);
+              }
+            } catch (emailError) {
+              console.error("Error sending confirmation email:", emailError);
+            }
           }
 
           // Clear user's cart
@@ -465,6 +489,17 @@ export const handleWebhook = async (req, res) => {
             order.paymentStatus = "succeeded";
             order.status = "placed"; // Changed from "confirmed" to "placed" - store needs to confirm manually
             await order.save();
+
+            // Send confirmation email
+            try {
+              const user = await User.findById(payment.userId);
+              if (user) {
+                await sendOrderConfirmationEmail(order, user.email, user.name);
+                console.log(`Confirmation email sent via webhook for order ${order.orderNumber}`);
+              }
+            } catch (emailError) {
+              console.error("Error sending confirmation email in webhook:", emailError);
+            }
 
             // Mark coupon as used
             if (order.appliedCoupon?.couponId) {

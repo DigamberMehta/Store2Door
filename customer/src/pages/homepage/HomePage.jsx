@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import { HiOutlineLocationMarker } from "react-icons/hi";
 import Header from "../../components/Header";
 import {
   GroceryKitchenSection,
@@ -211,13 +212,34 @@ const HomePage = ({ onStoreClick, onCategoryClick }) => {
       {selectedCategory === "All" &&
         (loading ? (
           <StoreListShimmer />
-        ) : (
+        ) : filteredStores.length > 0 ? (
           <StoreList
             stores={filteredStores}
             onStoreClick={onStoreClick}
             onCategoryClick={onCategoryClick}
           />
-        ))}
+        ) : (
+          <div className="px-4 py-10 text-center">
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 max-w-sm mx-auto">
+              <div className="w-16 h-16 bg-[rgb(49,134,22)]/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-[rgb(49,134,22)]/20">
+                <HiOutlineLocationMarker className="w-8 h-8 text-[rgb(49,134,22)]" />
+              </div>
+              <h3 className="text-white font-bold text-lg mb-2">No Stores Nearby</h3>
+              <p className="text-white/50 text-sm mb-6">
+                {latitude && longitude 
+                  ? "We couldn't find any stores within 7km of your current location."
+                  : "We couldn't detect your location. Please check your browser settings or add an address manually."}
+              </p>
+              <button 
+                onClick={() => navigate("/profile/addresses")}
+                className="w-full bg-[rgb(49,134,22)] text-white font-semibold py-3 rounded-xl active:bg-[rgb(49,134,22)]/90 transition-all"
+              >
+                Add Address Manually
+              </button>
+            </div>
+          </div>
+        )
+      )}
     </div>
   );
 };

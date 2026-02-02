@@ -244,6 +244,7 @@ const Login = () => {
             <div className="flex justify-end">
               <button
                 type="button"
+                onClick={() => navigate("/forgot-password")}
                 className="text-xs text-[rgb(49,134,22)] active:text-[rgb(49,134,22)]/80 transition-colors"
               >
                 Forgot password?

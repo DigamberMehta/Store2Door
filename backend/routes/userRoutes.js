@@ -7,6 +7,7 @@ import {
   updateProfile,
   changePassword,
   forgotPassword,
+  validateResetToken,
   resetPassword,
 } from "../controllers/userController.js";
 import { authenticate, rateLimitByUser } from "../middleware/auth.js";
@@ -21,7 +22,12 @@ router.post(
   rateLimitByUser(15 * 60 * 1000, 3),
   forgotPassword,
 );
-router.put(
+router.get(
+  "/validate-reset-token/:token",
+  rateLimitByUser(15 * 60 * 1000, 10),
+  validateResetToken
+);
+router.post(
   "/reset-password",
   rateLimitByUser(15 * 60 * 1000, 5),
   resetPassword,

@@ -8,61 +8,56 @@ export const useUserLocation = () => {
   const [location, setLocation] = useState({
     latitude: null,
     longitude: null,
+    address: null,
     loading: true,
     error: null
   });
 
   useEffect(() => {
-    // Check if geolocation is supported
+    console.log("📍 Initializing geolocation...");
+    
     if (!navigator.geolocation) {
-      setLocation({
-        latitude: null,
-        longitude: null,
-        loading: false,
-        error: 'Geolocation is not supported by your browser'
-      });
+      setLocation(prev => ({ ...prev, loading: false, error: 'Geolocation not supported' }));
       return;
     }
 
-    // Get current position
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        console.log("📍 Geolocation success:", latitude, longitude);
+        
+        // Attempt reverse geocoding
+        let addressStr = null;
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`);
+          const data = await res.json();
+          if (data && data.display_name) {
+            // Simplify address: use suburb/city or road
+            const addr = data.address;
+            addressStr = addr.suburb || addr.city_district || addr.city || addr.town || addr.village || addr.road || "Detected Location";
+            console.log("📍 Reverse geocode success:", addressStr);
+          }
+        } catch (err) {
+          console.error("📍 Reverse geocoding failed:", err);
+        }
+
         setLocation({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
+          latitude,
+          longitude,
+          address: addressStr,
           loading: false,
           error: null
         });
       },
       (error) => {
-        let errorMessage = 'Unable to retrieve location';
-        
-        switch(error.code) {
-          case error.PERMISSION_DENIED:
-            errorMessage = 'Location permission denied';
-            break;
-          case error.POSITION_UNAVAILABLE:
-            errorMessage = 'Location information unavailable';
-            break;
-          case error.TIMEOUT:
-            errorMessage = 'Location request timed out';
-            break;
-          default:
-            errorMessage = 'An unknown error occurred';
-        }
-
-        setLocation({
-          latitude: null,
-          longitude: null,
+        console.error("📍 Geolocation error:", error);
+        setLocation(prev => ({
+          ...prev,
           loading: false,
-          error: errorMessage
-        });
+          error: 'Location access denied'
+        }));
       },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 300000 // Cache for 5 minutes
-      }
+      { enableHighAccuracy: false, timeout: 15000 }
     );
   }, []);
 

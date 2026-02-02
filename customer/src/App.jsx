@@ -18,6 +18,8 @@ import ProductDetailPage from "./pages/product/ProductDetailPage";
 import AllReviewsPage from "./pages/product/AllReviewsPage";
 import Login from "./pages/auth/Login";
 import SignUp from "./pages/auth/SignUp";
+import ForgotPassword from "./pages/auth/ForgotPassword";
+import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
 import ProfileDetailsPage from "./pages/profile/ProfileDetailsPage";
 import AddressPage from "./pages/profile/AddressPage";
 import OrdersPage from "./pages/profile/OrdersPage";
@@ -195,6 +197,8 @@ function AppContent() {
         <Route path="/product/reviews" element={<AllReviewsPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
 
         {/* Info Pages */}
         <Route path="/about" element={<AboutUsPage />} />

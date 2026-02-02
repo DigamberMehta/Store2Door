@@ -1,9 +1,10 @@
-import { MapPin, ChevronDown, Check, Plus, X } from "lucide-react";
+import { MapPin, ChevronDown, Check, Plus, X, Navigation } from "lucide-react";
 import { useState, useEffect } from "react";
 import { customerProfileAPI } from "../../services/api/profile.api";
 import { formatPrice } from "../../utils/formatPrice";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import { useUserLocation } from "../../hooks/useUserLocation";
 
 const CheckoutFooter = ({ total, orderData }) => {
   const [selectedAddress, setSelectedAddress] = useState(null);
@@ -11,6 +12,7 @@ const CheckoutFooter = ({ total, orderData }) => {
   const [loading, setLoading] = useState(true);
   const [showAddressModal, setShowAddressModal] = useState(false);
   const navigate = useNavigate();
+  const { latitude, longitude, address: detectedAddressName } = useUserLocation();
 
   useEffect(() => {
     fetchAddresses();
@@ -34,7 +36,11 @@ const CheckoutFooter = ({ total, orderData }) => {
   };
 
   const formatAddress = (address) => {
-    if (!address) return "No address added";
+    if (!address) {
+      if (detectedAddressName) return detectedAddressName;
+      if (latitude && longitude) return `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+      return "No address added";
+    }
     const parts = [
       address.street,
       address.city,
@@ -46,32 +52,51 @@ const CheckoutFooter = ({ total, orderData }) => {
   };
 
   const handlePlaceOrder = () => {
-    if (!selectedAddress) {
-      toast.error("Please add a delivery address");
+    if (!selectedAddress && !latitude) {
+      toast.error("Please add a delivery address or enable location");
       return;
     }
 
     // Convert address to GeoJSON format for backend
-    const transformedAddress = {
-      street: selectedAddress.street,
-      city: selectedAddress.city,
-      province: selectedAddress.province,
-      postalCode: selectedAddress.postalCode,
-      country: selectedAddress.country || "ZA",
-      label: selectedAddress.label,
-      instructions: selectedAddress.instructions || "",
-      location: {
-        type: "Point",
-        coordinates: [
-          selectedAddress.longitude ||
-            selectedAddress.location?.coordinates?.[0] ||
-            28.0473,
-          selectedAddress.latitude ||
-            selectedAddress.location?.coordinates?.[1] ||
-            -26.2041,
-        ],
-      },
-    };
+    let transformedAddress;
+    
+    if (selectedAddress) {
+      transformedAddress = {
+        street: selectedAddress.street,
+        city: selectedAddress.city,
+        province: selectedAddress.province,
+        postalCode: selectedAddress.postalCode,
+        country: selectedAddress.country || "ZA",
+        label: selectedAddress.label,
+        instructions: selectedAddress.instructions || "",
+        location: {
+          type: "Point",
+          coordinates: [
+            selectedAddress.longitude ||
+              selectedAddress.location?.coordinates?.[0] ||
+              28.0473,
+            selectedAddress.latitude ||
+              selectedAddress.location?.coordinates?.[1] ||
+              -26.2041,
+          ],
+        },
+      };
+    } else {
+      // Use detected location if no address selected
+      transformedAddress = {
+        street: detectedAddressName || "Detected Location",
+        city: "Detected City",
+        province: "Detected Province",
+        postalCode: "0000",
+        country: "ZA",
+        label: "Current Location",
+        instructions: "Delivering to current GPS location",
+        location: {
+          type: "Point",
+          coordinates: [longitude, latitude],
+        },
+      };
+    }
 
     // Include the transformed address in the order data
     const updatedOrderData = {
@@ -93,7 +118,11 @@ const CheckoutFooter = ({ total, orderData }) => {
           <div className="flex items-start justify-between">
             <div className="flex items-start gap-2 flex-1 min-w-0">
               <div className="p-1 bg-white/5 rounded-lg flex-shrink-0">
-                <MapPin className="w-4 h-4 text-[rgb(49,134,22)]" />
+                {selectedAddress ? (
+                  <MapPin className="w-4 h-4 text-[rgb(49,134,22)]" />
+                ) : (
+                  <Navigation className="w-4 h-4 text-blue-400 animate-pulse" />
+                )}
               </div>
               <div className="flex-1 min-w-0">
                 <h3 className="text-white font-semibold text-xs mb-1">
@@ -101,18 +130,20 @@ const CheckoutFooter = ({ total, orderData }) => {
                     ? "Loading..."
                     : selectedAddress
                       ? `Delivering to ${selectedAddress.label || "Home"}`
-                      : "No address selected"}
+                      : detectedAddressName 
+                        ? "Delivering to Nearby Area"
+                        : "No address selected"}
                 </h3>
-                <p className="text-white/60 text-[10px] line-clamp-2">
+                <p className={`text-[10px] line-clamp-2 ${!selectedAddress && detectedAddressName ? 'text-blue-300' : 'text-white/60'}`}>
                   {loading ? "..." : formatAddress(selectedAddress)}
                 </p>
               </div>
             </div>
             <button
-              onClick={() => setShowAddressModal(true)}
+              onClick={() => navigate("/profile/addresses")}
               className="text-[rgb(49,134,22)] text-xs font-medium hover:text-[rgb(49,134,22)]/80 transition-colors flex-shrink-0 ml-2"
             >
-              Change
+              {selectedAddress ? "Change" : "Add Address"}
             </button>
           </div>
         </div>
@@ -121,7 +152,7 @@ const CheckoutFooter = ({ total, orderData }) => {
         <div className="px-3 py-3">
           <button
             onClick={handlePlaceOrder}
-            disabled={!selectedAddress || loading}
+            disabled={(loading || (!selectedAddress && !latitude))}
             className="w-full bg-[rgb(49,134,22)] hover:bg-[rgb(49,134,22)]/90 text-white rounded-lg py-2 px-3 transition-all duration-300 hover:scale-[1.02] shadow-lg shadow-[rgb(49,134,22)]/20 flex items-center justify-between disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <div className="text-left">

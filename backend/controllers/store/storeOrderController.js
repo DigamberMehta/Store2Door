@@ -1,6 +1,8 @@
 import mongoose from "mongoose";
 import Order from "../../models/Order.js";
+import User from "../../models/User.js";
 import { emitToOrder, broadcastToDrivers } from "../../config/socket.js";
+import { sendOrderStatusEmail } from "../../config/mailer.js";
 
 // Get all orders for store manager
 export const getStoreOrders = async (req, res) => {
@@ -204,6 +206,21 @@ export const updateOrderStatus = async (req, res) => {
     }
 
     await order.save();
+
+    // Send status update email to customer
+    try {
+      const user = await User.findById(order.customerId);
+      if (user) {
+        // Only send for important status changes
+        const importantStatuses = ["confirmed", "preparing", "ready_for_pickup", "cancelled"];
+        if (importantStatuses.includes(status)) {
+          await sendOrderStatusEmail(order, user.email, user.name, status);
+          console.log(`[Store] Status update email (${status}) sent for order ${order.orderNumber}`);
+        }
+      }
+    } catch (emailError) {
+      console.error("[Store] Error sending status update email:", emailError);
+    }
 
     // Emit socket event for real-time update
     console.log(

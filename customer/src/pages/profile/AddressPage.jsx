@@ -41,6 +41,8 @@ const AddressPage = () => {
 
   useEffect(() => {
     fetchAddresses();
+    // Automatically trigger location detection if no default address exists or on mount
+    getCurrentLocation();
   }, []);
 
   const fetchAddresses = async () => {

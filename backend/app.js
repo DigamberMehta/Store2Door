@@ -4,6 +4,10 @@ import cors from "cors";
 import compression from "compression";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
+
+// Load environment variables immediately
+dotenv.config();
+
 import userRoutes from "./routes/userRoutes.js";
 import customerProfileRoutes from "./routes/customerProfileRoutes.js";
 import driverAuthRoutes from "./routes/driverAuthRoutes.js";
@@ -26,9 +30,6 @@ import uploadRoutes from "./routes/uploadRoutes.js";
 import { errorHandler, notFound } from "./middleware/validation.js";
 import { connectRedis } from "./config/redis.js";
 import { initializeSocket } from "./config/socket.js";
-
-// Load environment variables
-dotenv.config();
 
 const app = express();
 const httpServer = createServer(app);

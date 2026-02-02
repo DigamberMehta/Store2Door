@@ -11,6 +11,7 @@ import {
 import { CategoryFilter } from "../pages/homepage/category";
 import { CategoryFilterShimmer } from "./shimmer";
 import { customerProfileAPI } from "../services/api";
+import { useUserLocation } from "../hooks/useUserLocation";
 
 const Header = ({
   selectedCategory,
@@ -19,6 +20,7 @@ const Header = ({
   loading = false,
 }) => {
   const navigate = useNavigate();
+  const { latitude, longitude, address: detectedAddress, error: locationError } = useUserLocation();
   const [addressData, setAddressData] = useState({
     label: null,
     address: null,
@@ -43,8 +45,49 @@ const Header = ({
         }
       }
     } catch (error) {
-      console.error("Error fetching address:", error);
+      // Silently handle - user may not have saved address yet
     }
+  };
+
+  const getDisplayAddress = () => {
+    // 1. Priority: User's saved default address
+    if (addressData.label && addressData.address) {
+      return (
+        <>
+          <span className="font-bold text-xs uppercase text-[rgb(49,134,22)]">
+            {addressData.label} -{" "}
+          </span>
+          <span className="font-normal text-xs truncate max-w-[150px]">
+            {addressData.address}
+          </span>
+        </>
+      );
+    }
+
+    // 2. Priority: Real-time detected address string
+    if (detectedAddress) {
+      return (
+        <span className="font-normal text-xs flex items-center gap-1.5">
+          <span className="bg-[rgb(49,134,22)]/20 text-[rgb(49,134,22)] px-1.5 py-0.5 rounded-[4px] text-[10px] uppercase font-bold tracking-tighter">Nearby</span>
+          <span className="text-white/80 truncate max-w-[200px]">{detectedAddress}</span>
+        </span>
+      );
+    }
+
+    // 3. Priority: Coordinates if address string is pending
+    if (latitude && longitude) {
+      return (
+        <span className="font-normal text-xs flex items-center gap-1">
+          <span className="bg-blue-400/20 text-blue-300 px-1.5 py-0.5 rounded text-[10px] uppercase font-bold tracking-tighter">Locating...</span>
+        </span>
+      );
+    }
+
+    if (locationError) {
+      return <span className="font-normal text-xs text-red-400/70">Location permission required</span>;
+    }
+
+    return <span className="font-normal text-xs text-white/50">Add delivery address</span>;
   };
 
   return (
@@ -58,21 +101,9 @@ const Header = ({
             className="flex items-center gap-2 text-xs md:text-sm cursor-pointer transition-all duration-300 hover:text-blue-300 group"
             onClick={() => navigate("/profile/addresses")}
           >
-            <HiOutlineLocationMarker className="text-lg text-blue-400 group-hover:text-blue-300 transition-colors duration-300 flex-shrink-0" />
-            {addressData.label && addressData.address ? (
-              <>
-                <span className="font-bold text-xs uppercase">
-                  {addressData.label} -{" "}
-                </span>
-                <span className="font-normal text-xs break-words max-w-[200px] line-clamp-2">
-                  {addressData.address}
-                </span>
-              </>
-            ) : (
-              <span className="font-normal text-xs text-white/60">
-                Add delivery address
-              </span>
-            )}
+            <HiOutlineLocationMarker className="text-lg text-blue-400 group-hover:text-blue-300 transition-colors duration-300" />
+            {getDisplayAddress()}
+            <HiChevronDown className="text-base ml-0.5 transition-transform duration-300 group-hover:rotate-180" />
           </div>
         </div>
         <div className="flex gap-2">

@@ -7,6 +7,12 @@ class YocoService {
     this.apiUrl = "https://payments.yoco.com/api";
     this.webhookSecret = process.env.YOCO_WEBHOOK_SECRET;
 
+    if (!this.secretKey) {
+      console.warn("⚠️ YOCO_SECRET_KEY is missing in environment variables!");
+    } else {
+      console.log("✅ YOCO_SECRET_KEY found.");
+    }
+
     // Create axios instance with default config
     this.api = axios.create({
       baseURL: this.apiUrl,

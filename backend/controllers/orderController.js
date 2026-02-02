@@ -7,8 +7,10 @@ import DeliverySettings from "../models/DeliverySettings.js";
 import PlatformSettings from "../models/PlatformSettings.js";
 import DeliveryRiderProfile from "../models/DeliveryRiderProfile.js";
 import Store from "../models/Store.js";
+import User from "../models/User.js";
 import PlatformFinancials from "../models/PlatformFinancials.js";
 import { emitToOrder, getIO } from "../config/socket.js";
+import { sendOrderStatusEmail } from "../config/mailer.js";
 
 /**
  * Calculate distance between two coordinates (Haversine formula)
@@ -801,6 +803,29 @@ export const updateOrderStatus = async (req, res) => {
           error,
         );
       }
+    }
+
+    // Note: trackingHistory is automatically updated by pre-save middleware in Order model
+
+    if (notes) {
+      order.notes = notes;
+    }
+
+    await order.save();
+
+    // Send status update email to customer
+    try {
+      const user = await User.findById(order.customerId);
+      if (user) {
+        // Only send for important status changes
+        const importantStatuses = ["confirmed", "picked_up", "on_the_way", "delivered", "cancelled"];
+        if (importantStatuses.includes(status)) {
+          await sendOrderStatusEmail(order, user.email, user.name, status);
+          console.log(`Status update email (${status}) sent for order ${order.orderNumber}`);
+        }
+      }
+    } catch (emailError) {
+      console.error("Error sending status update email:", emailError);
     }
 
     // Emit socket event for real-time update
