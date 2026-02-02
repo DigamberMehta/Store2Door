@@ -145,7 +145,7 @@ const sendOrderConfirmationEmail = async (
             <tr>
               <td style="padding: 10px; border-bottom: 1px solid #ddd;">
                 ${item.name}
-                ${item.selectedVariant ? `<br><small style="color: #666;">Variant: ${item.selectedVariant.value}</small>` : ""}
+                ${item.selectedVariant && item.selectedVariant.value ? `<br><small style="color: #666;">Variant: ${item.selectedVariant.value}</small>` : ""}
               </td>
               <td style="padding: 10px; border-bottom: 1px solid #ddd; text-align: center;">${item.quantity}</td>
               <td style="padding: 10px; border-bottom: 1px solid #ddd; text-align: right;">R ${item.totalPrice.toFixed(2)}</td>
@@ -345,6 +345,138 @@ const sendWelcomeEmail = async (email, userName) => {
   });
 };
 
+// Template for support ticket/contact us email
+const sendSupportTicketEmail = async (ticketData) => {
+  const { userName, userEmail, orderNumber, productName, issue, imageUrl } =
+    ticketData;
+
+  const subject = `Support Ticket - ${orderNumber ? `Order #${orderNumber}` : "General Inquiry"} from ${userName}`;
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+      <div style="background-color: rgb(49, 134, 22); padding: 20px; text-align: center;">
+        <h1 style="color: white; margin: 0;">Store2Door Support</h1>
+      </div>
+      <div style="padding: 30px;">
+        <h2 style="color: #333; margin-top: 0;">New Support Ticket</h2>
+        
+        <div style="background-color: #f9f9f9; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <h3 style="margin-top: 0; color: #333; border-bottom: 1px solid #ddd; padding-bottom: 10px;">Customer Information:</h3>
+          <p style="margin: 5px 0;"><strong>Name:</strong> ${userName}</p>
+          <p style="margin: 5px 0;"><strong>Email:</strong> <a href="mailto:${userEmail}" style="color: rgb(49, 134, 22);">${userEmail}</a></p>
+        </div>
+
+        ${
+          orderNumber
+            ? `
+        <div style="background-color: #f9f9f9; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <h3 style="margin-top: 0; color: #333; border-bottom: 1px solid #ddd; padding-bottom: 10px;">Order Details:</h3>
+          <p style="margin: 5px 0;"><strong>Order Number:</strong> ${orderNumber}</p>
+          ${productName ? `<p style="margin: 5px 0;"><strong>Product:</strong> ${productName}</p>` : ""}
+        </div>
+        `
+            : ""
+        }
+
+        <div style="background-color: #fff3cd; padding: 20px; border-radius: 8px; border-left: 4px solid #ffc107; margin: 20px 0;">
+          <h3 style="margin-top: 0; color: #333;">Issue Description:</h3>
+          <p style="margin: 0; white-space: pre-wrap; color: #333;">${issue}</p>
+        </div>
+
+        ${
+          imageUrl
+            ? `
+        <div style="margin: 20px 0;">
+          <h3 style="color: #333;">Attached Image:</h3>
+          <img src="${imageUrl}" alt="Issue" style="max-width: 100%; border-radius: 8px; border: 1px solid #ddd;" />
+        </div>
+        `
+            : ""
+        }
+
+        <div style="background-color: #f1f1f1; padding: 15px; border-radius: 6px; margin-top: 20px;">
+          <p style="margin: 0; font-size: 14px; color: #666;">
+            <strong>Action Required:</strong> Please respond to this customer inquiry as soon as possible.
+          </p>
+        </div>
+      </div>
+      <div style="background-color: #f1f1f1; padding: 20px; text-align: center; font-size: 12px; color: #666;">
+        <p>&copy; ${new Date().getFullYear()} Store2Door Delivery. All rights reserved.</p>
+        <p>This is an automated support ticket notification.</p>
+      </div>
+    </div>
+  `;
+
+  return await sendEmail({
+    from: `"Store2Door Support" <support@store2doordelivery.co.za>`,
+    to: "support@store2doordelivery.co.za",
+    replyTo: userEmail,
+    subject,
+    html,
+  });
+};
+
+// Template for support ticket confirmation email to customer
+const sendSupportTicketConfirmationEmail = async (ticketData) => {
+  const { userName, userEmail, ticketNumber, orderNumber, productName, issue } =
+    ticketData;
+
+  const subject = `Support Ticket Created - ${ticketNumber}`;
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+      <div style="background-color: rgb(49, 134, 22); padding: 20px; text-align: center;">
+        <h1 style="color: white; margin: 0;">Store2Door Support</h1>
+      </div>
+      <div style="padding: 30px;">
+        <h2 style="color: #333; margin-top: 0;">Ticket Created Successfully</h2>
+        <p>Dear ${userName},</p>
+        <p>Thank you for contacting Store2Door support. We have received your support request and created a ticket for you.</p>
+        
+        <div style="background-color: #f9f9f9; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <h3 style="margin-top: 0; color: #333; border-bottom: 1px solid #ddd; padding-bottom: 10px;">Ticket Details:</h3>
+          <p style="margin: 5px 0;"><strong>Ticket Number:</strong> <span style="color: rgb(49, 134, 22); font-family: monospace; font-weight: bold;">${ticketNumber}</span></p>
+          ${orderNumber ? `<p style="margin: 5px 0;"><strong>Order Number:</strong> ${orderNumber}</p>` : ""}
+          ${productName ? `<p style="margin: 5px 0;"><strong>Product:</strong> ${productName}</p>` : ""}
+          <p style="margin: 5px 0;"><strong>Status:</strong> <span style="color: #ff9800;">Open</span></p>
+        </div>
+
+        <div style="background-color: #e8f5e9; padding: 15px; border-radius: 6px; border-left: 4px solid #4caf50; margin: 20px 0;">
+          <p style="margin: 0; font-size: 14px; color: #2e7d32;">
+            <strong>What's next?</strong> Our support team will review your ticket and get back to you within 24 hours. Please keep your ticket number for reference.
+          </p>
+        </div>
+
+        <div style="background-color: #f5f5f5; padding: 15px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #2196f3;">
+          <p style="margin: 5px 0; font-size: 13px; color: #333;"><strong>Your Issue:</strong></p>
+          <p style="margin: 5px 0; white-space: pre-wrap; font-size: 13px; color: #666;">${issue}</p>
+        </div>
+
+        <div style="background-color: #fff3e0; padding: 15px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #ff9800;">
+          <p style="margin: 0; font-size: 13px; color: #e65100;">
+            <strong>Important:</strong> Please keep this email for your records. Use your ticket number when following up on this issue.
+          </p>
+        </div>
+
+        <p style="font-size: 13px; color: #666; margin-top: 20px;">
+          If you have any additional information to add, please reply to this email with your ticket number.
+        </p>
+      </div>
+      <div style="background-color: #f1f1f1; padding: 20px; text-align: center; font-size: 12px; color: #666;">
+        <p style="margin: 5px 0;">&copy; ${new Date().getFullYear()} Store2Door Delivery. All rights reserved.</p>
+        <p style="margin: 5px 0;">For urgent matters, contact us at <a href="mailto:support@store2doordelivery.co.za" style="color: rgb(49, 134, 22);">support@store2doordelivery.co.za</a></p>
+      </div>
+    </div>
+  `;
+
+  return await sendEmail({
+    from: `"Store2Door Support" <support@store2doordelivery.co.za>`,
+    to: userEmail,
+    subject,
+    html,
+  });
+};
+
 export {
   createTransporter,
   sendEmail,
@@ -352,4 +484,6 @@ export {
   sendOrderStatusEmail,
   sendPasswordResetEmail,
   sendWelcomeEmail,
+  sendSupportTicketEmail,
+  sendSupportTicketConfirmationEmail,
 };

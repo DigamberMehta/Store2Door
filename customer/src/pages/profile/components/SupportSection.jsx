@@ -26,9 +26,9 @@ const SupportSection = () => {
             <ChevronRight className="w-3.5 h-3.5 text-white/30" />
           </div>
         </button>
-        <a
-          href="mailto:support@store2door.co.za"
-          className="block w-full bg-white/5 backdrop-blur-xl rounded-xl border border-white/5 p-3 active:bg-white/10 transition-all text-left"
+        <button
+          onClick={() => navigate("/contact")}
+          className="w-full bg-white/5 backdrop-blur-xl rounded-xl border border-white/5 p-3 active:bg-white/10 transition-all text-left"
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
@@ -39,7 +39,7 @@ const SupportSection = () => {
             </div>
             <ChevronRight className="w-3.5 h-3.5 text-white/30" />
           </div>
-        </a>
+        </button>
       </div>
     </div>
   );

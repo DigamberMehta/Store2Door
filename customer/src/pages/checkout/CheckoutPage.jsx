@@ -30,6 +30,7 @@ const CheckoutPage = () => {
   const [cart, setCart] = useState(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [tip, setTip] = useState(0);
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
   const [deliveryFeeAmount, setDeliveryFeeAmount] = useState(30);
@@ -148,6 +149,21 @@ const CheckoutPage = () => {
       console.error("Error removing from cart:", error);
       // Revert to previous state on error
       setCart(previousCart);
+    }
+  };
+
+  const clearAllItems = async () => {
+    try {
+      setUpdating(true);
+      await cartAPI.clearCart();
+      await fetchCart();
+      setShowClearConfirm(false);
+      toast.success("Cart cleared successfully");
+    } catch (error) {
+      console.error("Error clearing cart:", error);
+      toast.error("Failed to clear cart");
+    } finally {
+      setUpdating(false);
     }
   };
 
@@ -362,12 +378,23 @@ const CheckoutPage = () => {
             <ChevronLeft className="w-5 h-5" />
           </button>
           <h1 className="text-lg font-semibold">Checkout</h1>
-          <button
-            onClick={handleShare}
-            className="p-1 hover:bg-white/10 rounded-full transition-colors"
-          >
-            <Share2 className="w-4 h-4 text-[rgb(49,134,22)]" />
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={handleShare}
+              className="p-1 hover:bg-white/10 rounded-full transition-colors"
+            >
+              <Share2 className="w-4 h-4 text-[rgb(49,134,22)]" />
+            </button>
+            {cartItems.length > 0 && (
+              <button
+                onClick={() => setShowClearConfirm(true)}
+                className="p-1 hover:bg-white/10 rounded-full transition-colors"
+                title="Clear cart"
+              >
+                <Trash2 className="w-4 h-4 text-white/60 hover:text-white" />
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -560,6 +587,47 @@ const CheckoutPage = () => {
             />
           )}
         </>
+      )}
+
+      {/* Clear Cart Confirmation Modal */}
+      {showClearConfirm && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end">
+          <div className="w-full bg-zinc-900 border-t border-white/10 rounded-t-2xl p-6 space-y-4 animate-in slide-in-from-bottom-5">
+            <div>
+              <h3 className="text-lg font-semibold text-white">Clear cart?</h3>
+              <p className="text-white/60 text-sm mt-1">
+                This will remove all {cartItems.length} item
+                {cartItems.length !== 1 ? "s" : ""} from your cart. This action
+                cannot be undone.
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowClearConfirm(false)}
+                className="flex-1 px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl font-medium transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={clearAllItems}
+                disabled={updating}
+                className="flex-1 px-4 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {updating ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Clearing...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    Clear All
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

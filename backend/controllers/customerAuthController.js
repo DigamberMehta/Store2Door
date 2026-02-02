@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import User from "../models/User.js";
 import { asyncHandler } from "../middleware/validation.js";
-import { sendPasswordResetEmail } from "../config/mailer.js";
+import { sendPasswordResetEmail, sendWelcomeEmail } from "../config/mailer.js";
 
 /**
  * Generate JWT token
@@ -56,6 +56,13 @@ export const registerUser = asyncHandler(async (req, res) => {
   // Save refresh token
   user.refreshToken = refreshToken;
   await user.save();
+
+  // Send welcome email (non-blocking)
+  if (email) {
+    sendWelcomeEmail(email, name).catch((error) => {
+      console.error("Failed to send welcome email:", error);
+    });
+  }
 
   res.status(201).json({
     success: true,
@@ -267,13 +274,17 @@ export const forgotPassword = asyncHandler(async (req, res) => {
     });
   }
 
-  const user = await User.findOne({ email: email.toLowerCase(), isActive: true });
+  const user = await User.findOne({
+    email: email.toLowerCase(),
+    isActive: true,
+  });
 
   if (!user) {
     // Don't reveal if user exists for security
     return res.json({
       success: true,
-      message: "If an account exists with this email, you will receive a password reset link",
+      message:
+        "If an account exists with this email, you will receive a password reset link",
     });
   }
 
@@ -292,7 +303,7 @@ export const forgotPassword = asyncHandler(async (req, res) => {
   // Send reset email
   try {
     await sendPasswordResetEmail(user.email, resetToken, user.name);
-    
+
     res.json({
       success: true,
       message: "Password reset link has been sent to your email",
@@ -392,23 +403,23 @@ export const resetPassword = asyncHandler(async (req, res) => {
 
   // Update password
   user.password = newPassword;
-  
+
   // Invalidate reset token
   user.passwordResetToken = undefined;
   user.passwordResetExpires = undefined;
-  
+
   // Invalidate all existing sessions (refresh tokens)
   user.refreshToken = undefined;
-  
+
   // Update last login
   user.lastLogin = new Date();
-  
+
   await user.save();
 
   // Generate new tokens for immediate login
   const accessToken = generateToken(user._id);
   const refreshToken = generateRefreshToken();
-  
+
   // Store new refresh token
   user.refreshToken = refreshToken;
   await user.save();

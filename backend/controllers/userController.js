@@ -3,7 +3,7 @@ import crypto from "crypto";
 import User from "../models/User.js";
 import Store from "../models/Store.js";
 import { asyncHandler } from "../middleware/validation.js";
-import { sendPasswordResetEmail } from "../config/mailer.js";
+import { sendPasswordResetEmail, sendWelcomeEmail } from "../config/mailer.js";
 
 /**
  * Generate JWT token
@@ -82,6 +82,14 @@ export const registerUser = asyncHandler(async (req, res) => {
 
   user.refreshToken = refreshToken;
   await user.save();
+
+  // Send welcome email (non-blocking)
+  if (email) {
+    sendWelcomeEmail(email, name).catch((error) => {
+      console.error("Failed to send welcome email:", error);
+      // Don't block registration if email fails
+    });
+  }
 
   // Remove password from response
   user.password = undefined;
@@ -400,24 +408,11 @@ export const resetPassword = asyncHandler(async (req, res) => {
     });
   }
 
-  // Enhanced password validation
-  if (newPassword.length < 8) {
+  // Password validation
+  if (newPassword.length < 6) {
     return res.status(400).json({
       success: false,
-      message: "Password must be at least 8 characters long",
-    });
-  }
-
-  // Check for common patterns
-  const hasUpperCase = /[A-Z]/.test(newPassword);
-  const hasLowerCase = /[a-z]/.test(newPassword);
-  const hasNumbers = /\d/.test(newPassword);
-
-  if (!hasUpperCase || !hasLowerCase || !hasNumbers) {
-    return res.status(400).json({
-      success: false,
-      message:
-        "Password must contain at least one uppercase letter, one lowercase letter, and one number",
+      message: "Password must be at least 6 characters long",
     });
   }
 

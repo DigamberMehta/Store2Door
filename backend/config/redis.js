@@ -20,11 +20,11 @@ redisClient.on('error', (err) => {
 });
 
 redisClient.on('connect', () => {
-  console.log('✅ Redis connected');
+  console.log('doeRedis connected');
 });
 
 redisClient.on('ready', () => {
-  console.log('✅ Redis ready');
+  console.log('Redis ready');
 });
 
 redisClient.on('reconnecting', () => {

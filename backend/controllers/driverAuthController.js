@@ -3,6 +3,7 @@ import crypto from "crypto";
 import User from "../models/User.js";
 import DeliveryRiderProfile from "../models/DeliveryRiderProfile.js";
 import { asyncHandler } from "../middleware/validation.js";
+import { sendPasswordResetEmail } from "../config/mailer.js";
 
 /**
  * Generate JWT token
@@ -48,7 +49,6 @@ export const registerDriver = asyncHandler(async (req, res) => {
     password,
     role: "delivery_rider",
   });
-
 
   // Generate token
   const token = generateToken(user._id);
@@ -286,16 +286,22 @@ export const forgotPassword = asyncHandler(async (req, res) => {
     .createHash("sha256")
     .update(resetToken)
     .digest("hex");
-  user.passwordResetExpires = Date.now() + 30 * 60 * 1000; // 30 minutes
+  user.passwordResetExpires = Date.now() + 60 * 60 * 1000; // 1 hour
 
   await user.save();
 
-  // TODO: Send reset token via email
-  // For now, return it in response (remove in production)
+  // Send password reset email
+  try {
+    await sendPasswordResetEmail(user.email, resetToken, user.name);
+    console.log(`Password reset email sent to driver: ${user.email}`);
+  } catch (emailError) {
+    console.error("Error sending password reset email:", emailError);
+    // Continue anyway - token is still valid
+  }
+
   res.json({
     success: true,
-    message: "Password reset token generated",
-    resetToken, // Remove this in production
+    message: "Password reset link has been sent to your email",
   });
 });
 
@@ -321,6 +327,14 @@ export const resetPassword = asyncHandler(async (req, res) => {
     return res.status(400).json({
       success: false,
       message: "Invalid or expired reset token",
+    });
+  }
+
+  // Validate new password
+  if (!newPassword || newPassword.length < 6) {
+    return res.status(400).json({
+      success: false,
+      message: "Password must be at least 6 characters long",
     });
   }
 

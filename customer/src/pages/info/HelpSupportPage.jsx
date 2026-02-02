@@ -24,8 +24,8 @@ const HelpSupportPage = () => {
       icon: Mail,
       title: "Email Support",
       description: "Get help via email",
-      value: "support@store2door.co.za",
-      action: "mailto:support@store2door.co.za",
+      value: "support@store2doordelivery.co.za",
+      action: "mailto:support@store2doordelivery.co.za",
     },
     {
       icon: Phone,
@@ -130,6 +130,17 @@ const HelpSupportPage = () => {
 
       {/* Main Content */}
       <div className="px-4 py-6">
+        {/* Contact Us Button */}
+        <section className="mb-6">
+          <button
+            onClick={() => navigate("/contact")}
+            className="w-full bg-green-500 text-white font-semibold text-sm px-6 py-3.5 rounded-xl active:bg-green-600 transition-all flex items-center justify-center gap-2"
+          >
+            <MessageCircle className="w-5 h-5" />
+            Submit a Support Ticket
+          </button>
+        </section>
+
         {/* Contact Methods */}
         <section className="mb-8">
           <h2 className="text-lg font-bold mb-4 px-2 text-white">Contact Us</h2>
@@ -236,7 +247,7 @@ const HelpSupportPage = () => {
               concerns.
             </p>
             <a
-              href="mailto:support@store2door.co.za"
+              href="mailto:support@store2doordelivery.co.za"
               className="inline-block bg-green-500 text-white font-semibold text-sm px-6 py-2.5 rounded-lg active:bg-green-600 transition-all"
             >
               Email Support Team

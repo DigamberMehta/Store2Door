@@ -24,6 +24,7 @@ import platformFinancialsRoutes from "./routes/platformFinancialsRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
+import supportRoutes from "./routes/supportRoutes.js";
 import adminRoutes from "./routes/admin/index.js";
 import storeManagerRoutes from "./routes/store/index.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
@@ -113,6 +114,7 @@ app.use("/api/platform-financials", platformFinancialsRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/reviews", reviewRoutes);
+app.use("/api/support", supportRoutes);
 app.use("/api/upload", uploadRoutes);
 // Routes
 app.use("/api/users", userRoutes);

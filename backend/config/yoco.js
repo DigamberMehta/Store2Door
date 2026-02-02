@@ -10,7 +10,7 @@ class YocoService {
     if (!this.secretKey) {
       console.warn("⚠️ YOCO_SECRET_KEY is missing in environment variables!");
     } else {
-      console.log("✅ YOCO_SECRET_KEY found.");
+      
     }
 
     // Create axios instance with default config
