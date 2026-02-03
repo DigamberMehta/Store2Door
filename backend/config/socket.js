@@ -1,6 +1,7 @@
 import { Server } from "socket.io";
 import Order from "../models/Order.js";
 import DeliveryRiderProfile from "../models/DeliveryRiderProfile.js";
+import locationService from "../services/locationService.js";
 
 let io;
 
@@ -93,6 +94,11 @@ export const initializeSocket = (httpServer) => {
         // Store driver location in memory
         driverLocations.set(driverId, location);
 
+        // Store in Redis for tracking page (only if driverId is valid)
+        if (driverId && driverId !== "null" && driverId !== "undefined") {
+          await locationService.updateLocation(driverId, latitude, longitude);
+        }
+
         // Update driver location in order document
         try {
           await Order.findByIdAndUpdate(orderId, {
@@ -111,8 +117,6 @@ export const initializeSocket = (httpServer) => {
           orderId,
           location,
         });
-
-        console.log(`Driver ${driverId} location updated for order ${orderId}`);
       },
     );
 
