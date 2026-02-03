@@ -43,6 +43,7 @@ import AdminDashboard from "../app/admin/pages/dashboard/DashboardPage";
 import UsersPage from "../app/admin/pages/users/UsersPage";
 import UserDetailPage from "../app/admin/pages/users/detail/UserDetailPage";
 import UserOrdersPage from "../app/admin/pages/users/UserOrdersPage";
+import TrackingPage from "../app/admin/pages/tracking/TrackingPage";
 
 // Admin Pages (placeholders - will be created later)
 const AdminStores = () => (
@@ -257,6 +258,16 @@ export const router = createBrowserRouter([
         element: <AdminAnalytics />,
       },
     ],
+  },
+
+  // Admin Tracking - Full Screen (No Sidebar)
+  {
+    path: "/admin/tracking",
+    element: (
+      <AdminProtectedRoute>
+        <TrackingPage />
+      </AdminProtectedRoute>
+    ),
   },
 
   // Redirect root to login

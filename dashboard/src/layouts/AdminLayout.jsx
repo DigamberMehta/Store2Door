@@ -13,6 +13,7 @@ import {
   CreditCard,
   Truck,
   TrendingUp,
+  MapPin,
   LogOut,
 } from "lucide-react";
 
@@ -93,6 +94,15 @@ const AdminLayout = () => {
             <Link to="/admin/riders" className={getLinkClass("/admin/riders")}>
               <Bike className="w-5 h-5" />
               <span>Riders</span>
+            </Link>
+            <Link
+              to="/admin/tracking"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={getLinkClass("/admin/tracking")}
+            >
+              <MapPin className="w-5 h-5" />
+              <span>Live Tracking</span>
             </Link>
             <Link
               to="/admin/reviews"
