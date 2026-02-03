@@ -2,12 +2,12 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { ArrowLeft, Edit, Trash2, ToggleLeft, ToggleRight } from "lucide-react";
-import { userAPI } from "../../../../../services/admin/api";
+import { userAPI, riderAPI } from "../../../../../services/admin/api";
 import { DeleteConfirmModal } from "../../../components/users/delete";
 import UserBasicInfo from "../../../components/users/detail/UserBasicInfo";
 import UserStatsCard from "../../../components/users/detail/UserStatsCard";
 import CustomerProfileSection from "../../../components/users/detail/CustomerProfileSection";
-import DeliveryRiderProfileSection from "../../../components/users/detail/DeliveryRiderProfileSection";
+import DeliveryRiderProfileSection from "../../../components/users/detail/rider-profile";
 import StoreManagerSection from "../../../components/users/detail/StoreManagerSection";
 import RecentActivitySection from "../../../components/users/detail/RecentActivitySection";
 
@@ -36,6 +36,28 @@ const UserDetailPage = () => {
       toast.error("Failed to load user details");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDocumentUpdate = async (userId, documentType, action, reason) => {
+    try {
+      let response;
+      if (action === "approve") {
+        response = await riderAPI.verifyDocument(userId, documentType);
+      } else if (action === "reject") {
+        response = await riderAPI.rejectDocument(userId, documentType, reason);
+      }
+
+      if (response?.success) {
+        toast.success(
+          `Document ${action === "approve" ? "approved" : "rejected"} successfully`,
+        );
+        await fetchUserDetails(); // Refresh the data
+      }
+    } catch (error) {
+      console.error("Error updating document:", error);
+      toast.error(error.response?.data?.message || "Failed to update document");
+      throw error;
     }
   };
 
@@ -185,7 +207,12 @@ const UserDetailPage = () => {
           <CustomerProfileSection profile={profile} />
         )}
         {user.role === "delivery_rider" && (
-          <DeliveryRiderProfileSection profile={profile} />
+          <DeliveryRiderProfileSection
+            profile={profile}
+            userId={id}
+            onDocumentUpdate={handleDocumentUpdate}
+            onProfileUpdate={fetchUserDetails}
+          />
         )}
         {user.role === "store_manager" && (
           <StoreManagerSection storeData={user.storeId} />

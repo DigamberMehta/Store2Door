@@ -78,33 +78,39 @@ const UserBasicInfo = ({ user }) => {
 
           {/* Contact Info */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="flex items-center gap-2 text-gray-600">
-              <Mail className="w-4 h-4" />
-              <div>
-                <span className="text-xs text-gray-500">Email</span>
-                <p className="text-sm font-medium">{user.email}</p>
+            <div className="flex items-start gap-2 text-gray-600">
+              <Mail className="w-4 h-4 mt-0.5" />
+              <div className="min-w-0 flex-1">
+                <span className="text-xs text-gray-500 block">Email</span>
+                <p className="text-sm font-medium text-gray-900 break-words">
+                  {user.email}
+                </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 text-gray-600">
-              <Phone className="w-4 h-4" />
-              <div>
-                <span className="text-xs text-gray-500">Phone</span>
-                <p className="text-sm font-medium">{user.phone}</p>
+            <div className="flex items-start gap-2 text-gray-600">
+              <Phone className="w-4 h-4 mt-0.5" />
+              <div className="min-w-0 flex-1">
+                <span className="text-xs text-gray-500 block">Phone</span>
+                <p className="text-sm font-medium text-gray-900">
+                  {user.phone}
+                </p>
               </div>
             </div>
           </div>
 
-          {/* Verification Status */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-gray-200">
-            <div className="flex items-center gap-1.5">
-              {user.isActive ? (
-                <CheckCircle className="w-4 h-4 text-green-600" />
-              ) : (
-                <XCircle className="w-4 h-4 text-red-600" />
-              )}
-              <div>
-                <span className="text-xs text-gray-500">Account Status</span>
+          {/* Status and Dates */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-gray-200">
+            <div>
+              <span className="text-xs text-gray-500 block mb-1">
+                Account Status
+              </span>
+              <div className="flex items-center gap-1.5">
+                {user.isActive ? (
+                  <CheckCircle className="w-3.5 h-3.5 text-green-600" />
+                ) : (
+                  <XCircle className="w-3.5 h-3.5 text-red-600" />
+                )}
                 <p
                   className={`text-sm font-medium ${user.isActive ? "text-green-600" : "text-red-600"}`}
                 >
@@ -113,14 +119,16 @@ const UserBasicInfo = ({ user }) => {
               </div>
             </div>
 
-            <div className="flex items-center gap-1.5">
-              {user.isEmailVerified ? (
-                <CheckCircle className="w-4 h-4 text-green-600" />
-              ) : (
-                <XCircle className="w-4 h-4 text-gray-400" />
-              )}
-              <div>
-                <span className="text-xs text-gray-500">Email Verified</span>
+            <div>
+              <span className="text-xs text-gray-500 block mb-1">
+                Email Verified
+              </span>
+              <div className="flex items-center gap-1.5">
+                {user.isEmailVerified ? (
+                  <CheckCircle className="w-3.5 h-3.5 text-green-600" />
+                ) : (
+                  <XCircle className="w-3.5 h-3.5 text-gray-400" />
+                )}
                 <p
                   className={`text-sm font-medium ${user.isEmailVerified ? "text-green-600" : "text-gray-500"}`}
                 >
@@ -129,14 +137,16 @@ const UserBasicInfo = ({ user }) => {
               </div>
             </div>
 
-            <div className="flex items-center gap-1.5">
-              {user.isPhoneVerified ? (
-                <CheckCircle className="w-4 h-4 text-green-600" />
-              ) : (
-                <XCircle className="w-4 h-4 text-gray-400" />
-              )}
-              <div>
-                <span className="text-xs text-gray-500">Phone Verified</span>
+            <div>
+              <span className="text-xs text-gray-500 block mb-1">
+                Phone Verified
+              </span>
+              <div className="flex items-center gap-1.5">
+                {user.isPhoneVerified ? (
+                  <CheckCircle className="w-3.5 h-3.5 text-green-600" />
+                ) : (
+                  <XCircle className="w-3.5 h-3.5 text-gray-400" />
+                )}
                 <p
                   className={`text-sm font-medium ${user.isPhoneVerified ? "text-green-600" : "text-gray-500"}`}
                 >
@@ -144,28 +154,28 @@ const UserBasicInfo = ({ user }) => {
                 </p>
               </div>
             </div>
-          </div>
 
-          {/* Timestamps */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-gray-200">
-            <div className="flex items-center gap-2 text-gray-600">
-              <Calendar className="w-4 h-4" />
-              <div>
-                <span className="text-xs text-gray-500">Member Since</span>
-                <p className="text-sm font-medium">
+            <div>
+              <span className="text-xs text-gray-500 block mb-1">
+                Member Since
+              </span>
+              <div className="flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-gray-500" />
+                <p className="text-sm font-medium text-gray-900">
                   {formatDate(user.createdAt)}
                 </p>
               </div>
             </div>
+          </div>
 
-            <div className="flex items-center gap-2 text-gray-600">
-              <Clock className="w-4 h-4" />
-              <div>
-                <span className="text-xs text-gray-500">Last Login</span>
-                <p className="text-sm font-medium">
-                  {formatDate(user.lastLogin)}
-                </p>
-              </div>
+          {/* Last Login */}
+          <div className="pt-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 rounded-lg">
+              <Clock className="w-3.5 h-3.5 text-gray-500" />
+              <span className="text-xs text-gray-500">Last Login:</span>
+              <span className="text-xs font-medium text-gray-900">
+                {formatDate(user.lastLogin)}
+              </span>
             </div>
           </div>
         </div>
