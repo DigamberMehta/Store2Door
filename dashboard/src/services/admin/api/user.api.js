@@ -62,4 +62,37 @@ export const userAPI = {
   bulkUpdate: async (userIds, action) => {
     return apiClient.post("/admin/users/bulk-update", { userIds, action });
   },
+
+  /**
+   * Toggle rider status (isActive, isSuspended, isVerified, etc.)
+   * @param {string} userId - User ID
+   * @param {string} statusType - Type of status to toggle
+   * @param {boolean} value - New value
+   * @param {string} reason - Optional reason (for suspension)
+   */
+  toggleRiderStatus: async (userId, statusType, value, reason = null) => {
+    return apiClient.patch(`/admin/users/${userId}/rider/status`, {
+      statusType,
+      value,
+      reason,
+    });
+  },
+
+  /**
+   * Update rider vehicle information
+   * @param {string} userId - User ID
+   * @param {Object} vehicleData - Vehicle information
+   */
+  updateRiderVehicle: async (userId, vehicleData) => {
+    return apiClient.put(`/admin/users/${userId}/rider/vehicle`, vehicleData);
+  },
+
+  /**
+   * Update rider bank details
+   * @param {string} userId - User ID
+   * @param {Object} bankData - Bank details
+   */
+  updateRiderBankDetails: async (userId, bankData) => {
+    return apiClient.put(`/admin/users/${userId}/rider/bank-details`, bankData);
+  },
 };

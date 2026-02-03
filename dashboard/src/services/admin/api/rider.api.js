@@ -25,12 +25,10 @@ export const riderAPI = {
    * Verify rider document
    * @param {string} riderId - Rider ID
    * @param {string} documentType - Document type
-   * @param {Object} verificationData - Verification data
    */
-  verifyDocument: async (riderId, documentType, verificationData) => {
-    return apiClient.post(`/riders/${riderId}/verify-document`, {
-      documentType,
-      ...verificationData,
+  verifyDocument: async (riderId, documentType) => {
+    return apiClient.put(`/driver-profile/documents/${documentType}/verify`, {
+      driverId: riderId,
     });
   },
 
@@ -38,12 +36,12 @@ export const riderAPI = {
    * Reject rider document
    * @param {string} riderId - Rider ID
    * @param {string} documentType - Document type
-   * @param {Object} rejectionData - Rejection data
+   * @param {string} reason - Rejection reason
    */
-  rejectDocument: async (riderId, documentType, rejectionData) => {
-    return apiClient.post(`/riders/${riderId}/reject-document`, {
-      documentType,
-      ...rejectionData,
+  rejectDocument: async (riderId, documentType, reason) => {
+    return apiClient.put(`/driver-profile/documents/${documentType}/reject`, {
+      driverId: riderId,
+      reason,
     });
   },
 
