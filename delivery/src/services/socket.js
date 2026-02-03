@@ -109,7 +109,23 @@ class SocketService {
       return;
     }
 
-    const driverId = localStorage.getItem("userId");
+    // Get driver ID from localStorage
+    const driverStr = localStorage.getItem("driver");
+    let driverId = null;
+
+    if (driverStr) {
+      try {
+        const driver = JSON.parse(driverStr);
+        driverId = driver._id || driver.id;
+      } catch (error) {
+        console.error("Error parsing driver data:", error);
+      }
+    }
+
+    if (!driverId) {
+      console.error("Driver ID not found in localStorage");
+      return;
+    }
 
     this.socket.emit("driver:location", {
       driverId,

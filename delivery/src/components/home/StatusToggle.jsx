@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { driverProfileAPI } from "../../services/api";
 import socketService from "../../services/socket";
 import toast from "react-hot-toast";
@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 const StatusToggle = () => {
   const [isOnline, setIsOnline] = useState(false);
   const [loading, setLoading] = useState(true);
+  const locationIntervalRef = useRef(null);
 
   // Fetch initial status from backend
   useEffect(() => {
@@ -22,6 +23,62 @@ const StatusToggle = () => {
     fetchStatus();
   }, []);
 
+  // Periodic location updates when online
+  useEffect(() => {
+    if (isOnline) {
+      // Update immediately
+      updateDriverLocation();
+
+      // Update every 30 seconds while online
+      locationIntervalRef.current = setInterval(() => {
+        updateDriverLocation();
+      }, 30000);
+    } else {
+      // Clear interval when offline
+      if (locationIntervalRef.current) {
+        clearInterval(locationIntervalRef.current);
+        locationIntervalRef.current = null;
+      }
+    }
+
+    // Cleanup on unmount
+    return () => {
+      if (locationIntervalRef.current) {
+        clearInterval(locationIntervalRef.current);
+      }
+    };
+  }, [isOnline]);
+
+  const updateDriverLocation = async () => {
+    return new Promise((resolve) => {
+      if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            try {
+              await driverProfileAPI.updateLocation({
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude,
+              });
+              console.log("Location updated successfully");
+              resolve(true);
+            } catch (error) {
+              console.error("Error updating location:", error);
+              resolve(false);
+            }
+          },
+          (error) => {
+            console.error("Error getting location:", error);
+            resolve(false);
+          },
+          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
+        );
+      } else {
+        console.log("Geolocation not supported");
+        resolve(false);
+      }
+    });
+  };
+
   const handleToggle = async () => {
     const newStatus = !isOnline;
     const previousStatus = isOnline;
@@ -34,6 +91,11 @@ const StatusToggle = () => {
 
     try {
       await driverProfileAPI.toggleOnlineStatus(newStatus);
+
+      // Update location if going online
+      if (newStatus) {
+        await updateDriverLocation();
+      }
 
       // Notify socket server about availability change
       const driverStr = localStorage.getItem("driver");
