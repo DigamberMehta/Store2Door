@@ -58,13 +58,6 @@ export const driverProfileAPI = {
     return apiClient.put("/driver-profile/location", location);
   },
 
-  // Work Areas
-  updateWorkAreas: async (workAreas) => {
-    return apiClient.put("/driver-profile/work-areas", {
-      preferredWorkAreas: workAreas,
-    });
-  },
-
   // Statistics
   getStats: async () => {
     return apiClient.get("/driver-profile/stats");

@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import DashboardPage from "./pages/dashboard/DashboardPage";
 import DeliveriesPage from "./pages/delivery/DeliveriesPage";
 import DeliveriesHistoryPage from "./pages/delivery/DeliveriesHistoryPage";
+import AllDeliveriesPage from "./pages/delivery/AllDeliveriesPage";
 import OrderDetailPage from "./pages/orders/OrderDetailPage";
 import TrackingPage from "./pages/tracking/TrackingPage";
 import WalletPage from "./pages/earnings/WalletPage";
@@ -45,6 +46,14 @@ function App() {
           element={
             <ProtectedRoute>
               <DeliveriesHistoryPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/deliveries/all"
+          element={
+            <ProtectedRoute>
+              <AllDeliveriesPage />
             </ProtectedRoute>
           }
         />

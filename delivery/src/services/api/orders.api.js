@@ -24,6 +24,13 @@ export const ordersAPI = {
     });
   },
 
+  // Get all deliveries with pagination
+  getAllDeliveries: async (page = 1, limit = 20, status) => {
+    const params = { page, limit };
+    if (status) params.status = status;
+    return apiClient.get("/driver-profile/deliveries", { params });
+  },
+
   // Get order by ID
   getOrderById: async (orderId) => {
     return apiClient.get(`/driver-profile/orders/${orderId}`);
