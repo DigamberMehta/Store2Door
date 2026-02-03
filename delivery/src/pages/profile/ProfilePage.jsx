@@ -155,7 +155,6 @@ const ProfilePage = () => {
               }
             : null,
         preferences: {
-          areas: profileData.profile?.serviceAreas || [],
           maxDeliveriesPerDay:
             profileData.profile?.preferences?.maxDeliveriesPerDay || 20,
           preferredVehicleType:
@@ -256,6 +255,30 @@ const ProfilePage = () => {
       </div>
 
       <div className="px-3 space-y-3">
+        {/* Deliveries Section */}
+        <div>
+          <h3 className="text-[10px] font-bold text-zinc-500 mb-1.5 px-1 uppercase tracking-wider">
+            Deliveries
+          </h3>
+          <button
+            onClick={() => navigate("/deliveries/all")}
+            className="w-full bg-white/5 border border-white/5 rounded-xl p-3 flex items-center justify-between active:scale-[0.98] transition-all"
+          >
+            <div className="flex items-center gap-2.5">
+              <div className="bg-purple-500/10 p-2 rounded-lg">
+                <LuFileText className="w-4 h-4 text-purple-400" />
+              </div>
+              <div className="text-left">
+                <p className="font-bold text-[11px]">View All Deliveries</p>
+                <p className="text-[9px] text-zinc-500 mt-0.5">
+                  Complete delivery history
+                </p>
+              </div>
+            </div>
+            <LuChevronRight className="w-3.5 h-3.5 text-zinc-600" />
+          </button>
+        </div>
+
         {/* Document Verification Section */}
         <div>
           <h3 className="text-[10px] font-bold text-zinc-500 mb-1.5 px-1 uppercase tracking-wider">

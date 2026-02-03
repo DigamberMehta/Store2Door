@@ -5,6 +5,7 @@ import ActiveOrderCard from "../../components/home/ActiveOrderCard";
 import EarningCard from "../../components/home/EarningCard";
 import NotificationCard from "../../components/home/NotificationCard";
 import RecentTransactions from "../../components/home/RecentTransactions";
+import RecentDeliveries from "../../components/home/RecentDeliveries";
 import BottomNavigation from "../../components/home/BottomNavigation";
 import { ordersAPI } from "../../services/api";
 
@@ -13,6 +14,7 @@ const DashboardPage = () => {
     earnings: null,
     activeOrder: null,
     transactions: [],
+    deliveries: [],
     loading: true,
   });
 
@@ -23,11 +25,13 @@ const DashboardPage = () => {
   const fetchDashboardData = async () => {
     try {
       // Fetch all data in parallel
-      const [earningsRes, ordersRes, transactionsRes] = await Promise.all([
-        ordersAPI.getEarnings(),
-        ordersAPI.getMyOrders(),
-        ordersAPI.getTransactions(3),
-      ]);
+      const [earningsRes, ordersRes, transactionsRes, deliveriesRes] =
+        await Promise.all([
+          ordersAPI.getEarnings(),
+          ordersAPI.getMyOrders(),
+          ordersAPI.getTransactions(3),
+          ordersAPI.getAllDeliveries(1, 5),
+        ]);
 
       // Find active order
       const activeOrder = ordersRes.data?.orders?.find(
@@ -38,6 +42,7 @@ const DashboardPage = () => {
         earnings: earningsRes.data || {},
         activeOrder: activeOrder || null,
         transactions: transactionsRes.data || [],
+        deliveries: deliveriesRes.data?.orders || [],
         loading: false,
       });
     } catch (error) {
@@ -59,6 +64,10 @@ const DashboardPage = () => {
         loading={dashboardData.loading}
       />
       <NotificationCard />
+      <RecentDeliveries
+        deliveries={dashboardData.deliveries}
+        loading={dashboardData.loading}
+      />
       <RecentTransactions
         transactions={dashboardData.transactions}
         loading={dashboardData.loading}
