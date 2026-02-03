@@ -487,3 +487,167 @@ export const bulkUpdateUsers = async (req, res) => {
     });
   }
 };
+
+// Admin: Toggle rider status (isActive, isSuspended, isVerified, isAvailable)
+export const toggleRiderStatus = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { statusType, value, reason } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid user ID",
+      });
+    }
+
+    const profile = await DeliveryRiderProfile.findOne({ userId });
+
+    if (!profile) {
+      return res.status(404).json({
+        success: false,
+        message: "Rider profile not found",
+      });
+    }
+
+    const updateData = {};
+
+    switch (statusType) {
+      case "isActive":
+        updateData.isActive = value;
+        break;
+      case "isSuspended":
+        updateData.isSuspended = value;
+        if (value && reason) {
+          updateData.suspensionReason = reason;
+          updateData.suspendedAt = new Date();
+          updateData.suspendedBy = req.user.id;
+          updateData.isAvailable = false; // Auto set unavailable when suspended
+        }
+        break;
+      case "isVerified":
+        updateData.isVerified = value;
+        if (value) {
+          updateData.approvedAt = new Date();
+          updateData.approvedBy = req.user.id;
+        }
+        break;
+      case "isAvailable":
+        updateData.isAvailable = value;
+        break;
+      case "onboardingCompleted":
+        updateData.onboardingCompleted = value;
+        if (value) {
+          updateData.approvedAt = new Date();
+          updateData.approvedBy = req.user.id;
+        }
+        break;
+      default:
+        return res.status(400).json({
+          success: false,
+          message: "Invalid status type",
+        });
+    }
+
+    Object.assign(profile, updateData);
+    await profile.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Status updated successfully",
+      data: { profile },
+    });
+  } catch (error) {
+    console.error("Error toggling rider status:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to update status",
+    });
+  }
+};
+
+// Admin: Update rider vehicle information
+export const updateRiderVehicle = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const vehicleData = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid user ID",
+      });
+    }
+
+    const profile = await DeliveryRiderProfile.findOne({ userId });
+
+    if (!profile) {
+      return res.status(404).json({
+        success: false,
+        message: "Rider profile not found",
+      });
+    }
+
+    profile.vehicle = {
+      ...profile.vehicle,
+      ...vehicleData,
+    };
+
+    await profile.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Vehicle information updated successfully",
+      data: { vehicle: profile.vehicle },
+    });
+  } catch (error) {
+    console.error("Error updating vehicle:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to update vehicle information",
+    });
+  }
+};
+
+// Admin: Update rider bank details
+export const updateRiderBankDetails = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const bankData = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid user ID",
+      });
+    }
+
+    const profile = await DeliveryRiderProfile.findOne({ userId });
+
+    if (!profile) {
+      return res.status(404).json({
+        success: false,
+        message: "Rider profile not found",
+      });
+    }
+
+    profile.bankDetails = {
+      ...profile.bankDetails,
+      ...bankData,
+    };
+
+    await profile.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Bank details updated successfully",
+      data: { bankDetails: profile.bankDetails },
+    });
+  } catch (error) {
+    console.error("Error updating bank details:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to update bank details",
+    });
+  }
+};

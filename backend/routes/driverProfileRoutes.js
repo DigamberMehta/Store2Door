@@ -10,7 +10,6 @@ import {
   updateAvailability,
   updateLocation,
   getDriverStats,
-  updateWorkAreas,
   getBankAccount,
   updateBankAccount,
   toggleOnlineStatus,
@@ -60,9 +59,6 @@ router.put("/status", toggleOnlineStatus);
 
 // Location update route
 router.put("/location", updateLocation);
-
-// Work areas route
-router.put("/work-areas", updateWorkAreas);
 
 // Statistics route
 router.get("/stats", getDriverStats);

@@ -65,6 +65,16 @@ const documentsSchema = new mongoose.Schema(
       },
       rejectionReason: String,
       uploadedAt: Date,
+      verifiedAt: Date,
+      verifiedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+      rejectedAt: Date,
+      rejectedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
     },
     vehiclePhoto: {
       imageUrl: String,
@@ -80,6 +90,16 @@ const documentsSchema = new mongoose.Schema(
       },
       rejectionReason: String,
       uploadedAt: Date,
+      verifiedAt: Date,
+      verifiedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+      rejectedAt: Date,
+      rejectedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
     },
     idDocument: {
       number: {
@@ -100,6 +120,16 @@ const documentsSchema = new mongoose.Schema(
       },
       rejectionReason: String,
       uploadedAt: Date,
+      verifiedAt: Date,
+      verifiedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+      rejectedAt: Date,
+      rejectedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
     },
     workPermit: {
       number: {
@@ -121,6 +151,16 @@ const documentsSchema = new mongoose.Schema(
       },
       rejectionReason: String,
       uploadedAt: Date,
+      verifiedAt: Date,
+      verifiedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+      rejectedAt: Date,
+      rejectedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
     },
     driversLicence: {
       number: {
@@ -142,6 +182,16 @@ const documentsSchema = new mongoose.Schema(
       },
       rejectionReason: String,
       uploadedAt: Date,
+      verifiedAt: Date,
+      verifiedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+      rejectedAt: Date,
+      rejectedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
     },
     proofOfBankingDetails: {
       imageUrl: String,
@@ -157,6 +207,16 @@ const documentsSchema = new mongoose.Schema(
       },
       rejectionReason: String,
       uploadedAt: Date,
+      verifiedAt: Date,
+      verifiedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+      rejectedAt: Date,
+      rejectedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
     },
     proofOfAddress: {
       imageUrl: String,
@@ -172,6 +232,16 @@ const documentsSchema = new mongoose.Schema(
       },
       rejectionReason: String,
       uploadedAt: Date,
+      verifiedAt: Date,
+      verifiedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+      rejectedAt: Date,
+      rejectedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
     },
     vehicleLicense: {
       number: {
@@ -193,6 +263,16 @@ const documentsSchema = new mongoose.Schema(
       },
       rejectionReason: String,
       uploadedAt: Date,
+      verifiedAt: Date,
+      verifiedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+      rejectedAt: Date,
+      rejectedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
     },
     vehicleAssessment: {
       imageUrl: String,
@@ -209,6 +289,16 @@ const documentsSchema = new mongoose.Schema(
       rejectionReason: String,
       uploadedAt: Date,
       assessmentDate: Date,
+      verifiedAt: Date,
+      verifiedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+      rejectedAt: Date,
+      rejectedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
     },
     carrierAgreement: {
       imageUrl: String,
@@ -225,6 +315,16 @@ const documentsSchema = new mongoose.Schema(
       rejectionReason: String,
       uploadedAt: Date,
       signedDate: Date,
+      verifiedAt: Date,
+      verifiedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+      rejectedAt: Date,
+      rejectedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
     },
     // Legacy fields for backward compatibility
     drivingLicense: {
@@ -281,6 +381,16 @@ const bankDetailsSchema = new mongoose.Schema(
       maxlength: 50,
       select: false, // Hide by default for security
     },
+    routingNumber: {
+      type: String,
+      trim: true,
+      maxlength: 50,
+    },
+    branchCode: {
+      type: String,
+      trim: true,
+      maxlength: 50,
+    },
     bankName: {
       type: String,
       trim: true,
@@ -322,56 +432,6 @@ const emergencyContactSchema = new mongoose.Schema(
       type: String,
       trim: true,
       maxlength: 500,
-    },
-  },
-  {
-    _id: false,
-  },
-);
-
-// Work schedule sub-schema
-const workScheduleSchema = new mongoose.Schema(
-  {
-    day: {
-      type: String,
-      enum: [
-        "monday",
-        "tuesday",
-        "wednesday",
-        "thursday",
-        "friday",
-        "saturday",
-        "sunday",
-      ],
-      required: [true, "Day is required"],
-    },
-    isWorking: {
-      type: Boolean,
-      default: true,
-    },
-    startTime: {
-      type: String,
-      required: function () {
-        return this.isWorking;
-      },
-      validate: {
-        validator: function (v) {
-          return !this.isWorking || /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(v);
-        },
-        message: "Start time must be in HH:MM format",
-      },
-    },
-    endTime: {
-      type: String,
-      required: function () {
-        return this.isWorking;
-      },
-      validate: {
-        validator: function (v) {
-          return !this.isWorking || /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(v);
-        },
-        message: "End time must be in HH:MM format",
-      },
     },
   },
   {
@@ -500,12 +560,6 @@ const deliveryRiderProfileSchema = new mongoose.Schema(
     // Emergency Contact
     emergencyContact: emergencyContactSchema,
 
-    // Work Schedule - flexible to support both day-based and shift-based formats
-    workSchedule: {
-      type: mongoose.Schema.Types.Mixed,
-      default: [],
-    },
-
     // Current Status
     isAvailable: {
       type: Boolean,
@@ -538,12 +592,6 @@ const deliveryRiderProfileSchema = new mongoose.Schema(
         type: Date,
         default: Date.now,
       },
-    },
-
-    // Service Areas - flexible format to store area names as strings
-    serviceAreas: {
-      type: mongoose.Schema.Types.Mixed,
-      default: [],
     },
 
     // Performance and Statistics
@@ -611,7 +659,6 @@ deliveryRiderProfileSchema.index({
   "stats.completionRate": -1,
 });
 deliveryRiderProfileSchema.index({ lastActiveAt: -1 });
-deliveryRiderProfileSchema.index({ "serviceAreas.city": 1, isAvailable: 1 });
 
 // Geospatial index for location-based queries
 deliveryRiderProfileSchema.index({ currentLocation: "2dsphere" });
@@ -628,25 +675,6 @@ deliveryRiderProfileSchema.pre("save", function (next) {
     this.stats.completionRate = Math.round(
       (this.stats.completedDeliveries / this.stats.totalDeliveries) * 100,
     );
-  }
-
-  // Set default work schedule if none provided
-  if (this.workSchedule.length === 0) {
-    const days = [
-      "monday",
-      "tuesday",
-      "wednesday",
-      "thursday",
-      "friday",
-      "saturday",
-      "sunday",
-    ];
-    this.workSchedule = days.map((day) => ({
-      day,
-      isWorking: true,
-      startTime: "09:00",
-      endTime: "21:00",
-    }));
   }
 
   next();
@@ -720,24 +748,6 @@ deliveryRiderProfileSchema.methods.updateStats = function (deliveryData) {
   return this.save();
 };
 
-deliveryRiderProfileSchema.methods.isWorkingNow = function () {
-  const now = new Date();
-  const currentDay = now.toLocaleDateString("en-US", { weekday: "lowercase" });
-  const currentTime = now.toLocaleTimeString("en-US", {
-    hour12: false,
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-
-  const todaySchedule = this.workSchedule.find((s) => s.day === currentDay);
-  if (!todaySchedule || !todaySchedule.isWorking) return false;
-
-  return (
-    currentTime >= todaySchedule.startTime &&
-    currentTime <= todaySchedule.endTime
-  );
-};
-
 deliveryRiderProfileSchema.methods.suspend = function (reason, suspendedBy) {
   this.isSuspended = true;
   this.suspensionReason = reason;
@@ -751,6 +761,80 @@ deliveryRiderProfileSchema.methods.approve = function (approvedBy) {
   this.isVerified = true;
   this.approvedAt = new Date();
   this.approvedBy = approvedBy;
+  return this.save();
+};
+
+// Document verification methods
+deliveryRiderProfileSchema.methods.verifyDocument = function (
+  documentType,
+  verifiedBy,
+) {
+  const validDocuments = [
+    "profilePhoto",
+    "vehiclePhoto",
+    "idDocument",
+    "workPermit",
+    "driversLicence",
+    "proofOfBankingDetails",
+    "proofOfAddress",
+    "vehicleLicense",
+    "vehicleAssessment",
+    "carrierAgreement",
+  ];
+
+  if (!validDocuments.includes(documentType)) {
+    throw new Error(`Invalid document type: ${documentType}`);
+  }
+
+  if (!this.documents[documentType] || !this.documents[documentType].imageUrl) {
+    throw new Error(`Document ${documentType} has not been uploaded yet`);
+  }
+
+  this.documents[documentType].isVerified = true;
+  this.documents[documentType].status = "verified";
+  this.documents[documentType].rejectionReason = null;
+  this.documents[documentType].verifiedAt = new Date();
+  this.documents[documentType].verifiedBy = verifiedBy;
+
+  return this.save();
+};
+
+deliveryRiderProfileSchema.methods.rejectDocument = function (
+  documentType,
+  rejectedBy,
+  reason,
+) {
+  const validDocuments = [
+    "profilePhoto",
+    "vehiclePhoto",
+    "idDocument",
+    "workPermit",
+    "driversLicence",
+    "proofOfBankingDetails",
+    "proofOfAddress",
+    "vehicleLicense",
+    "vehicleAssessment",
+    "carrierAgreement",
+  ];
+
+  if (!validDocuments.includes(documentType)) {
+    throw new Error(`Invalid document type: ${documentType}`);
+  }
+
+  if (!this.documents[documentType] || !this.documents[documentType].imageUrl) {
+    throw new Error(`Document ${documentType} has not been uploaded yet`);
+  }
+
+  if (!reason || reason.trim() === "") {
+    throw new Error("Rejection reason is required");
+  }
+
+  this.documents[documentType].isVerified = false;
+  this.documents[documentType].status = "rejected";
+  this.documents[documentType].rejectionReason = reason;
+  this.documents[documentType].rejectedAt = new Date();
+  this.documents[documentType].rejectedBy = rejectedBy;
+
   return this.save();
 };
 
@@ -773,24 +857,6 @@ deliveryRiderProfileSchema.statics.findAvailableRiders = function (
       },
     },
   }).populate("userId", "name phone");
-};
-
-deliveryRiderProfileSchema.statics.findByServiceArea = function (
-  city,
-  zipCode = null,
-) {
-  const query = {
-    "serviceAreas.city": city,
-    isActive: true,
-    isVerified: true,
-    isSuspended: false,
-  };
-
-  if (zipCode) {
-    query["serviceAreas.zipCodes"] = zipCode;
-  }
-
-  return this.find(query).populate("userId", "name phone email");
 };
 
 deliveryRiderProfileSchema.statics.getTopPerformers = function (limit = 10) {

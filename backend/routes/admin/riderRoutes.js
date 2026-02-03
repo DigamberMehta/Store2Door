@@ -1,5 +1,10 @@
 import express from "express";
 import { authenticate, authorize } from "../../middleware/auth.js";
+import {
+  getActiveRiders,
+  getAllRiders,
+  getRiderStats,
+} from "../../controllers/adminRiderController.js";
 
 const router = express.Router();
 
@@ -7,11 +12,14 @@ const router = express.Router();
 router.use(authenticate);
 router.use(authorize("admin"));
 
-// Get all riders
-router.get("/", async (req, res) => {
-  // TODO: Implement get all riders
-  res.json({ success: true, message: "Get all riders endpoint" });
-});
+// Get rider statistics
+router.get("/stats/summary", getRiderStats);
+
+// Get all active riders with locations (for tracking)
+router.get("/active", getActiveRiders);
+
+// Get all riders with pagination
+router.get("/", getAllRiders);
 
 // Get rider by ID
 router.get("/:id", async (req, res) => {

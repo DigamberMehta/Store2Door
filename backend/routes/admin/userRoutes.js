@@ -7,6 +7,9 @@ import {
   toggleUserStatus,
   getUserStatsSummary,
   bulkUpdateUsers,
+  toggleRiderStatus,
+  updateRiderVehicle,
+  updateRiderBankDetails,
 } from "../../controllers/adminUserController.js";
 
 const router = express.Router();
@@ -31,5 +34,10 @@ router.patch("/:id/toggle-status", toggleUserStatus);
 
 // Bulk actions
 router.post("/bulk-update", bulkUpdateUsers);
+
+// Rider-specific routes
+router.patch("/:userId/rider/status", toggleRiderStatus);
+router.put("/:userId/rider/vehicle", updateRiderVehicle);
+router.put("/:userId/rider/bank-details", updateRiderBankDetails);
 
 export default router;
