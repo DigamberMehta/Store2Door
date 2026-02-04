@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import toast from "react-hot-toast";
+import { productAPI, categoryAPI } from "../../../../services/store/api";
 import testProducts from "./testData.json";
 import BasicInformationSection from "./create-product/BasicInformationSection";
 import PricingSection from "./create-product/PricingSection";
@@ -161,10 +161,8 @@ const CreateProductPage = () => {
 
   const fetchCategories = async () => {
     try {
-      const API_BASE_URL =
-        import.meta.env.VITE_API_URL || "http://localhost:3000/api";
-      const response = await axios.get(`${API_BASE_URL}/categories`);
-      const categoriesData = response.data.data || [];
+      const response = await categoryAPI.getAll();
+      const categoriesData = response.data || [];
       setCategories(categoriesData);
     } catch (error) {
       console.error("Error fetching categories:", error);
@@ -180,12 +178,8 @@ const CreateProductPage = () => {
 
   const fetchSubcategories = async (slug) => {
     try {
-      const API_BASE_URL =
-        import.meta.env.VITE_API_URL || "http://localhost:3000/api";
-      const response = await axios.get(
-        `${API_BASE_URL}/categories/${slug}/subcategories`,
-      );
-      setSubcategories(response.data.data || []);
+      const response = await categoryAPI.getSubcategories(slug);
+      setSubcategories(response.data || []);
     } catch (error) {
       console.error("Error fetching subcategories:", error);
     }
@@ -349,21 +343,9 @@ const CreateProductPage = () => {
       // Append product data as JSON
       formDataToSend.append("productData", JSON.stringify(productData));
 
-      const token = localStorage.getItem("storeAuthToken");
-      const API_BASE_URL =
-        import.meta.env.VITE_API_URL || "http://localhost:3000/api";
-      const response = await axios.post(
-        `${API_BASE_URL}/managers/products`,
-        formDataToSend,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
-          },
-        },
-      );
+      const response = await productAPI.create(formDataToSend);
 
-      if (response.data.success) {
+      if (response.success) {
         toast.success("Product created successfully!");
         navigate("/store/products");
       }

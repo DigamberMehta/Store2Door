@@ -31,4 +31,34 @@ export const uploadAPI = {
 
     return response.data;
   },
+
+  /**
+   * Upload product images
+   * @param {FileList|File[]} files - Image files to upload
+   * @returns {Promise<Array<{url: string, publicId: string}>>}
+   */
+  uploadProductImages: async (files) => {
+    const formData = new FormData();
+    
+    // Handle both FileList and array of Files
+    const fileArray = Array.from(files);
+    fileArray.forEach((file) => {
+      formData.append("images", file);
+    });
+
+    const token = localStorage.getItem("storeAuthToken");
+
+    const response = await axios.post(
+      `${API_BASE_URL}/upload/product-images`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
+
+    return response.data;
+  },
 };

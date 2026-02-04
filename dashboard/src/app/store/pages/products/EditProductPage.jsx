@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import axios from "axios";
+import toast from "react-hot-toast";
+import { productAPI, categoryAPI, uploadAPI } from "../../../../services/store/api";
 import BasicInformationSection from "./create-product/BasicInformationSection";
 import PricingSection from "./create-product/PricingSection";
 import ProductImagesSection from "./create-product/ProductImagesSection";
@@ -101,15 +102,9 @@ const EditProductPage = () => {
   const fetchProduct = async () => {
     try {
       setFetchingProduct(true);
-      const token = localStorage.getItem("storeAuthToken");
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_URL || "http://localhost:3000/api"}/managers/products/${id}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
+      const response = await productAPI.getById(id);
 
-      if (response.data.success) {
+      if (response.success) {
         const product = response.data.data;
 
         // Set selected category first
@@ -214,10 +209,8 @@ const EditProductPage = () => {
 
   const fetchCategories = async () => {
     try {
-      const API_BASE_URL =
-        import.meta.env.VITE_API_URL || "http://localhost:3000/api";
-      const response = await axios.get(`${API_BASE_URL}/categories`);
-      setCategories(response.data.data || []);
+      const response = await categoryAPI.getAll();
+      setCategories(response.data || []);
     } catch (error) {
       console.error("Error fetching categories:", error);
     }
@@ -231,12 +224,8 @@ const EditProductPage = () => {
 
   const fetchSubcategories = async (slug) => {
     try {
-      const API_BASE_URL =
-        import.meta.env.VITE_API_URL || "http://localhost:3000/api";
-      const response = await axios.get(
-        `${API_BASE_URL}/categories/${slug}/subcategories`,
-      );
-      setSubcategories(response.data.data || []);
+      const response = await categoryAPI.getSubcategories(slug);
+      setSubcategories(response.data || []);
     } catch (error) {
       console.error("Error fetching subcategories:", error);
     }
@@ -343,28 +332,13 @@ const EditProductPage = () => {
       let uploadedImages = [];
 
       if (imagesToUpload.length > 0) {
-        const uploadFormData = new FormData();
-        imagesToUpload.forEach((img) => {
-          uploadFormData.append("images", img.file);
-        });
+        const filesToUpload = imagesToUpload.map(img => img.file);
 
         try {
-          const token = localStorage.getItem("storeAuthToken");
-          const API_BASE_URL =
-            import.meta.env.VITE_API_URL || "http://localhost:3000/api";
-          const uploadResponse = await axios.post(
-            `${API_BASE_URL}/managers/upload/product-images`,
-            uploadFormData,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "multipart/form-data",
-              },
-            },
-          );
+          const uploadResponse = await uploadAPI.uploadProductImages(filesToUpload);
 
-          if (uploadResponse.data.success) {
-            uploadedImages = uploadResponse.data.data;
+          if (uploadResponse.success) {
+            uploadedImages = uploadResponse.data;
           }
         } catch (uploadError) {
           console.error("Upload error:", uploadError);
@@ -448,18 +422,9 @@ const EditProductPage = () => {
         images: finalImages,
       };
 
-      const token = localStorage.getItem("storeAuthToken");
-      const API_BASE_URL =
-        import.meta.env.VITE_API_URL || "http://localhost:3000/api";
-      const response = await axios.patch(
-        `${API_BASE_URL}/managers/products/${id}`,
-        productData,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
+      const response = await productAPI.update(id, productData);
 
-      if (response.data.success) {
+      if (response.success) {
         toast.success("Product updated successfully!");
         navigate("/store/products");
       }
