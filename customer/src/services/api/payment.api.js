@@ -42,6 +42,21 @@ export const refundPayment = (paymentId, refundData) => {
   return apiClient.post(`/payments/${paymentId}/refund`, refundData);
 };
 
+/**
+ * Initialize Paystack payment
+ */
+export const initializePaystackPayment = (paymentData) => {
+  return apiClient.post("/payments/paystack/initialize", paymentData);
+};
+
+/**
+ * Verify Paystack payment
+ */
+export const verifyPaystackPayment = (reference, paymentId) => {
+  const params = paymentId ? { paymentId } : {};
+  return apiClient.get(`/payments/paystack/verify/${reference}`, { params });
+};
+
 const paymentAPI = {
   createCheckout,
   createPayment,
@@ -49,6 +64,8 @@ const paymentAPI = {
   getPayment,
   getPayments,
   refundPayment,
+  initializePaystackPayment,
+  verifyPaystackPayment,
 };
 
 export default paymentAPI;

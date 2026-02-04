@@ -11,7 +11,7 @@ const updateAtlasCategories = async () => {
       process.env.MONGODB_URI ||
       "mongodb+srv://digambermehta2603_db_user:3QWGrKyCGOpImdgX@cluster0.pe4muvt.mongodb.net/door2door?retryWrites=true&w=majority";
     await mongoose.connect(mongoUri);
-    console.log("✅ Connected to MongoDB Atlas\n");
+    console.log(" Connected to MongoDB Atlas\n");
 
     // Update category names to match frontend
     const updates = [

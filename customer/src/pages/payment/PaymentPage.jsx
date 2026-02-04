@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { ChevronLeft, CreditCard, Loader, CheckCircle2 } from "lucide-react";
-import { createCheckout } from "../../services/api/payment.api";
+import { createCheckout, initializePaystackPayment } from "../../services/api/payment.api";
 import { createOrder } from "../../services/api/order.api";
 import { formatPrice } from "../../utils/formatPrice";
 import toast from "react-hot-toast";
@@ -12,6 +12,7 @@ const PaymentPage = () => {
   const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("yoco_card");
+  const [paymentInitiated, setPaymentInitiated] = useState(false);
 
   // Get order data from location state or URL params
   const orderData = location.state?.orderData || {
@@ -24,7 +25,15 @@ const PaymentPage = () => {
     items: location.state?.orderData?.items || [],
   };
 
-  const handleCardPayment = async () => {
+  // Auto-trigger payment when page loads
+  useEffect(() => {
+    if (!paymentInitiated && orderData.deliveryAddress && orderData.items.length > 0) {
+      setPaymentInitiated(true);
+      handlePaystackPayment();
+    }
+  }, []);
+
+  const handlePaystackPayment = async () => {
     try {
       if (!orderData.deliveryAddress) {
         toast.error("Delivery address is required");
@@ -57,44 +66,106 @@ const PaymentPage = () => {
         deliveryAddress,
         couponCode: orderData.couponCode,
         tip: orderData.tip,
-        paymentMethod: "yoco_card",
+        paymentMethod: "paystack_card",
         paymentStatus: "pending",
       };
 
       const orderResponse = await createOrder(orderPayload);
       const orderId = orderResponse.order._id;
-      const calculatedTotal = orderResponse.order.total; // Use backend-calculated total
+      const calculatedTotal = orderResponse.order.total;
 
-      // Create Yoco checkout session with redirect URLs
+      // Initialize Paystack payment
       const baseUrl = window.location.origin;
-      const checkoutResponse = await createCheckout({
+      const paystackResponse = await initializePaystackPayment({
         orderId,
-        amount: calculatedTotal, // Use backend total, not frontend
+        amount: calculatedTotal,
         currency: "ZAR",
-        successUrl: `${baseUrl}/payment/success?orderId=${orderId}`,
-        cancelUrl: `${baseUrl}/payment`,
-        failureUrl: `${baseUrl}/payment/failure?orderId=${orderId}`,
+        callbackUrl: `${baseUrl}/payment/verify`,
       });
 
-      // Redirect to Yoco checkout page
-      if (checkoutResponse.redirectUrl) {
-        window.location.href = checkoutResponse.redirectUrl;
+      // Redirect to Paystack payment page
+      if (paystackResponse.authorization_url) {
+        window.location.href = paystackResponse.authorization_url;
       } else {
-        throw new Error("No redirect URL received from payment gateway");
+        throw new Error("No authorization URL received from Paystack");
       }
     } catch (error) {
-      console.error("Payment error:", error);
+      console.error("Paystack payment error:", error);
       toast.error(error.message || "Payment failed. Please try again.");
       setLoading(false);
     }
   };
 
+  // YOCO PAYMENT - COMMENTED OUT (Now using Paystack)
+  // const handleCardPayment = async () => {
+  //   try {
+  //     if (!orderData.deliveryAddress) {
+  //       toast.error("Delivery address is required");
+  //       return;
+  //     }
+
+  //     // Ensure deliveryAddress has proper GeoJSON format
+  //     const deliveryAddress = orderData.deliveryAddress.location?.coordinates
+  //       ? orderData.deliveryAddress
+  //       : {
+  //           ...orderData.deliveryAddress,
+  //           location: {
+  //             type: "Point",
+  //             coordinates: [
+  //               orderData.deliveryAddress.longitude || 28.0473,
+  //               orderData.deliveryAddress.latitude || -26.2041,
+  //             ],
+  //           },
+  //         };
+
+  //     setLoading(true);
+
+  //     // Send only essential data - backend calculates prices
+  //     const orderPayload = {
+  //       items: orderData.items.map((item) => ({
+  //         product: item.productId?._id || item.productId,
+  //         quantity: item.quantity,
+  //         selectedVariant: item.selectedVariant,
+  //       })),
+  //       deliveryAddress,
+  //       couponCode: orderData.couponCode,
+  //       tip: orderData.tip,
+  //       paymentMethod: "yoco_card",
+  //       paymentStatus: "pending",
+  //     };
+
+  //     const orderResponse = await createOrder(orderPayload);
+  //     const orderId = orderResponse.order._id;
+  //     const calculatedTotal = orderResponse.order.total; // Use backend-calculated total
+
+  //     // Create Yoco checkout session with redirect URLs
+  //     const baseUrl = window.location.origin;
+  //     const checkoutResponse = await createCheckout({
+  //       orderId,
+  //       amount: calculatedTotal, // Use backend total, not frontend
+  //       currency: "ZAR",
+  //       successUrl: `${baseUrl}/payment/success?orderId=${orderId}`,
+  //       cancelUrl: `${baseUrl}/payment`,
+  //       failureUrl: `${baseUrl}/payment/failure?orderId=${orderId}`,
+  //     });
+
+  //     // Redirect to Yoco checkout page
+  //     if (checkoutResponse.redirectUrl) {
+  //       window.location.href = checkoutResponse.redirectUrl;
+  //     } else {
+  //       throw new Error("No redirect URL received from payment gateway");
+  //     }
+  //   } catch (error) {
+  //     console.error("Payment error:", error);
+  //     toast.error(error.message || "Payment failed. Please try again.");
+  //     setLoading(false);
+  //   }
+  // };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-
-    if (paymentMethod === "yoco_card") {
-      handleCardPayment();
-    }
+    // Directly trigger Paystack payment
+    handlePaystackPayment();
   };
 
   return (
@@ -161,75 +232,26 @@ const PaymentPage = () => {
           </div>
         </div>
 
-        {/* Payment Methods */}
+        {/* Payment Button */}
         <form onSubmit={handleSubmit} className="space-y-4">
-          <h2 className="text-sm font-semibold text-white/80 mb-3">
-            Select Payment Method
-          </h2>
-
-          <div className="space-y-3">
-            {/* Card Payment */}
-            <label
-              className={`flex items-center p-4 border-2 rounded-xl cursor-pointer transition-all ${
-                paymentMethod === "yoco_card"
-                  ? "border-[rgb(49,134,22)] bg-[rgb(49,134,22)]/10"
-                  : "border-white/10 bg-white/5 hover:border-white/20"
-              }`}
-            >
-              <input
-                type="radio"
-                name="paymentMethod"
-                value="yoco_card"
-                checked={paymentMethod === "yoco_card"}
-                onChange={(e) => setPaymentMethod(e.target.value)}
-                className="mr-3 accent-[rgb(49,134,22)]"
-                disabled={loading}
-              />
-              <CreditCard className="w-5 h-5 mr-3 text-white/60" />
-              <div className="flex-1">
-                <div className="font-medium text-white">Card Payment</div>
-                <div className="text-xs text-white/50">
-                  Pay securely with your credit/debit card
-                </div>
-              </div>
-              {paymentMethod === "yoco_card" && (
-                <CheckCircle2 className="w-5 h-5 text-[rgb(49,134,22)]" />
-              )}
-            </label>
-          </div>
-
-          {/* Security Note */}
-          {paymentMethod === "yoco_card" && (
-            <div className="mt-4 p-3 bg-white/5 border border-white/10 rounded-lg">
-              <p className="text-xs text-white/60 text-center">
-                Your payment is secured by Yoco. We never store your card
-                details.
-              </p>
-            </div>
-          )}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-[rgb(49,134,22)] text-white py-4 rounded-xl font-semibold hover:bg-[rgb(49,134,22)]/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center text-lg"
+          >
+            {loading ? (
+              <>
+                <Loader className="w-5 h-5 mr-2 animate-spin" />
+                Processing Payment...
+              </>
+            ) : (
+              <>
+                <CreditCard className="w-5 h-5 mr-2" />
+                Pay {formatPrice(orderData.total)}
+              </>
+            )}
+          </button>
         </form>
-      </div>
-
-      {/* Fixed Bottom Button */}
-      <div className="fixed bottom-0 left-0 right-0 bg-black/40 backdrop-blur-md border-t border-white/10 px-3 py-3">
-        <button
-          onClick={handleSubmit}
-          disabled={loading}
-          className="w-full bg-[rgb(49,134,22)] text-white py-3 rounded-lg font-semibold hover:bg-[rgb(49,134,22)]/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
-        >
-          {loading ? (
-            <>
-              <Loader className="w-5 h-5 mr-2 animate-spin" />
-              Processing...
-            </>
-          ) : (
-            <>
-              {paymentMethod === "cash_on_delivery"
-                ? "Place Order"
-                : `Pay ${formatPrice(orderData.total)}`}
-            </>
-          )}
-        </button>
       </div>
     </div>
   );
