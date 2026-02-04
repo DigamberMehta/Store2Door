@@ -37,9 +37,8 @@ const DashboardPage = () => {
       );
 
       // Get only completed deliveries from orders
-      const completedDeliveries = ordersRes.data?.orders?.filter(
-        (o) => o.status === "delivered",
-      ) || [];
+      const completedDeliveries =
+        ordersRes.data?.orders?.filter((o) => o.status === "delivered") || [];
 
       setDashboardData({
         earnings: earningsRes.data || {},
