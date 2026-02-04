@@ -103,7 +103,7 @@ const EditProductPage = () => {
       setFetchingProduct(true);
       const token = localStorage.getItem("storeAuthToken");
       const response = await axios.get(
-        `http://localhost:3000/api/managers/products/${id}`,
+        `${import.meta.env.VITE_API_URL || "http://localhost:3000/api"}/managers/products/${id}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         },
@@ -214,7 +214,9 @@ const EditProductPage = () => {
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get("http://localhost:3000/api/categories");
+      const API_BASE_URL =
+        import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+      const response = await axios.get(`${API_BASE_URL}/categories`);
       setCategories(response.data.data || []);
     } catch (error) {
       console.error("Error fetching categories:", error);
@@ -229,8 +231,10 @@ const EditProductPage = () => {
 
   const fetchSubcategories = async (slug) => {
     try {
+      const API_BASE_URL =
+        import.meta.env.VITE_API_URL || "http://localhost:3000/api";
       const response = await axios.get(
-        `http://localhost:3000/api/categories/${slug}/subcategories`,
+        `${API_BASE_URL}/categories/${slug}/subcategories`,
       );
       setSubcategories(response.data.data || []);
     } catch (error) {
@@ -346,8 +350,10 @@ const EditProductPage = () => {
 
         try {
           const token = localStorage.getItem("storeAuthToken");
+          const API_BASE_URL =
+            import.meta.env.VITE_API_URL || "http://localhost:3000/api";
           const uploadResponse = await axios.post(
-            "http://localhost:3000/api/managers/upload/product-images",
+            `${API_BASE_URL}/managers/upload/product-images`,
             uploadFormData,
             {
               headers: {
@@ -443,8 +449,10 @@ const EditProductPage = () => {
       };
 
       const token = localStorage.getItem("storeAuthToken");
-      const response = await axios.put(
-        `http://localhost:3000/api/managers/products/${id}`,
+      const API_BASE_URL =
+        import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+      const response = await axios.patch(
+        `${API_BASE_URL}/managers/products/${id}`,
         productData,
         {
           headers: { Authorization: `Bearer ${token}` },

@@ -161,7 +161,9 @@ const CreateProductPage = () => {
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get("http://localhost:3000/api/categories");
+      const API_BASE_URL =
+        import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+      const response = await axios.get(`${API_BASE_URL}/categories`);
       const categoriesData = response.data.data || [];
       setCategories(categoriesData);
     } catch (error) {
@@ -178,8 +180,10 @@ const CreateProductPage = () => {
 
   const fetchSubcategories = async (slug) => {
     try {
+      const API_BASE_URL =
+        import.meta.env.VITE_API_URL || "http://localhost:3000/api";
       const response = await axios.get(
-        `http://localhost:3000/api/categories/${slug}/subcategories`,
+        `${API_BASE_URL}/categories/${slug}/subcategories`,
       );
       setSubcategories(response.data.data || []);
     } catch (error) {
@@ -346,8 +350,10 @@ const CreateProductPage = () => {
       formDataToSend.append("productData", JSON.stringify(productData));
 
       const token = localStorage.getItem("storeAuthToken");
+      const API_BASE_URL =
+        import.meta.env.VITE_API_URL || "http://localhost:3000/api";
       const response = await axios.post(
-        "http://localhost:3000/api/managers/products",
+        `${API_BASE_URL}/managers/products`,
         formDataToSend,
         {
           headers: {
