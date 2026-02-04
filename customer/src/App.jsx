@@ -7,6 +7,7 @@ import {
 } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "./context/AuthContext";
+import { LocationProvider } from "./context/LocationContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import HomePage from "./pages/homepage/HomePage";
 import StoreDetailPage from "./pages/store/StoreDetailPage";
@@ -29,6 +30,7 @@ import OrderDeliveredPage from "./pages/orders/OrderDeliveredPage";
 import PaymentPage from "./pages/payment/PaymentPage";
 import PaymentSuccessPage from "./pages/payment/PaymentSuccessPage";
 import PaymentFailurePage from "./pages/payment/PaymentFailurePage";
+import PaymentVerifyPage from "./pages/payment/PaymentVerifyPage";
 import {
   AboutUsPage,
   TermsOfServicePage,
@@ -121,6 +123,7 @@ function AppContent() {
         />
         <Route path="/payment/success" element={<PaymentSuccessPage />} />
         <Route path="/payment/failure" element={<PaymentFailurePage />} />
+        <Route path="/payment/verify" element={<PaymentVerifyPage />} />
         <Route
           path="/profile"
           element={
@@ -242,7 +245,9 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <AppContent />
+        <LocationProvider>
+          <AppContent />
+        </LocationProvider>
       </AuthProvider>
     </Router>
   );
