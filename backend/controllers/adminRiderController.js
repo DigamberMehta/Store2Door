@@ -2,6 +2,7 @@ import DeliveryRiderProfile from "../models/DeliveryRiderProfile.js";
 import User from "../models/User.js";
 import Order from "../models/Order.js";
 import locationService from "../services/locationService.js";
+import { emitToUser } from "../config/socket.js";
 
 /**
  * Get all active riders with their current locations
@@ -11,22 +12,36 @@ export const getActiveRiders = async (req, res) => {
   try {
     const { includeOffline = false } = req.query;
 
-    // Build query - only require verified and not suspended
-    // Don't require isActive since riders actively delivering might have it set incorrectly
+    // Build query - for tracking, get all riders (don't filter by verification status)
+    // but exclude only suspended riders
     const query = {
-      isVerified: true,
       isSuspended: false,
     };
 
     const riders = await DeliveryRiderProfile.find(query)
       .populate("userId", "name email phone")
       .select(
-        "userId vehicle isAvailable stats lastActiveAt onboardingCompleted",
+        "userId vehicle isAvailable stats lastActiveAt onboardingCompleted isVerified",
       )
       .lean();
 
+    console.log(`[DEBUG] Found ${riders.length} riders in DB (not suspended)`);
+    console.log(
+      `[DEBUG] Breakdown: Available=${riders.filter((r) => r.isAvailable).length}, Offline=${riders.filter((r) => !r.isAvailable).length}, Verified=${riders.filter((r) => r.isVerified).length}`,
+    );
+
+    console.log(
+      `[DEBUG] Initial riders: ${riders.length} (Available: ${riders.filter((r) => r.isAvailable).length}, Offline: ${riders.filter((r) => !r.isAvailable).length})`,
+    );
+
+    // Filter out riders with null userId (orphaned records)
+    const validRiders = riders.filter((rider) => rider.userId);
+    console.log(
+      `[DEBUG] Valid riders: ${validRiders.length} (excluded ${riders.length - validRiders.length} riders with null userId)`,
+    );
+
     // Get locations from Redis for all riders
-    const riderIds = riders.map((rider) => rider.userId._id.toString());
+    const riderIds = validRiders.map((rider) => rider.userId._id.toString());
     const locations = await locationService.getLocations(riderIds);
 
     // Get active orders for all riders (use correct field and status names)
@@ -58,30 +73,30 @@ export const getActiveRiders = async (req, res) => {
       }
     });
 
-    // Merge location data with rider profiles
-    const ridersWithLocation = riders
-      .map((rider) => {
-        const riderId = rider.userId._id.toString();
-        const location = locationMap[riderId];
-        const activeOrder = orderMap[riderId];
+    // Merge location data with rider profiles - return ALL valid riders
+    const ridersWithLocation = validRiders.map((rider) => {
+      const riderId = rider.userId._id.toString();
+      const location = locationMap[riderId];
+      const activeOrder = orderMap[riderId];
 
-        // Only include riders with fresh location data
-        if (location && locationService.isLocationFresh(location)) {
-          return {
-            ...rider,
-            currentLocation: {
+      return {
+        ...rider,
+        currentLocation: location
+          ? {
               type: "Point",
               coordinates: location.coordinates,
               lastUpdated: location.lastUpdated,
-            },
-            latitude: location.latitude,
-            longitude: location.longitude,
-            activeOrder: activeOrder || null,
-          };
-        }
-        return null;
-      })
-      .filter(Boolean);
+            }
+          : null,
+        latitude: location?.latitude || null,
+        longitude: location?.longitude || null,
+        activeOrder: activeOrder || null,
+      };
+    });
+
+    console.log(
+      `[DEBUG] Total riders: ${ridersWithLocation.length} (Online: ${ridersWithLocation.filter((r) => r.latitude && r.longitude).length}, Offline/No location: ${ridersWithLocation.filter((r) => !r.latitude || !r.longitude).length})`,
+    );
 
     res.json({
       success: true,
@@ -210,6 +225,165 @@ export const getRiderStats = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to fetch rider statistics",
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * Assign order to a rider (Admin)
+ * @route POST /api/admin/orders/:orderId/assign
+ */
+export const assignOrderToRider = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { riderId } = req.body;
+
+    if (!riderId) {
+      return res.status(400).json({
+        success: false,
+        message: "Rider ID is required",
+      });
+    }
+
+    // Get order
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    // Check if order can be assigned
+    if (order.status === "delivered" || order.status === "cancelled") {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot assign ${order.status} order`,
+      });
+    }
+
+    // Get rider profile
+    const riderProfile = await DeliveryRiderProfile.findOne({
+      userId: riderId,
+    });
+    if (!riderProfile) {
+      return res.status(404).json({
+        success: false,
+        message: "Rider profile not found",
+      });
+    }
+
+    // Check if rider is available and verified
+    if (!riderProfile.isVerified) {
+      return res.status(400).json({
+        success: false,
+        message: "Rider is not verified",
+      });
+    }
+
+    if (riderProfile.isSuspended) {
+      return res.status(400).json({
+        success: false,
+        message: "Rider is suspended",
+      });
+    }
+
+    // Assign rider to order
+    const previousRiderId = order.riderId;
+    order.riderId = riderId;
+
+    // Update status to assigned if it's pending
+    if (order.status === "pending") {
+      order.status = "assigned";
+    }
+
+    await order.save();
+
+    // Emit socket events
+    if (previousRiderId) {
+      emitToUser(previousRiderId.toString(), "order:updated", order);
+    }
+    emitToUser(riderId, "order:assigned", order);
+    emitToUser(order.customerId.toString(), "order:updated", order);
+
+    res.json({
+      success: true,
+      message: "Order assigned successfully",
+      data: { order },
+    });
+  } catch (error) {
+    console.error("Error assigning order:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to assign order",
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * Unassign order from rider (Admin)
+ * @route POST /api/admin/orders/:orderId/unassign
+ */
+export const unassignOrderFromRider = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+
+    // Get order
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    // Check if order has a rider
+    if (!order.riderId) {
+      return res.status(400).json({
+        success: false,
+        message: "Order has no assigned rider",
+      });
+    }
+
+    // Check if order can be unassigned
+    if (order.status === "delivered" || order.status === "cancelled") {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot unassign ${order.status} order`,
+      });
+    }
+
+    // If order is picked up or on the way, don't allow unassign
+    if (order.status === "picked_up" || order.status === "on_the_way") {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Cannot unassign order that is already picked up or in transit",
+      });
+    }
+
+    const previousRiderId = order.riderId.toString();
+    order.riderId = null;
+    order.status = "pending"; // Reset to pending
+
+    await order.save();
+
+    // Emit socket event to previous rider
+    emitToUser(previousRiderId, "order:unassigned", order);
+    emitToUser(order.customerId.toString(), "order:updated", order);
+
+    res.json({
+      success: true,
+      message: "Order unassigned successfully",
+      data: { order },
+    });
+  } catch (error) {
+    console.error("Error unassigning order:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to unassign order",
       error: error.message,
     });
   }

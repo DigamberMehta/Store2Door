@@ -4,6 +4,8 @@ import {
   getActiveRiders,
   getAllRiders,
   getRiderStats,
+  assignOrderToRider,
+  unassignOrderFromRider,
 } from "../../controllers/adminRiderController.js";
 
 const router = express.Router();
@@ -14,6 +16,12 @@ router.use(authorize("admin"));
 
 // Get rider statistics
 router.get("/stats/summary", getRiderStats);
+
+// Assign order to rider
+router.post("/orders/:orderId/assign", assignOrderToRider);
+
+// Unassign order from rider
+router.post("/orders/:orderId/unassign", unassignOrderFromRider);
 
 // Get all active riders with locations (for tracking)
 router.get("/active", getActiveRiders);

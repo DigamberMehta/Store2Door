@@ -1,5 +1,6 @@
 import express from "express";
 import { authenticate, authorize } from "../../middleware/auth.js";
+import Order from "../../models/Order.js";
 
 const router = express.Router();
 
@@ -9,8 +10,52 @@ router.use(authorize("admin"));
 
 // Get all orders
 router.get("/", async (req, res) => {
-  // TODO: Implement get all orders
-  res.json({ success: true, message: "Get all orders endpoint" });
+  try {
+    const { status, page = 1, limit = 50 } = req.query;
+
+    const query = {};
+    if (status) {
+      if (Array.isArray(status)) {
+        query.status = { $in: status };
+      } else {
+        query.status = status;
+      }
+    }
+
+    const skip = (page - 1) * limit;
+
+    const [orders, total] = await Promise.all([
+      Order.find(query)
+        .populate("customerId", "name email phone")
+        .populate("storeId", "name address phone")
+        .populate("riderId", "name email phone")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(parseInt(limit))
+        .lean(),
+      Order.countDocuments(query),
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        orders,
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total,
+          pages: Math.ceil(total / limit),
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching orders:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch orders",
+      error: error.message,
+    });
+  }
 });
 
 // Get order by ID
