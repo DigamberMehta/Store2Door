@@ -25,24 +25,27 @@ const DashboardPage = () => {
   const fetchDashboardData = async () => {
     try {
       // Fetch all data in parallel
-      const [earningsRes, ordersRes, transactionsRes, deliveriesRes] =
-        await Promise.all([
-          ordersAPI.getEarnings(),
-          ordersAPI.getMyOrders(),
-          ordersAPI.getTransactions(3),
-          ordersAPI.getAllDeliveries(1, 5),
-        ]);
+      const [earningsRes, ordersRes, transactionsRes] = await Promise.all([
+        ordersAPI.getEarnings(),
+        ordersAPI.getMyOrders(),
+        ordersAPI.getTransactions(3),
+      ]);
 
       // Find active order
       const activeOrder = ordersRes.data?.orders?.find(
         (o) => o.status === "assigned" || o.status === "on_the_way",
       );
 
+      // Get only completed deliveries from orders
+      const completedDeliveries = ordersRes.data?.orders?.filter(
+        (o) => o.status === "delivered",
+      ) || [];
+
       setDashboardData({
         earnings: earningsRes.data || {},
         activeOrder: activeOrder || null,
         transactions: transactionsRes.data || [],
-        deliveries: deliveriesRes.data?.orders || [],
+        deliveries: completedDeliveries.slice(0, 5), // Limit to 5 recent deliveries
         loading: false,
       });
     } catch (error) {
