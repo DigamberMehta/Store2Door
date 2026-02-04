@@ -38,9 +38,18 @@ const Header = ({
           (addr) => addr._id === response.data.defaultAddress,
         );
         if (defaultAddr) {
+          const fullAddress = [
+            defaultAddr.street,
+            defaultAddr.city,
+            defaultAddr.province,
+            defaultAddr.postalCode,
+          ]
+            .filter(Boolean)
+            .join(", ");
+
           setAddressData({
             label: defaultAddr.label,
-            address: `${defaultAddr.street}, ${defaultAddr.city}`,
+            address: fullAddress,
           });
         }
       }
@@ -68,8 +77,9 @@ const Header = ({
     if (detectedAddress) {
       return (
         <span className="font-normal text-xs flex items-center gap-1.5">
-          <span className="bg-[rgb(49,134,22)]/20 text-[rgb(49,134,22)] px-1.5 py-0.5 rounded-[4px] text-[10px] uppercase font-bold tracking-tighter">Nearby</span>
-          <span className="text-white/80 truncate max-w-[200px]">{detectedAddress}</span>
+          <span className="text-white/80 truncate max-w-[200px]">
+            {detectedAddress}
+          </span>
         </span>
       );
     }

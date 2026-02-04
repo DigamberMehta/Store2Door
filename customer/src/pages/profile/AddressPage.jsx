@@ -151,13 +151,50 @@ const AddressPage = () => {
     }
   };
 
-  const handleLocationSelected = (lat, lng) => {
+  const handleLocationSelected = async (lat, lng) => {
     setFormData((prev) => ({
       ...prev,
       latitude: lat,
       longitude: lng,
     }));
     setShowMapPicker(false);
+
+    // Auto-fill address details
+    try {
+      setLoading(true);
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
+      );
+      const data = await res.json();
+      if (data && data.address) {
+        const addr = data.address;
+
+        // Construct detailed street address
+        const streetParts = [
+          addr.amenity,
+          addr.building,
+          addr.house_number,
+          addr.road,
+          addr.suburb,
+          addr.neighbourhood,
+          addr.hamlet,
+          addr.industrial,
+        ].filter(Boolean);
+
+        setFormData((prev) => ({
+          ...prev,
+          street: streetParts.join(", ") || addr.road || "",
+          city: addr.city || addr.town || addr.village || addr.county || "",
+          province: addr.state || "",
+          postalCode: addr.postcode || "",
+          country: addr.country || "IN",
+        }));
+      }
+    } catch (err) {
+      console.error("Reverse geocoding failed:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -493,8 +530,8 @@ const AddressPage = () => {
                         )}
                       </div>
                       <p className="text-white/60 text-xs leading-relaxed">
-                        {address.street}, {address.city}, {address.state}{" "}
-                        {address.zipCode}
+                        {address.street}, {address.city}, {address.province}{" "}
+                        {address.postalCode}, {address.country}
                       </p>
                       {address.instructions && (
                         <p className="text-white/40 text-[11px] mt-1">

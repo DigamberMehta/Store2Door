@@ -1,67 +1,17 @@
-import { useState, useEffect } from 'react';
+// Re-export from LocationContext for backward compatibility
+import { useContext } from 'react';
+import { LocationContext } from '../context/LocationContext';
 
 /**
- * Hook to get user's current geolocation
- * @returns {Object} { latitude, longitude, loading, error }
+ * Hook to get user's current geolocation from shared context
+ * @returns {Object} { latitude, longitude, address, loading, error }
  */
 export const useUserLocation = () => {
-  const [location, setLocation] = useState({
-    latitude: null,
-    longitude: null,
-    address: null,
-    loading: true,
-    error: null
-  });
-
-  useEffect(() => {
-    console.log("📍 Initializing geolocation...");
-    
-    if (!navigator.geolocation) {
-      setLocation(prev => ({ ...prev, loading: false, error: 'Geolocation not supported' }));
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
-        console.log("📍 Geolocation success:", latitude, longitude);
-        
-        // Attempt reverse geocoding
-        let addressStr = null;
-        try {
-          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`);
-          const data = await res.json();
-          if (data && data.display_name) {
-            // Simplify address: use suburb/city or road
-            const addr = data.address;
-            addressStr = addr.suburb || addr.city_district || addr.city || addr.town || addr.village || addr.road || "Detected Location";
-            console.log("📍 Reverse geocode success:", addressStr);
-          }
-        } catch (err) {
-          console.error("📍 Reverse geocoding failed:", err);
-        }
-
-        setLocation({
-          latitude,
-          longitude,
-          address: addressStr,
-          loading: false,
-          error: null
-        });
-      },
-      (error) => {
-        console.error("📍 Geolocation error:", error);
-        setLocation(prev => ({
-          ...prev,
-          loading: false,
-          error: 'Location access denied'
-        }));
-      },
-      { enableHighAccuracy: false, timeout: 15000 }
-    );
-  }, []);
-
-  return location;
+  const context = useContext(LocationContext);
+  if (!context) {
+    throw new Error('useUserLocation must be used within a LocationProvider');
+  }
+  return context;
 };
 
 /**

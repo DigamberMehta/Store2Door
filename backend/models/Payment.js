@@ -99,7 +99,7 @@ const paymentSchema = new mongoose.Schema(
     // Payment method
     method: {
       type: String,
-      enum: ["yoco_card", "yoco_eft", "yoco_instant_eft"],
+      enum: ["yoco_card", "yoco_eft", "yoco_instant_eft", "paystack_card", "paystack_bank", "paystack_ussd", "paystack_mobile_money", "paystack_eft"],
       required: [true, "Payment method is required"],
     },
 
@@ -111,6 +111,7 @@ const paymentSchema = new mongoose.Schema(
         "processing",
         "requires_action",
         "succeeded",
+        "completed",
         "failed",
         "cancelled",
         "refunded",
@@ -149,6 +150,23 @@ const paymentSchema = new mongoose.Schema(
     yocoChargeId: {
       type: String,
       trim: true,
+    },
+
+    // Paystack payment fields
+    paystackReference: {
+      type: String,
+      trim: true,
+    },
+    paystackAccessCode: {
+      type: String,
+      trim: true,
+    },
+    paystackPaymentId: {
+      type: String,
+      trim: true,
+    },
+    paystackResponse: {
+      type: mongoose.Schema.Types.Mixed,
     },
 
     // Card details (for card payments)
@@ -271,6 +289,8 @@ paymentSchema.index({ userId: 1, createdAt: -1 });
 paymentSchema.index({ status: 1, createdAt: -1 });
 paymentSchema.index({ yocoPaymentId: 1 }, { sparse: true });
 paymentSchema.index({ yocoCheckoutId: 1 }, { sparse: true });
+paymentSchema.index({ paystackReference: 1 }, { sparse: true });
+paymentSchema.index({ paystackPaymentId: 1 }, { sparse: true });
 
 // Pre-save middleware
 paymentSchema.pre("save", function (next) {

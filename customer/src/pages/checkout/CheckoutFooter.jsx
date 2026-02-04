@@ -57,6 +57,35 @@ const CheckoutFooter = ({ total, orderData }) => {
       return;
     }
 
+    // Validate distance from store (max 7km)
+    if (selectedAddress && orderData?.items?.[0]?.storeId) {
+      const store = orderData.items[0].storeId;
+      if (store?.address?.latitude && store?.address?.longitude) {
+        const userLat = selectedAddress.latitude || selectedAddress.location?.coordinates?.[1];
+        const userLon = selectedAddress.longitude || selectedAddress.location?.coordinates?.[0];
+        
+        if (userLat && userLon) {
+          const toRad = (deg) => (deg * Math.PI) / 180;
+          const R = 6371; // Earth's radius in km
+          const dLat = toRad(store.address.latitude - userLat);
+          const dLon = toRad(store.address.longitude - userLon);
+          const a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(toRad(userLat)) *
+              Math.cos(toRad(store.address.latitude)) *
+              Math.sin(dLon / 2) *
+              Math.sin(dLon / 2);
+          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+          const distance = R * c;
+          
+          if (distance > 7) {
+            toast.error(`Delivery address is ${distance.toFixed(1)}km away. Maximum delivery distance is 7km. Please select a closer address.`);
+            return;
+          }
+        }
+      }
+    }
+
     // Convert address to GeoJSON format for backend
     let transformedAddress;
     
