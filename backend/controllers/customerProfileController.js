@@ -43,7 +43,7 @@ export const getCustomerProfile = asyncHandler(async (req, res) => {
  * @access  Private (Customer)
  */
 export const updateCustomerProfile = asyncHandler(async (req, res) => {
-  const { dateOfBirth, gender, emergencyContact, preferences } = req.body;
+  const { dateOfBirth, gender, preferences } = req.body;
 
   let profile = await CustomerProfile.findOne({ userId: req.user.id });
 
@@ -53,15 +53,12 @@ export const updateCustomerProfile = asyncHandler(async (req, res) => {
       userId: req.user.id,
       dateOfBirth,
       gender,
-      emergencyContact,
       preferences,
     });
   } else {
     // Update existing profile
     if (dateOfBirth !== undefined) profile.dateOfBirth = dateOfBirth;
     if (gender !== undefined) profile.gender = gender;
-    if (emergencyContact !== undefined)
-      profile.emergencyContact = emergencyContact;
     if (preferences !== undefined) {
       profile.preferences = { ...profile.preferences, ...preferences };
     }

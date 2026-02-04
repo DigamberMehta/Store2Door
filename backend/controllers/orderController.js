@@ -522,6 +522,7 @@ export const getOrder = async (req, res) => {
 
     const order = await Order.findOne({ _id: orderId, customerId: userId })
       .populate("storeId", "name address")
+      .populate("customerId", "name phone")
       .populate("riderId", "name phone");
 
     if (!order) {
@@ -818,10 +819,18 @@ export const updateOrderStatus = async (req, res) => {
       const user = await User.findById(order.customerId);
       if (user) {
         // Only send for important status changes
-        const importantStatuses = ["confirmed", "picked_up", "on_the_way", "delivered", "cancelled"];
+        const importantStatuses = [
+          "confirmed",
+          "picked_up",
+          "on_the_way",
+          "delivered",
+          "cancelled",
+        ];
         if (importantStatuses.includes(status)) {
           await sendOrderStatusEmail(order, user.email, user.name, status);
-          console.log(`Status update email (${status}) sent for order ${order.orderNumber}`);
+          console.log(
+            `Status update email (${status}) sent for order ${order.orderNumber}`,
+          );
         }
       }
     } catch (emailError) {

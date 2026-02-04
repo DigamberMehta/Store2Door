@@ -33,11 +33,6 @@ const ProfileDetailsPage = () => {
   const [profileData, setProfileData] = useState({
     dateOfBirth: "",
     gender: "",
-    emergencyContact: {
-      name: "",
-      phone: "",
-      relationship: "",
-    },
   });
 
   const [stats, setStats] = useState({
@@ -75,11 +70,6 @@ const ProfileDetailsPage = () => {
             ? new Date(profile.dateOfBirth).toISOString().split("T")[0]
             : "",
           gender: profile.gender || "",
-          emergencyContact: profile.emergencyContact || {
-            name: "",
-            phone: "",
-            relationship: "",
-          },
         });
 
         // Set stats
@@ -100,13 +90,6 @@ const ProfileDetailsPage = () => {
     setProfileData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleEmergencyContactChange = (field, value) => {
-    setProfileData((prev) => ({
-      ...prev,
-      emergencyContact: { ...prev.emergencyContact, [field]: value },
-    }));
-  };
-
   const handleSave = async () => {
     try {
       setSaving(true);
@@ -123,7 +106,6 @@ const ProfileDetailsPage = () => {
       const profileUpdateData = {
         dateOfBirth: profileData.dateOfBirth || undefined,
         gender: profileData.gender || undefined,
-        emergencyContact: profileData.emergencyContact,
       };
 
       await customerProfileAPI.updateProfile(profileUpdateData);
@@ -328,60 +310,6 @@ const ProfileDetailsPage = () => {
             </div>
           </div>
         </div>
-
-        {/* Emergency Contact */}
-        <div>
-          <h3 className="text-white/40 text-[10px] uppercase tracking-wider font-medium mb-2 px-1">
-            Emergency Contact
-          </h3>
-          <div className="bg-white/[0.03] backdrop-blur-sm rounded-xl border border-white/5 overflow-hidden">
-            <div className="p-3 border-b border-white/5">
-              <label className="text-white/40 text-[11px] mb-1.5 block">
-                Name
-              </label>
-              <input
-                type="text"
-                value={profileData.emergencyContact.name}
-                onChange={(e) =>
-                  handleEmergencyContactChange("name", e.target.value)
-                }
-                className="w-full bg-white/5 text-white text-sm rounded-lg px-3 py-2 outline-none border border-white/5 placeholder:text-white/30"
-                placeholder="Emergency contact name"
-              />
-            </div>
-
-            <div className="p-3 border-b border-white/5">
-              <label className="text-white/40 text-[11px] mb-1.5 block">
-                Phone
-              </label>
-              <input
-                type="tel"
-                value={profileData.emergencyContact.phone}
-                onChange={(e) =>
-                  handleEmergencyContactChange("phone", e.target.value)
-                }
-                className="w-full bg-white/5 text-white text-sm rounded-lg px-3 py-2 outline-none border border-white/5 placeholder:text-white/30"
-                placeholder="Emergency contact phone"
-              />
-            </div>
-
-            <div className="p-3">
-              <label className="text-white/40 text-[11px] mb-1.5 block">
-                Relationship
-              </label>
-              <input
-                type="text"
-                value={profileData.emergencyContact.relationship}
-                onChange={(e) =>
-                  handleEmergencyContactChange("relationship", e.target.value)
-                }
-                className="w-full bg-white/5 text-white text-sm rounded-lg px-3 py-2 outline-none border border-white/5 placeholder:text-white/30"
-                placeholder="e.g., Mother, Father, Spouse"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };

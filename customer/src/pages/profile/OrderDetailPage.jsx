@@ -33,7 +33,7 @@ const OrderDetailPage = () => {
     setLoading(true);
     try {
       const response = await getOrderById(orderId);
-      setOrder(response.order);
+      setOrder(response.data);
     } catch (error) {
       console.error("Error fetching order:", error);
       toast.error("Failed to load order details");
@@ -142,7 +142,7 @@ const OrderDetailPage = () => {
         </div>
 
         {/* Store Info Card */}
-        {order.store && (
+        {order.storeId && (
           <div className="bg-white/5 backdrop-blur-xl rounded-xl border border-white/5 p-4">
             <div className="flex items-center gap-2 mb-1">
               <ShoppingBag className="w-4 h-4 text-white/50" />
@@ -150,7 +150,9 @@ const OrderDetailPage = () => {
                 Store
               </span>
             </div>
-            <p className="text-white text-sm font-medium">{order.store.name}</p>
+            <p className="text-white text-sm font-medium">
+              {order.storeId.name}
+            </p>
           </div>
         )}
 
@@ -221,14 +223,14 @@ const OrderDetailPage = () => {
               {order.deliveryAddress.street}
             </p>
             <p className="text-white/60 text-[11px]">
-              {order.deliveryAddress.city}, {order.deliveryAddress.state}{" "}
+              {order.deliveryAddress.city}, {order.deliveryAddress.province}{" "}
               {order.deliveryAddress.postalCode}
             </p>
           </div>
         )}
 
         {/* Customer Info Card */}
-        {order.customer && (
+        {order.customerId && (
           <div className="bg-white/5 backdrop-blur-xl rounded-xl border border-white/5 p-4">
             <div className="flex items-center gap-2 mb-3">
               <User className="w-4 h-4 text-white/50" />
@@ -239,13 +241,11 @@ const OrderDetailPage = () => {
             <div className="space-y-2">
               <div>
                 <p className="text-white/40 text-[10px] mb-0.5">Name</p>
-                <p className="text-white text-xs">
-                  {order.customer.firstName} {order.customer.lastName}
-                </p>
+                <p className="text-white text-xs">{order.customerId.name}</p>
               </div>
               <div>
                 <p className="text-white/40 text-[10px] mb-0.5">Phone</p>
-                <p className="text-white text-xs">{order.customer.phone}</p>
+                <p className="text-white text-xs">{order.customerId.phone}</p>
               </div>
             </div>
           </div>

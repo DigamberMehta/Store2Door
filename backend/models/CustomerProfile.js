@@ -63,7 +63,7 @@ const addressSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // Customer preferences sub-schema
@@ -175,24 +175,6 @@ const customerProfileSchema = new mongoose.Schema(
       maxlength: 500,
     },
 
-    // Emergency Contact
-    emergencyContact: {
-      name: {
-        type: String,
-        trim: true,
-        maxlength: 100,
-      },
-      phone: {
-        type: String,
-        trim: true,
-      },
-      relationship: {
-        type: String,
-        trim: true,
-        maxlength: 50,
-      },
-    },
-
     // Last Known Location for delivery optimization
     lastKnownLocation: {
       latitude: Number,
@@ -202,7 +184,7 @@ const customerProfileSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // Compound indexes for performance
@@ -252,7 +234,7 @@ customerProfileSchema.methods.addAddress = function (addressData) {
 
 customerProfileSchema.methods.updateOrderStats = function (
   orderAmount,
-  rating
+  rating,
 ) {
   this.totalOrders += 1;
   this.totalSpent += orderAmount;
@@ -276,7 +258,7 @@ customerProfileSchema.statics.findByUserId = function (userId) {
 customerProfileSchema.statics.findNearbyCustomers = function (
   latitude,
   longitude,
-  maxDistance = 10000
+  maxDistance = 10000,
 ) {
   return this.find({
     lastKnownLocation: {
@@ -303,7 +285,7 @@ customerProfileSchema.methods.toJSON = function () {
 
 const CustomerProfile = mongoose.model(
   "CustomerProfile",
-  customerProfileSchema
+  customerProfileSchema,
 );
 
 export default CustomerProfile;
