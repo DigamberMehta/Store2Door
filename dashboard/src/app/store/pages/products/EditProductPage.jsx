@@ -17,8 +17,7 @@ import SafetyRestrictionsSection from "./create-product/SafetyRestrictionsSectio
 import AvailabilityPromotionsSection from "./create-product/AvailabilityPromotionsSection";
 import VariantsSection from "./create-product/VariantsSection";
 import FormActions from "./create-product/FormActions";
-import { productAPI } from "../../../../services/store/api/product.api";
-import toast from "react-hot-toast";
+// ...existing code...
 import { RefreshCw } from "lucide-react";
 
 const EditProductPage = () => {
