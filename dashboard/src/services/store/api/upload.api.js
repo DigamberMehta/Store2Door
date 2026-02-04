@@ -39,7 +39,7 @@ export const uploadAPI = {
    */
   uploadProductImages: async (files) => {
     const formData = new FormData();
-    
+
     // Handle both FileList and array of Files
     const fileArray = Array.from(files);
     fileArray.forEach((file) => {

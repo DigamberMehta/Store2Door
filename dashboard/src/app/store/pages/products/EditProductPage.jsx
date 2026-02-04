@@ -1,7 +1,11 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
-import { productAPI, categoryAPI, uploadAPI } from "../../../../services/store/api";
+import {
+  productAPI,
+  categoryAPI,
+  uploadAPI,
+} from "../../../../services/store/api";
 import BasicInformationSection from "./create-product/BasicInformationSection";
 import PricingSection from "./create-product/PricingSection";
 import ProductImagesSection from "./create-product/ProductImagesSection";
@@ -332,10 +336,11 @@ const EditProductPage = () => {
       let uploadedImages = [];
 
       if (imagesToUpload.length > 0) {
-        const filesToUpload = imagesToUpload.map(img => img.file);
+        const filesToUpload = imagesToUpload.map((img) => img.file);
 
         try {
-          const uploadResponse = await uploadAPI.uploadProductImages(filesToUpload);
+          const uploadResponse =
+            await uploadAPI.uploadProductImages(filesToUpload);
 
           if (uploadResponse.success) {
             uploadedImages = uploadResponse.data;
