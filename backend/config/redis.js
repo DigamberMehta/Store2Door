@@ -1,37 +1,42 @@
-import { createClient } from 'redis';
+import { createClient } from "redis";
 
-// Initialize Redis client
 const redisClient = createClient({
-  url: process.env.REDIS_URL || 'redis://localhost:6379',
+  url: process.env.REDIS_URL || "redis://localhost:6379",
   socket: {
     reconnectStrategy: (retries) => {
       if (retries > 10) {
-        console.error('❌ Redis max retries reached');
-        return new Error('Redis connection failed');
+        console.error("❌ Redis max retries reached. Stopping reconnect.");
+        return new Error("Redis reconnect failed");
       }
-      return Math.min(retries * 100, 3000);
-    }
-  }
+      return Math.min(retries * 200, 3000);
+    },
+  },
 });
 
-// Error handling
-redisClient.on('error', (err) => {
-  console.warn('⚠️ Redis Client Error:', err.message);
+/* =========================
+   EVENTS
+========================= */
+
+redisClient.on("connect", () => {
+  console.log("✅ Redis connected");
 });
 
-redisClient.on('connect', () => {
-  console.log('doeRedis connected');
+redisClient.on("ready", () => {
+  console.log("🚀 Redis ready");
 });
 
-redisClient.on('ready', () => {
-  console.log('Redis ready');
+redisClient.on("error", (err) => {
+  console.error("❌ Redis Error:", err.message);
 });
 
-redisClient.on('reconnecting', () => {
-  console.log('🔄 Redis reconnecting...');
+redisClient.on("reconnecting", () => {
+  console.log("🔄 Redis reconnecting...");
 });
 
-// Connect to Redis
+/* =========================
+   CONNECT FUNCTION
+========================= */
+
 export const connectRedis = async () => {
   try {
     if (!redisClient.isOpen) {
@@ -39,131 +44,148 @@ export const connectRedis = async () => {
     }
     return true;
   } catch (error) {
-    console.warn('⚠️ Redis connection failed:', error.message);
-    console.warn('Caching will be disabled');
+    console.error("⚠️ Redis connection failed:", error.message);
     return false;
   }
 };
 
-// Cache helper functions
+/* =========================
+   CACHE HELPERS
+========================= */
+
 export const cacheHelpers = {
-  // Get cached data
-  get: async (key) => {
+  async get(key) {
     try {
       if (!redisClient.isOpen) return null;
-      
+
       const data = await redisClient.get(key);
-      return data ? JSON.parse(data) : null;
+      if (!data) return null;
+
+      try {
+        return JSON.parse(data);
+      } catch {
+        return data;
+      }
     } catch (error) {
-      console.error('Redis get error:', error.message);
+      console.error("Redis GET error:", error.message);
       return null;
     }
   },
 
-  // Set cached data with TTL (time to live in seconds)
-  set: async (key, value, ttl = 3600) => {
+  async set(key, value, ttl = 3600) {
     try {
       if (!redisClient.isOpen) return false;
-      
-      await redisClient.setEx(key, ttl, JSON.stringify(value));
+
+      const stringValue =
+        typeof value === "string" ? value : JSON.stringify(value);
+
+      await redisClient.setEx(key, ttl, stringValue);
       return true;
     } catch (error) {
-      console.error('Redis set error:', error.message);
+      console.error("Redis SET error:", error.message);
       return false;
     }
   },
 
-  // Delete cached data
-  del: async (key) => {
+  async del(key) {
     try {
       if (!redisClient.isOpen) return false;
-      
       await redisClient.del(key);
       return true;
     } catch (error) {
-      console.error('Redis del error:', error.message);
+      console.error("Redis DEL error:", error.message);
       return false;
     }
   },
 
-  // Delete multiple keys by pattern
-  delPattern: async (pattern) => {
+  // Production-safe pattern delete using SCAN
+  async delPattern(pattern) {
     try {
       if (!redisClient.isOpen) return false;
-      
-      const keys = await redisClient.keys(pattern);
-      if (keys.length > 0) {
-        await redisClient.del(keys);
+
+      const iterator = redisClient.scanIterator({
+        MATCH: pattern,
+        COUNT: 100,
+      });
+
+      for await (const key of iterator) {
+        await redisClient.del(key);
       }
+
       return true;
     } catch (error) {
-      console.error('Redis delPattern error:', error.message);
+      console.error("Redis delPattern error:", error.message);
       return false;
     }
   },
 
-  // Check if key exists
-  exists: async (key) => {
+  async exists(key) {
     try {
       if (!redisClient.isOpen) return false;
-      
-      const exists = await redisClient.exists(key);
-      return exists === 1;
+      return (await redisClient.exists(key)) === 1;
     } catch (error) {
-      console.error('Redis exists error:', error.message);
+      console.error("Redis EXISTS error:", error.message);
       return false;
     }
   },
 
-  // Set expiration on existing key
-  expire: async (key, ttl) => {
+  async expire(key, ttl) {
     try {
       if (!redisClient.isOpen) return false;
-      
       await redisClient.expire(key, ttl);
       return true;
     } catch (error) {
-      console.error('Redis expire error:', error.message);
+      console.error("Redis EXPIRE error:", error.message);
       return false;
     }
   },
 
-  // Increment counter
-  incr: async (key) => {
+  async incr(key) {
     try {
       if (!redisClient.isOpen) return null;
-      
       return await redisClient.incr(key);
     } catch (error) {
-      console.error('Redis incr error:', error.message);
+      console.error("Redis INCR error:", error.message);
       return null;
     }
   },
 
-  // Get TTL of a key
-  ttl: async (key) => {
+  async ttl(key) {
     try {
       if (!redisClient.isOpen) return -1;
-      
       return await redisClient.ttl(key);
     } catch (error) {
-      console.error('Redis ttl error:', error.message);
+      console.error("Redis TTL error:", error.message);
       return -1;
     }
-  }
+  },
 };
 
-// Graceful shutdown
+/* =========================
+   GRACEFUL SHUTDOWN
+========================= */
+
 export const disconnectRedis = async () => {
   try {
     if (redisClient.isOpen) {
       await redisClient.quit();
-      console.log('✅ Redis disconnected gracefully');
+      console.log("👋 Redis disconnected gracefully");
     }
   } catch (error) {
-    console.error('Error disconnecting Redis:', error.message);
+    console.error("Redis disconnect error:", error.message);
   }
 };
+
+// Handle app termination
+process.on("SIGINT", async () => {
+  await disconnectRedis();
+  process.exit(0);
+});
+
+process.on("SIGTERM", async () => {
+  await disconnectRedis();
+  process.exit(0);
+});
 
 export { redisClient };
 export default redisClient;
