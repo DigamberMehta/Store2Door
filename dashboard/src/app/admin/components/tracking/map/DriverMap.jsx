@@ -71,9 +71,7 @@ const DriverMap = ({ riders, selectedRider, onRiderSelect }) => {
           } w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-all transform group-hover:scale-110 border-3 border-white">
             <span class="text-2xl">🛵</span>
           </div>
-          ${
-            rider.isAvailable
-          }
+          ${rider.isAvailable}
         </div>
       `;
 
@@ -140,6 +138,9 @@ const DriverMap = ({ riders, selectedRider, onRiderSelect }) => {
   // Highlight selected rider
   useEffect(() => {
     if (!selectedRider || !map.current) return;
+
+    // Skip if rider has no location (offline)
+    if (!selectedRider.currentLocation?.coordinates) return;
 
     const [lng, lat] = selectedRider.currentLocation.coordinates;
     map.current.flyTo({
