@@ -96,70 +96,71 @@ const PaymentPage = () => {
     }
   };
 
-  const handleCardPayment = async () => {
-    try {
-      if (!orderData.deliveryAddress) {
-        toast.error("Delivery address is required");
-        return;
-      }
+  // YOCO PAYMENT - COMMENTED OUT (Now using Paystack)
+  // const handleCardPayment = async () => {
+  //   try {
+  //     if (!orderData.deliveryAddress) {
+  //       toast.error("Delivery address is required");
+  //       return;
+  //     }
 
-      // Ensure deliveryAddress has proper GeoJSON format
-      const deliveryAddress = orderData.deliveryAddress.location?.coordinates
-        ? orderData.deliveryAddress
-        : {
-            ...orderData.deliveryAddress,
-            location: {
-              type: "Point",
-              coordinates: [
-                orderData.deliveryAddress.longitude || 28.0473,
-                orderData.deliveryAddress.latitude || -26.2041,
-              ],
-            },
-          };
+  //     // Ensure deliveryAddress has proper GeoJSON format
+  //     const deliveryAddress = orderData.deliveryAddress.location?.coordinates
+  //       ? orderData.deliveryAddress
+  //       : {
+  //           ...orderData.deliveryAddress,
+  //           location: {
+  //             type: "Point",
+  //             coordinates: [
+  //               orderData.deliveryAddress.longitude || 28.0473,
+  //               orderData.deliveryAddress.latitude || -26.2041,
+  //             ],
+  //           },
+  //         };
 
-      setLoading(true);
+  //     setLoading(true);
 
-      // Send only essential data - backend calculates prices
-      const orderPayload = {
-        items: orderData.items.map((item) => ({
-          product: item.productId?._id || item.productId,
-          quantity: item.quantity,
-          selectedVariant: item.selectedVariant,
-        })),
-        deliveryAddress,
-        couponCode: orderData.couponCode,
-        tip: orderData.tip,
-        paymentMethod: "yoco_card",
-        paymentStatus: "pending",
-      };
+  //     // Send only essential data - backend calculates prices
+  //     const orderPayload = {
+  //       items: orderData.items.map((item) => ({
+  //         product: item.productId?._id || item.productId,
+  //         quantity: item.quantity,
+  //         selectedVariant: item.selectedVariant,
+  //       })),
+  //       deliveryAddress,
+  //       couponCode: orderData.couponCode,
+  //       tip: orderData.tip,
+  //       paymentMethod: "yoco_card",
+  //       paymentStatus: "pending",
+  //     };
 
-      const orderResponse = await createOrder(orderPayload);
-      const orderId = orderResponse.order._id;
-      const calculatedTotal = orderResponse.order.total; // Use backend-calculated total
+  //     const orderResponse = await createOrder(orderPayload);
+  //     const orderId = orderResponse.order._id;
+  //     const calculatedTotal = orderResponse.order.total; // Use backend-calculated total
 
-      // Create Yoco checkout session with redirect URLs
-      const baseUrl = window.location.origin;
-      const checkoutResponse = await createCheckout({
-        orderId,
-        amount: calculatedTotal, // Use backend total, not frontend
-        currency: "ZAR",
-        successUrl: `${baseUrl}/payment/success?orderId=${orderId}`,
-        cancelUrl: `${baseUrl}/payment`,
-        failureUrl: `${baseUrl}/payment/failure?orderId=${orderId}`,
-      });
+  //     // Create Yoco checkout session with redirect URLs
+  //     const baseUrl = window.location.origin;
+  //     const checkoutResponse = await createCheckout({
+  //       orderId,
+  //       amount: calculatedTotal, // Use backend total, not frontend
+  //       currency: "ZAR",
+  //       successUrl: `${baseUrl}/payment/success?orderId=${orderId}`,
+  //       cancelUrl: `${baseUrl}/payment`,
+  //       failureUrl: `${baseUrl}/payment/failure?orderId=${orderId}`,
+  //     });
 
-      // Redirect to Yoco checkout page
-      if (checkoutResponse.redirectUrl) {
-        window.location.href = checkoutResponse.redirectUrl;
-      } else {
-        throw new Error("No redirect URL received from payment gateway");
-      }
-    } catch (error) {
-      console.error("Payment error:", error);
-      toast.error(error.message || "Payment failed. Please try again.");
-      setLoading(false);
-    }
-  };
+  //     // Redirect to Yoco checkout page
+  //     if (checkoutResponse.redirectUrl) {
+  //       window.location.href = checkoutResponse.redirectUrl;
+  //     } else {
+  //       throw new Error("No redirect URL received from payment gateway");
+  //     }
+  //   } catch (error) {
+  //     console.error("Payment error:", error);
+  //     toast.error(error.message || "Payment failed. Please try again.");
+  //     setLoading(false);
+  //   }
+  // };
 
   const handleSubmit = (e) => {
     e.preventDefault();
