@@ -1,4 +1,5 @@
 import axios from "axios";
+import https from "https";
 
 class PaystackService {
   constructor() {
@@ -7,7 +8,9 @@ class PaystackService {
     this.apiUrl = "https://api.paystack.co";
 
     if (!this.secretKey) {
-      console.warn("⚠️ PAYSTACK_SECRET_KEY is missing in environment variables!");
+      console.warn(
+        "⚠️ PAYSTACK_SECRET_KEY is missing in environment variables!",
+      );
     } else {
       console.log("✅ Paystack Service initialized");
     }
@@ -20,6 +23,11 @@ class PaystackService {
         "Content-Type": "application/json",
       },
       timeout: 30000, // 30 seconds
+      // Disable SSL verification for development (Paystack API has certificate issues in some environments)
+      httpsAgent: new https.Agent({
+        rejectUnauthorized:
+          process.env.NODE_ENV === "production" ? true : false,
+      }),
     });
   }
 
@@ -52,7 +60,7 @@ class PaystackService {
     } catch (error) {
       console.error(
         "Paystack initialize transaction error:",
-        error.response?.data || error.message
+        error.response?.data || error.message,
       );
       return {
         success: false,
@@ -83,7 +91,7 @@ class PaystackService {
     } catch (error) {
       console.error(
         "Paystack verify transaction error:",
-        error.response?.data || error.message
+        error.response?.data || error.message,
       );
       return {
         success: false,
@@ -102,7 +110,9 @@ class PaystackService {
     try {
       const payload = {
         transaction: reference,
-        amount: refundData.amount ? Math.round(refundData.amount * 100) : undefined, // Partial refund if amount specified
+        amount: refundData.amount
+          ? Math.round(refundData.amount * 100)
+          : undefined, // Partial refund if amount specified
         currency: refundData.currency || "ZAR",
         customer_note: refundData.reason || "Refund requested by customer",
         merchant_note: refundData.merchantNote || "Refund processed",
@@ -119,7 +129,7 @@ class PaystackService {
     } catch (error) {
       console.error(
         "Paystack create refund error:",
-        error.response?.data || error.message
+        error.response?.data || error.message,
       );
       return {
         success: false,
@@ -144,7 +154,7 @@ class PaystackService {
     } catch (error) {
       console.error(
         "Paystack get transaction error:",
-        error.response?.data || error.message
+        error.response?.data || error.message,
       );
       return {
         success: false,
@@ -179,7 +189,7 @@ class PaystackService {
     } catch (error) {
       console.error(
         "Paystack list transactions error:",
-        error.response?.data || error.message
+        error.response?.data || error.message,
       );
       return {
         success: false,
@@ -204,7 +214,10 @@ class PaystackService {
         metadata: chargeData.metadata || {},
       };
 
-      const response = await this.api.post("/transaction/charge_authorization", payload);
+      const response = await this.api.post(
+        "/transaction/charge_authorization",
+        payload,
+      );
 
       return {
         success: true,
@@ -215,7 +228,7 @@ class PaystackService {
     } catch (error) {
       console.error(
         "Paystack charge authorization error:",
-        error.response?.data || error.message
+        error.response?.data || error.message,
       );
       return {
         success: false,
