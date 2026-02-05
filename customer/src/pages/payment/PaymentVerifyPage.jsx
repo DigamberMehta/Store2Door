@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Loader } from "lucide-react";
 import { verifyPaystackPayment } from "../../services/api/payment.api";
-import toast from "react-hot-toast";
+import { showError, showSuccess } from "../../utils/toast";
 import Logo from "../../assets/logo.png";
 
 const PaymentVerifyPage = () => {
@@ -18,44 +18,50 @@ const PaymentVerifyPage = () => {
   useEffect(() => {
     const verifyPayment = async () => {
       if (!reference) {
-        toast.error("Invalid payment reference");
+        showError("Invalid payment reference");
         navigate("/payment");
         return;
       }
 
       try {
         setVerifying(true);
-        
+
         // Verify payment with Paystack
         const response = await verifyPaystackPayment(reference, paymentId);
 
         if (response.success) {
           // Payment successful
-          toast.success("Payment verified successfully!");
-          
+          showSuccess("Payment verified successfully!");
+
           // Trigger cart update event to clear cart in UI
           window.dispatchEvent(new CustomEvent("cartUpdated"));
-          
+
           // Redirect to success page
           setTimeout(() => {
-            navigate(`/payment/success?paymentId=${response.payment.id}&orderId=${orderId || response.order?.id}`);
+            navigate(
+              `/payment/success?paymentId=${response.payment.id}&orderId=${orderId || response.order?.id}`,
+            );
           }, 1000);
         } else {
           // Payment failed
           setError(response.message || "Payment verification failed");
-          toast.error(response.message || "Payment verification failed");
-          
+          showError(response.message || "Payment verification failed");
+
           setTimeout(() => {
-            navigate(`/payment/failure?orderId=${orderId}&reason=${encodeURIComponent(response.message || "Verification failed")}`);
+            navigate(
+              `/payment/failure?orderId=${orderId}&reason=${encodeURIComponent(response.message || "Verification failed")}`,
+            );
           }, 2000);
         }
       } catch (error) {
         console.error("Payment verification error:", error);
         setError(error.message || "Failed to verify payment");
-        toast.error(error.message || "Failed to verify payment");
-        
+        showError(error, "Failed to verify payment");
+
         setTimeout(() => {
-          navigate(`/payment/failure?orderId=${orderId}&reason=${encodeURIComponent(error.message || "Verification error")}`);
+          navigate(
+            `/payment/failure?orderId=${orderId}&reason=${encodeURIComponent(error.message || "Verification error")}`,
+          );
         }, 2000);
       } finally {
         setVerifying(false);
@@ -161,7 +167,8 @@ const PaymentVerifyPage = () => {
         {reference && (
           <div className="mt-4 text-center">
             <p className="text-white/40 text-xs">
-              Reference: <span className="text-white/60 font-mono">{reference}</span>
+              Reference:{" "}
+              <span className="text-white/60 font-mono">{reference}</span>
             </p>
           </div>
         )}

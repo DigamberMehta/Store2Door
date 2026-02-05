@@ -41,7 +41,7 @@ const OrdersPage = () => {
       setOrders(sortedOrders);
     } catch (error) {
       console.error("Error fetching orders:", error);
-      toast.error("Failed to load orders");
+      showError(error, "Failed to load orders");
     } finally {
       setLoading(false);
     }

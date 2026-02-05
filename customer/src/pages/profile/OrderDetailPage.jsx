@@ -16,7 +16,7 @@ import {
   User,
 } from "lucide-react";
 import { getOrderById } from "../../services/api/order.api";
-import toast from "react-hot-toast";
+import { showError, showSuccess } from "../../utils/toast";
 import { formatDateOnly, formatTimeOnly } from "../../utils/date";
 
 const OrderDetailPage = () => {
@@ -324,7 +324,7 @@ const OrderDetailPage = () => {
         {order.status === "delivered" && (
           <button
             onClick={() => {
-              toast.success("Reorder functionality coming soon!");
+              showSuccess("Reorder functionality coming soon!");
             }}
             className="w-full px-4 py-3 bg-white/5 border border-white/10 text-white text-sm font-medium rounded-xl active:bg-white/10 transition-all"
           >

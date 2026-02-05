@@ -3,10 +3,12 @@ import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { HiOutlineArrowLeft } from "react-icons/hi";
 import { Info } from "lucide-react";
 import toast from "react-hot-toast";
+import { showError, showSuccess } from "../../utils/toast";
 import { storeAPI, productAPI } from "../../services/api";
 import cartAPI from "../../services/api/cart.api";
 import { useAuth } from "../../context/AuthContext";
 import StoreConflictModal from "../../components/StoreConflictModal";
+import { getErrorMessage } from "../../utils/errorHandler";
 import StoreBanner from "./StoreBanner";
 import ProductsGrid from "./ProductsGrid";
 import {
@@ -191,9 +193,7 @@ const StoreDetailPage = () => {
     } catch (error) {
       // Revert to previous state on error
       setCartItems(previousCartItems);
-      const errorMessage =
-        error.response?.data?.message || "Failed to update quantity";
-      toast.error(errorMessage, {
+      showError(getErrorMessage(error, "Failed to update quantity"), {
         duration: 2000,
         position: "top-center",
         style: {
@@ -224,9 +224,7 @@ const StoreDetailPage = () => {
     } catch (error) {
       // Revert to previous state on error
       setCartItems(previousCartItems);
-      const errorMessage =
-        error.response?.data?.message || "Failed to remove from cart";
-      toast.error(errorMessage, {
+      showError(getErrorMessage(error, "Failed to remove from cart"), {
         duration: 2000,
         position: "top-center",
         style: {
@@ -243,7 +241,7 @@ const StoreDetailPage = () => {
 
     // Check authentication
     if (!isAuthenticated) {
-      toast.error("Please sign in to continue", {
+      showError("Please sign in to continue", {
         duration: 3000,
         position: "top-center",
       });
@@ -318,11 +316,7 @@ const StoreDetailPage = () => {
         setShowConflictModal(true);
       } else {
         // Show the actual error message from backend if available
-        const errorMessage =
-          error.response?.data?.message ||
-          error.message ||
-          "Failed to add to cart";
-        toast.error(errorMessage, {
+        showError(getErrorMessage(error, "Failed to add to cart"), {
           duration: 3000,
           position: "top-center",
           style: {
@@ -369,7 +363,7 @@ const StoreDetailPage = () => {
       // Refresh cart items
       fetchCartItems();
 
-      toast.success("Added to cart!", {
+      showSuccess("Added to cart!", {
         duration: 2000,
         position: "top-center",
         style: {
@@ -380,7 +374,7 @@ const StoreDetailPage = () => {
       });
     } catch (error) {
       console.error("Error replacing cart:", error);
-      toast.error("Failed to update cart. Please try again.", {
+      showError("Failed to update cart. Please try again.", {
         duration: 2000,
         position: "top-center",
         style: {

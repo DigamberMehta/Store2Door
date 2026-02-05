@@ -8,7 +8,8 @@ import {
   Loader2,
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
-import toast from "react-hot-toast";
+import { showError, showSuccess } from "../../utils/toast";
+import { getErrorMessage } from "../../utils/errorHandler";
 import cartAPI from "../../services/api/cart.api";
 import { createOrder } from "../../services/api/order.api";
 import { useAuth } from "../../context/AuthContext";
@@ -158,10 +159,10 @@ const CheckoutPage = () => {
       await cartAPI.clearCart();
       await fetchCart();
       setShowClearConfirm(false);
-      toast.success("Cart cleared successfully");
+      showSuccess("Cart cleared successfully");
     } catch (error) {
       console.error("Error clearing cart:", error);
-      toast.error("Failed to clear cart");
+      showError("Failed to clear cart");
     } finally {
       setUpdating(false);
     }
@@ -172,11 +173,11 @@ const CheckoutPage = () => {
       setIsApplyingCoupon(true);
       const response = await cartAPI.applyCoupon(couponCode);
       setCart(response?.data || response);
-      toast.success(response?.message || "Coupon applied successfully!");
+      showSuccess(response?.message || "Coupon applied successfully!");
       return true;
     } catch (error) {
       console.error("Error applying coupon:", error);
-      toast.error(error.response?.data?.message || "Failed to apply coupon");
+      showError(error, "Failed to apply coupon");
       return false;
     } finally {
       setIsApplyingCoupon(false);
@@ -188,10 +189,10 @@ const CheckoutPage = () => {
       setIsApplyingCoupon(true);
       const response = await cartAPI.removeCoupon();
       setCart(response?.data || response);
-      toast.success("Coupon removed successfully");
+      showSuccess("Coupon removed successfully");
     } catch (error) {
       console.error("Error removing coupon:", error);
-      toast.error("Failed to remove coupon");
+      showError("Failed to remove coupon");
     } finally {
       setIsApplyingCoupon(false);
     }
@@ -256,20 +257,16 @@ const CheckoutPage = () => {
         paymentMethod:
           paymentData.paymentMethod ||
           paymentData.payment?.method ||
-          "yoco_card",
+          "paystack_card",
         paymentId: paymentData.payment?._id,
       };
 
       const response = await createOrder(orderPayload);
-      toast.success("Order placed successfully!");
+      showSuccess("Order placed successfully!");
       return response;
     } catch (error) {
       console.error("Error creating order:", error);
-      const errorMessage =
-        error.response?.data?.message ||
-        error.message ||
-        "Failed to create order";
-      toast.error(errorMessage);
+      showError(error, "Failed to create order");
       throw error;
     }
   };

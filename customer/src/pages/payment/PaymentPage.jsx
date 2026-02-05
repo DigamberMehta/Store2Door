@@ -1,17 +1,17 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { ChevronLeft, CreditCard, Loader, CheckCircle2 } from "lucide-react";
-import { createCheckout, initializePaystackPayment } from "../../services/api/payment.api";
+import { initializePaystackPayment } from "../../services/api/payment.api";
 import { createOrder } from "../../services/api/order.api";
 import { formatPrice } from "../../utils/formatPrice";
-import toast from "react-hot-toast";
+import { showError } from "../../utils/toast";
 
 const PaymentPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState("yoco_card");
+  const [paymentMethod, setPaymentMethod] = useState("paystack_card");
   const [paymentInitiated, setPaymentInitiated] = useState(false);
 
   // Get order data from location state or URL params
@@ -27,7 +27,11 @@ const PaymentPage = () => {
 
   // Auto-trigger payment when page loads
   useEffect(() => {
-    if (!paymentInitiated && orderData.deliveryAddress && orderData.items.length > 0) {
+    if (
+      !paymentInitiated &&
+      orderData.deliveryAddress &&
+      orderData.items.length > 0
+    ) {
       setPaymentInitiated(true);
       handlePaystackPayment();
     }
@@ -36,7 +40,7 @@ const PaymentPage = () => {
   const handlePaystackPayment = async () => {
     try {
       if (!orderData.deliveryAddress) {
-        toast.error("Delivery address is required");
+        showError("Delivery address is required");
         return;
       }
 
@@ -91,76 +95,10 @@ const PaymentPage = () => {
       }
     } catch (error) {
       console.error("Paystack payment error:", error);
-      toast.error(error.message || "Payment failed. Please try again.");
+      showError(error, "Payment failed. Please try again.");
       setLoading(false);
     }
   };
-
-  // YOCO PAYMENT - COMMENTED OUT (Now using Paystack)
-  // const handleCardPayment = async () => {
-  //   try {
-  //     if (!orderData.deliveryAddress) {
-  //       toast.error("Delivery address is required");
-  //       return;
-  //     }
-
-  //     // Ensure deliveryAddress has proper GeoJSON format
-  //     const deliveryAddress = orderData.deliveryAddress.location?.coordinates
-  //       ? orderData.deliveryAddress
-  //       : {
-  //           ...orderData.deliveryAddress,
-  //           location: {
-  //             type: "Point",
-  //             coordinates: [
-  //               orderData.deliveryAddress.longitude || 28.0473,
-  //               orderData.deliveryAddress.latitude || -26.2041,
-  //             ],
-  //           },
-  //         };
-
-  //     setLoading(true);
-
-  //     // Send only essential data - backend calculates prices
-  //     const orderPayload = {
-  //       items: orderData.items.map((item) => ({
-  //         product: item.productId?._id || item.productId,
-  //         quantity: item.quantity,
-  //         selectedVariant: item.selectedVariant,
-  //       })),
-  //       deliveryAddress,
-  //       couponCode: orderData.couponCode,
-  //       tip: orderData.tip,
-  //       paymentMethod: "yoco_card",
-  //       paymentStatus: "pending",
-  //     };
-
-  //     const orderResponse = await createOrder(orderPayload);
-  //     const orderId = orderResponse.order._id;
-  //     const calculatedTotal = orderResponse.order.total; // Use backend-calculated total
-
-  //     // Create Yoco checkout session with redirect URLs
-  //     const baseUrl = window.location.origin;
-  //     const checkoutResponse = await createCheckout({
-  //       orderId,
-  //       amount: calculatedTotal, // Use backend total, not frontend
-  //       currency: "ZAR",
-  //       successUrl: `${baseUrl}/payment/success?orderId=${orderId}`,
-  //       cancelUrl: `${baseUrl}/payment`,
-  //       failureUrl: `${baseUrl}/payment/failure?orderId=${orderId}`,
-  //     });
-
-  //     // Redirect to Yoco checkout page
-  //     if (checkoutResponse.redirectUrl) {
-  //       window.location.href = checkoutResponse.redirectUrl;
-  //     } else {
-  //       throw new Error("No redirect URL received from payment gateway");
-  //     }
-  //   } catch (error) {
-  //     console.error("Payment error:", error);
-  //     toast.error(error.message || "Payment failed. Please try again.");
-  //     setLoading(false);
-  //   }
-  // };
 
   const handleSubmit = (e) => {
     e.preventDefault();

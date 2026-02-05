@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Loader2, Info } from "lucide-react";
 import toast from "react-hot-toast";
+import { getErrorMessage } from "../../utils/errorHandler";
 import { useAuth } from "../../context/AuthContext";
 import productAPI from "../../services/api/product.api";
 import cartAPI from "../../services/api/cart.api";
@@ -103,18 +104,18 @@ const ProductDetailPage = () => {
         setShowConflictModal(true);
       } else {
         // Actual error - show message from backend
-        const errorMessage =
-          error.response?.data?.message ||
-          "Failed to add to cart. Please try again.";
-        toast.error(errorMessage, {
-          duration: 2000,
-          position: "top-center",
-          style: {
-            background: "#1a1a1a",
-            color: "#fff",
-            border: "1px solid rgba(239,68,68,0.3)",
+        toast.error(
+          getErrorMessage(error, "Failed to add to cart. Please try again."),
+          {
+            duration: 2000,
+            position: "top-center",
+            style: {
+              background: "#1a1a1a",
+              color: "#fff",
+              border: "1px solid rgba(239,68,68,0.3)",
+            },
           },
-        });
+        );
         // Revert cart update on error
         window.dispatchEvent(new CustomEvent("cartUpdated"));
       }
@@ -168,18 +169,18 @@ const ProductDetailPage = () => {
         },
       );
     } catch (error) {
-      const errorMessage =
-        error.response?.data?.message ||
-        "Failed to update cart. Please try again.";
-      toast.error(errorMessage, {
-        duration: 2000,
-        position: "top-center",
-        style: {
-          background: "#1a1a1a",
-          color: "#fff",
-          border: "1px solid rgba(239,68,68,0.3)",
+      toast.error(
+        getErrorMessage(error, "Failed to update cart. Please try again."),
+        {
+          duration: 2000,
+          position: "top-center",
+          style: {
+            background: "#1a1a1a",
+            color: "#fff",
+            border: "1px solid rgba(239,68,68,0.3)",
+          },
         },
-      });
+      );
     } finally {
       setAddingToCart(false);
     }

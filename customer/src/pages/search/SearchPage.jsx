@@ -8,6 +8,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { Minus, Plus, Info } from "lucide-react";
 import toast from "react-hot-toast";
+import { getErrorMessage } from "../../utils/errorHandler";
 import { StoreList } from "../homepage/store";
 import { suggestionsAPI } from "../../services/api";
 import cartAPI from "../../services/api/cart.api";
@@ -242,9 +243,7 @@ const SearchPage = () => {
         setShowConflictModal(true);
       } else {
         // Actual error - show message from backend
-        const errorMessage =
-          error.response?.data?.message || "Failed to add item to cart";
-        toast.error(errorMessage, {
+        toast.error(getErrorMessage(error, "Failed to add item to cart"), {
           duration: 2000,
           position: "top-center",
           style: {
