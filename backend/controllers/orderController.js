@@ -111,6 +111,37 @@ export const createOrder = async (req, res) => {
         .json({ message: "All items must be from the same store" });
     }
 
+    // Validate store status - must be active, approved, not suspended, and not temporarily closed
+    const store = await Store.findById(storeId);
+    if (!store) {
+      return res.status(404).json({ message: "Store not found" });
+    }
+
+    if (!store.isActive) {
+      return res.status(400).json({
+        message: "This store is currently inactive and cannot accept orders",
+      });
+    }
+
+    if (!store.isApproved) {
+      return res.status(400).json({
+        message:
+          "This store is not yet approved and cannot accept orders. Please check back later.",
+      });
+    }
+
+    if (store.isSuspended) {
+      return res.status(400).json({
+        message: `This store is currently suspended. ${store.suspensionReason || "Please contact support for more information."}`,
+      });
+    }
+
+    if (store.isTemporarilyClosed) {
+      return res.status(400).json({
+        message: `This store is temporarily closed. ${store.temporaryCloseReason || "Please try again later."}`,
+      });
+    }
+
     // Validate stock availability
     for (const item of items) {
       const product = products.find(
@@ -378,7 +409,7 @@ export const createOrder = async (req, res) => {
       deliveryAddress: transformedDeliveryAddress,
       appliedCoupon: appliedCouponData,
       paymentSplit: paymentSplit,
-      paymentMethod: paymentMethod || "yoco_card",
+      paymentMethod: paymentMethod || "paystack_card",
       paymentId,
       status: "pending", // Will be updated to 'placed' after payment verification
       paymentStatus: "pending",
