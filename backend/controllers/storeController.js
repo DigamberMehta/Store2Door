@@ -233,12 +233,18 @@ export const getStoreById = asyncHandler(async (req, res) => {
       // Get delivery settings for charge calculation (with caching)
       const deliverySettingsCacheKey = "delivery:settings";
       let deliverySettings = await cacheHelpers.get(deliverySettingsCacheKey);
-      
+
       if (!deliverySettings) {
-        deliverySettings = await DeliverySettings.findOne({ isActive: true }).lean();
-        await cacheHelpers.set(deliverySettingsCacheKey, deliverySettings, CACHE_TTL.DELIVERY_SETTINGS);
+        deliverySettings = await DeliverySettings.findOne({
+          isActive: true,
+        }).lean();
+        await cacheHelpers.set(
+          deliverySettingsCacheKey,
+          deliverySettings,
+          CACHE_TTL.DELIVERY_SETTINGS,
+        );
       }
-      
+
       const deliveryCharge = deliverySettings
         ? calculateDeliveryCharge(distance, deliverySettings.distanceTiers)
         : 0;
@@ -253,7 +259,7 @@ export const getStoreById = asyncHandler(async (req, res) => {
     success: true,
     data: store,
   };
-  
+
   // Cache result if no user location provided
   if (!userLat || !userLon) {
     await cacheHelpers.set(cacheKey, result, CACHE_TTL.STORE_DETAIL);
@@ -475,7 +481,7 @@ export const getNearbyStores = asyncHandler(async (req, res) => {
  * @access  Private (Store Manager)
  */
 export const getMyStore = asyncHandler(async (req, res) => {
-  const store = await Store.findOne({ managerId: req.user.id });
+  const store = await Store.findOne({ managerId: req.user._id });
 
   if (!store) {
     return res.status(404).json({
@@ -496,7 +502,7 @@ export const getMyStore = asyncHandler(async (req, res) => {
  * @access  Private (Store Manager)
  */
 export const getMyStoreProfile = asyncHandler(async (req, res) => {
-  const store = await Store.findOne({ managerId: req.user.id }).select(
+  const store = await Store.findOne({ managerId: req.user._id }).select(
     "name description logo coverImage businessLicense taxId businessType",
   );
 
@@ -519,7 +525,7 @@ export const getMyStoreProfile = asyncHandler(async (req, res) => {
  * @access  Private (Store Manager)
  */
 export const getMyStoreLocation = asyncHandler(async (req, res) => {
-  const store = await Store.findOne({ managerId: req.user.id }).select(
+  const store = await Store.findOne({ managerId: req.user._id }).select(
     "address contactInfo",
   );
 
@@ -542,7 +548,7 @@ export const getMyStoreLocation = asyncHandler(async (req, res) => {
  * @access  Private (Store Manager)
  */
 export const getMyStoreFeatures = asyncHandler(async (req, res) => {
-  const store = await Store.findOne({ managerId: req.user.id }).select(
+  const store = await Store.findOne({ managerId: req.user._id }).select(
     "features",
   );
 
@@ -565,7 +571,7 @@ export const getMyStoreFeatures = asyncHandler(async (req, res) => {
  * @access  Private (Store Manager)
  */
 export const getMyStoreBankAccount = asyncHandler(async (req, res) => {
-  const store = await Store.findOne({ managerId: req.user.id }).select(
+  const store = await Store.findOne({ managerId: req.user._id }).select(
     "accountHolderName bankName accountNumber accountType branchCode",
   );
 
@@ -588,7 +594,7 @@ export const getMyStoreBankAccount = asyncHandler(async (req, res) => {
  * @access  Private (Store Manager)
  */
 export const getMyStoreOperatingHours = asyncHandler(async (req, res) => {
-  const store = await Store.findOne({ managerId: req.user.id }).select(
+  const store = await Store.findOne({ managerId: req.user._id }).select(
     "operatingHours",
   );
 
@@ -620,7 +626,7 @@ export const updateOperatingHours = asyncHandler(async (req, res) => {
     });
   }
 
-  const store = await Store.findOne({ managerId: req.user.id });
+  const store = await Store.findOne({ managerId: req.user._id });
 
   if (!store) {
     return res.status(404).json({
@@ -645,7 +651,7 @@ export const updateOperatingHours = asyncHandler(async (req, res) => {
  * @access  Private (Store Manager)
  */
 export const updateDeliverySettings = asyncHandler(async (req, res) => {
-  const store = await Store.findOne({ managerId: req.user.id });
+  const store = await Store.findOne({ managerId: req.user._id });
 
   if (!store) {
     return res.status(404).json({

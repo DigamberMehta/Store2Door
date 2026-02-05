@@ -103,12 +103,8 @@ const FinancePage = () => {
 
   const getPaymentMethodDisplay = useCallback((method) => {
     switch (method) {
-      case "yoco_card":
+      case "paystack_card":
         return "Card";
-      case "yoco_eft":
-        return "EFT";
-      case "yoco_instant_eft":
-        return "Instant EFT";
       default:
         return method;
     }

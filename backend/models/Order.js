@@ -389,7 +389,16 @@ const orderSchema = new mongoose.Schema(
     },
     paymentMethod: {
       type: String,
-      enum: ["yoco_card", "yoco_eft", "yoco_instant_eft", "paystack_card", "paystack_bank", "paystack_ussd", "paystack_mobile_money", "paystack_eft"],
+      enum: [
+        "yoco_card",
+        "yoco_eft",
+        "yoco_instant_eft",
+        "paystack_card",
+        "paystack_bank",
+        "paystack_ussd",
+        "paystack_mobile_money",
+        "paystack_eft",
+      ],
     },
 
     // Special instructions and notes

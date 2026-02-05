@@ -15,13 +15,6 @@ export const createPayment = (paymentData) => {
 };
 
 /**
- * Confirm payment status
- */
-export const confirmPayment = (paymentId) => {
-  return apiClient.get(`/payments/${paymentId}/confirm`);
-};
-
-/**
  * Get payment details
  */
 export const getPayment = (paymentId) => {
@@ -60,7 +53,6 @@ export const verifyPaystackPayment = (reference, paymentId) => {
 const paymentAPI = {
   createCheckout,
   createPayment,
-  confirmPayment,
   getPayment,
   getPayments,
   refundPayment,

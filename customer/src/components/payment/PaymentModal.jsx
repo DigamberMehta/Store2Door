@@ -1,13 +1,12 @@
 import { useState, useEffect } from "react";
 import { X, CreditCard, Loader } from "lucide-react";
-import { createYocoPopup } from "../../utils/yoco";
-import { createPayment, confirmPayment } from "../../services/api/payment.api";
+import { initializePaystackPayment } from "../../services/api/payment.api";
 import { formatPrice } from "../../utils/formatPrice";
 import toast from "react-hot-toast";
 
 const PaymentModal = ({ isOpen, onClose, orderData, onSuccess }) => {
   const [loading, setLoading] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState("yoco_card");
+  const [paymentMethod, setPaymentMethod] = useState("paystack_card");
 
   useEffect(() => {
     if (!isOpen) {
@@ -19,36 +18,23 @@ const PaymentModal = ({ isOpen, onClose, orderData, onSuccess }) => {
     try {
       setLoading(true);
 
-      // Show Yoco payment popup
-      const result = await createYocoPopup(orderData.total, "ZAR", {
-        orderId: orderData.orderId,
-        customerName: orderData.customerName,
-        customerEmail: orderData.customerEmail,
-      });
+      if (!orderData.deliveryAddress) {
+        toast.error("Delivery address is required");
+        return;
+      }
 
-      // Create payment with token
-      const paymentResponse = await createPayment({
+      // Initialize Paystack payment
+      const response = await initializePaystackPayment({
         orderId: orderData.orderId,
         amount: orderData.total,
         currency: "ZAR",
-        token: result.id,
-        metadata: {
-          customerName: orderData.customerName,
-          customerEmail: orderData.customerEmail,
-          items: orderData.items,
-        },
       });
 
-      // Confirm payment status
-      const confirmResponse = await confirmPayment(
-        paymentResponse.data.payment._id,
-      );
-
-      if (confirmResponse.data.payment.status === "succeeded") {
-        toast.success("Payment successful!");
-        onSuccess(paymentResponse.data);
+      if (response.success && response.data?.authorization_url) {
+        // Redirect to Paystack payment page
+        window.location.href = response.data.authorization_url;
       } else {
-        toast.error("Payment failed. Please try again.");
+        toast.error("Failed to initialize payment. Please try again.");
       }
     } catch (error) {
       console.error("Payment error:", error);
@@ -80,7 +66,7 @@ const PaymentModal = ({ isOpen, onClose, orderData, onSuccess }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (paymentMethod === "yoco_card") {
+    if (paymentMethod === "paystack_card") {
       handleCardPayment();
     } else if (paymentMethod === "cash_on_delivery") {
       handleCashOnDelivery();
@@ -152,7 +138,7 @@ const PaymentModal = ({ isOpen, onClose, orderData, onSuccess }) => {
               {/* Card Payment */}
               <label
                 className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                  paymentMethod === "yoco_card"
+                  paymentMethod === "paystack_card"
                     ? "border-primary-500 bg-primary-50"
                     : "border-gray-200 hover:border-gray-300"
                 }`}
@@ -160,8 +146,8 @@ const PaymentModal = ({ isOpen, onClose, orderData, onSuccess }) => {
                 <input
                   type="radio"
                   name="paymentMethod"
-                  value="yoco_card"
-                  checked={paymentMethod === "yoco_card"}
+                  value="paystack_card"
+                  checked={paymentMethod === "paystack_card"}
                   onChange={(e) => setPaymentMethod(e.target.value)}
                   className="mr-3"
                   disabled={loading}
@@ -223,9 +209,9 @@ const PaymentModal = ({ isOpen, onClose, orderData, onSuccess }) => {
           </form>
 
           {/* Security Note */}
-          {paymentMethod === "yoco_card" && (
+          {paymentMethod === "paystack_card" && (
             <p className="mt-4 text-xs text-gray-500 text-center">
-              Your payment is secured by Yoco. We never store your card
+              Your payment is secured by Paystack. We never store your card
               details.
             </p>
           )}

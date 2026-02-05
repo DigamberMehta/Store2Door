@@ -120,7 +120,12 @@ const CategoryProductsView = ({ categoryName, onCategoryClick }) => {
             };
           });
 
-          setGroupedStores(groups);
+          // Filter out categories with no stores
+          const groupsWithStores = groups.filter(
+            (group) => group.stores.length > 0,
+          );
+
+          setGroupedStores(groupsWithStores);
         } catch (subcatError) {
           console.error("Error fetching subcategories:", subcatError);
           setGroupedStores([]);

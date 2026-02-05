@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { CheckCircle, Loader, ShoppingBag } from "lucide-react";
-import { confirmPayment, getPayment } from "../../services/api/payment.api";
+import { getPayment } from "../../services/api/payment.api";
 import { formatPrice } from "../../utils/formatPrice";
 import toast from "react-hot-toast";
 import Logo from "../../assets/logo.png";
@@ -11,27 +11,20 @@ const PaymentSuccessPage = () => {
   const [searchParams] = useSearchParams();
   const [payment, setPayment] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [confirming, setConfirming] = useState(true);
 
   const paymentId = searchParams.get("paymentId");
   const orderId = searchParams.get("orderId");
 
   useEffect(() => {
-    const confirmAndFetchPayment = async () => {
+    const fetchPaymentDetails = async () => {
       if (!paymentId) {
         navigate("/orders");
         return;
       }
 
       try {
-        // First, confirm the payment with Yoco
-        setConfirming(true);
-        await confirmPayment(paymentId);
-
-        // Wait a moment for the backend to update
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-
-        // Then fetch the updated payment details
+        // Payment is already verified by Paystack before redirect to this page
+        // Just fetch the payment details
         const response = await getPayment(paymentId);
         setPayment(response.payment || response.data?.payment);
 
@@ -41,18 +34,17 @@ const PaymentSuccessPage = () => {
         // Show success toast
         toast.success("Payment confirmed successfully!");
       } catch (error) {
-        console.error("Failed to confirm/fetch payment:", error);
-        toast.error("Failed to confirm payment status");
+        console.error("Failed to fetch payment details:", error);
+        toast.error("Failed to load payment status");
       } finally {
-        setConfirming(false);
         setLoading(false);
       }
     };
 
-    confirmAndFetchPayment();
+    fetchPaymentDetails();
   }, [paymentId, navigate]);
 
-  if (loading || confirming) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center">
         <div className="relative">
@@ -66,7 +58,7 @@ const PaymentSuccessPage = () => {
           </div>
         </div>
         <p className="text-white/60 mt-6 font-medium tracking-wide animate-pulse">
-          {confirming ? "Verifying Payment..." : "Finalizing Order..."}
+          Loading Payment Details...
         </p>
       </div>
     );
@@ -97,15 +89,6 @@ const PaymentSuccessPage = () => {
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full">
                 <div className="absolute inset-0 rounded-full border-2 border-[rgb(49,134,22)] animate-[ping_1.5s_ease-in-out_infinite] opacity-20"></div>
                 <div className="absolute inset-0 rounded-full border-2 border-[rgb(49,134,22)] animate-[ping_1.5s_ease-in-out_infinite_0.5s] opacity-20"></div>
-              </div>
-              {/* Success Badge */}
-              <div className="absolute -bottom-1 -right-1 bg-[rgb(49,134,22)] text-white p-1.5 rounded-full border-4 border-zinc-900 shadow-lg transform scale-100 animate-in zoom-in duration-300 delay-150">
-                <CheckCircle
-                  className="w-5 h-5"
-                  fill="currentColor"
-                  stroke="white"
-                  strokeWidth={3}
-                />
               </div>
             </div>
 

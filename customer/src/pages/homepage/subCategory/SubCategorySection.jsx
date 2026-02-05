@@ -1,4 +1,9 @@
 const SubCategorySection = ({ title, items, onCategoryClick, route }) => {
+  // Don't show section if no items
+  if (!items || items.length === 0) {
+    return null;
+  }
+
   return (
     <section className="px-2 py-4 bg-black max-w-xl mx-auto md:max-w-4xl lg:max-w-5xl xl:max-w-6xl">
       <h2 className="text-lg font-bold text-white mb-3 tracking-wide">
