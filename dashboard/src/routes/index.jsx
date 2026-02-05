@@ -37,6 +37,7 @@ import StoreFeatures from "../app/store/pages/settings/StoreFeaturesPage";
 import BankAccountSettings from "../app/store/pages/settings/BankAccountPage";
 import OperatingHoursSettings from "../app/store/pages/settings/OperatingHoursPage";
 import DeliverySettings from "../app/store/pages/settings/DeliverySettingsPage";
+import StoreOperations from "../app/store/pages/operations/StoreOperationsPage";
 
 // Admin Pages
 import AdminDashboard from "../app/admin/pages/dashboard/DashboardPage";
@@ -148,6 +149,10 @@ export const router = createBrowserRouter([
       {
         path: "orders/:id",
         element: <OrderDetails />,
+      },
+      {
+        path: "operations",
+        element: <StoreOperations />,
       },
       {
         path: "finance",

@@ -72,6 +72,21 @@ export const storeAPI = {
   },
 
   /**
+   * Get store operations status
+   */
+  getMyOperations: async () => {
+    return apiClient.get("/stores/my/operations");
+  },
+
+  /**
+   * Update temporary closure status
+   * @param {Object} data - { isTemporarilyClosed: boolean, temporaryCloseReason?: string }
+   */
+  updateTempClosure: async (data) => {
+    return apiClient.put("/stores/my/operations/temp-closure", data);
+  },
+
+  /**
    * Get store statistics
    */
   getStats: async () => {

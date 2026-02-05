@@ -18,9 +18,15 @@ import {
   CreditCard,
   Clock,
   Truck,
+  Activity,
 } from "lucide-react";
 
-const Sidebar = ({ user, onLogout, type = "store" }) => {
+const Sidebar = ({
+  user,
+  onLogout,
+  type = "store",
+  storeName = "Store2Door",
+}) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [openMenus, setOpenMenus] = useState({
@@ -44,6 +50,7 @@ const Sidebar = ({ user, onLogout, type = "store" }) => {
       ],
     },
     { path: "/store/orders", icon: ShoppingCart, label: "Orders" },
+    { path: "/store/operations", icon: Activity, label: "Operations" },
     { path: "/store/finance", icon: DollarSign, label: "Finance" },
     { path: "/store/reviews", icon: Star, label: "Reviews" },
     {
@@ -92,14 +99,19 @@ const Sidebar = ({ user, onLogout, type = "store" }) => {
   return (
     <aside className="fixed inset-y-0 left-0 w-64 bg-white border-r border-gray-200 flex flex-col">
       {/* Logo */}
-      <div className="h-16 flex items-center px-6 border-b border-gray-200">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-green-600 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-green-500/30">
+      <div className="h-16 flex items-center px-4 border-b border-gray-200">
+        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+          <div className="w-9 h-9 bg-gradient-to-br from-green-600 to-emerald-600 rounded-lg flex items-center justify-center shadow-lg shadow-green-500/30 flex-shrink-0">
             <ShoppingBag className="w-5 h-5 text-white" />
           </div>
-          <div>
-            <h1 className="text-lg font-bold text-gray-900">Store2Door</h1>
-            <p className="text-xs text-gray-500">
+          <div className="min-w-0 flex-1">
+            <h1
+              className="text-sm font-bold text-gray-900 truncate"
+              title={storeName}
+            >
+              {storeName}
+            </h1>
+            <p className="text-[10px] text-gray-500 truncate">
               {type === "store" ? "Store Manager" : "Admin Panel"}
             </p>
           </div>
