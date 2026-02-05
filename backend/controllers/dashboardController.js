@@ -4,18 +4,15 @@ import Product from "../models/Product.js";
 import Review from "../models/Review.js";
 import Store from "../models/Store.js";
 import Transaction from "../models/Transaction.js";
+import { getManagerStoreOrFail } from "../utils/storeHelpers.js";
+import { toObjectId } from "../utils/mongoHelpers.js";
 
 // Get dashboard statistics for store manager
 export const getStoreDashboardStats = async (req, res) => {
   try {
-    const storeId = req.user.storeId;
-
-    if (!storeId) {
-      return res.status(400).json({
-        success: false,
-        message: "Store ID not found for user",
-      });
-    }
+    const store = await getManagerStoreOrFail(req, res);
+    if (!store) return;
+    const storeId = store._id;
 
     // Get today's date range
     const today = new Date();
@@ -37,7 +34,6 @@ export const getStoreDashboardStats = async (req, res) => {
       yesterdayOrders,
       recentOrders,
       topProducts,
-      store,
       last7DaysSales,
       recentReviews,
       totalProducts,
@@ -47,7 +43,7 @@ export const getStoreDashboardStats = async (req, res) => {
       Order.aggregate([
         {
           $match: {
-            storeId: new mongoose.Types.ObjectId(storeId),
+            storeId: toObjectId(storeId),
             createdAt: { $gte: today, $lt: tomorrow },
             paymentStatus: "succeeded",
           },
@@ -66,7 +62,7 @@ export const getStoreDashboardStats = async (req, res) => {
       Order.aggregate([
         {
           $match: {
-            storeId: new mongoose.Types.ObjectId(storeId),
+            storeId: toObjectId(storeId),
             createdAt: { $gte: yesterday, $lt: today },
             paymentStatus: "succeeded",
           },
@@ -94,7 +90,7 @@ export const getStoreDashboardStats = async (req, res) => {
       Order.aggregate([
         {
           $match: {
-            storeId: new mongoose.Types.ObjectId(storeId),
+            storeId: toObjectId(storeId),
             paymentStatus: "succeeded",
           },
         },
@@ -138,14 +134,11 @@ export const getStoreDashboardStats = async (req, res) => {
         },
       ]),
 
-      // Store information
-      Store.findById(storeId).select("name stats earnings"),
-
       // Last 7 days sales for chart (only succeeded payments)
       Order.aggregate([
         {
           $match: {
-            storeId: new mongoose.Types.ObjectId(storeId),
+            storeId: toObjectId(storeId),
             createdAt: { $gte: last7Days },
             paymentStatus: "succeeded",
           },
@@ -177,7 +170,7 @@ export const getStoreDashboardStats = async (req, res) => {
       Transaction.aggregate([
         {
           $match: {
-            storeId: new mongoose.Types.ObjectId(storeId),
+            storeId: toObjectId(storeId),
             userType: "store",
           },
         },

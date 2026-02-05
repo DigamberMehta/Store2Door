@@ -1,9 +1,12 @@
 import Product from "../models/Product.js";
 import Category from "../models/Category.js";
+import Store from "../models/Store.js";
 import { asyncHandler } from "../middleware/validation.js";
 import { expandQueryWithSynonyms } from "../config/synonyms.js";
 import fuzzysort from "fuzzysort";
 import { uploadToCloudinary } from "../config/cloudinary.js";
+import { getManagerStoreOrFail } from "../utils/storeHelpers.js";
+import { getPaginationParams } from "../utils/pagination.js";
 
 /**
  * @desc Get all products with filters
@@ -443,14 +446,9 @@ export const getStoreProductsWithContext = asyncHandler(async (req, res) => {
  * @access Private (Store Manager)
  */
 export const createProduct = asyncHandler(async (req, res) => {
-  const storeId = req.user.storeId;
-
-  if (!storeId) {
-    return res.status(400).json({
-      success: false,
-      message: "Store ID not found for this user",
-    });
-  }
+  const store = await getManagerStoreOrFail(req, res);
+  if (!store) return;
+  const storeId = store._id;
 
   // Parse productData from form if it exists (multipart/form-data)
   let productInfo = req.body;
@@ -622,7 +620,9 @@ export const createProduct = asyncHandler(async (req, res) => {
  */
 export const updateProduct = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const storeId = req.user.storeId;
+  const store = await getManagerStoreOrFail(req, res);
+  if (!store) return;
+  const storeId = store._id;
 
   // Find product and verify ownership
   const product = await Product.findById(id);
@@ -709,7 +709,9 @@ export const updateProduct = asyncHandler(async (req, res) => {
  */
 export const deleteProduct = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const storeId = req.user.storeId;
+  const store = await getManagerStoreOrFail(req, res);
+  if (!store) return;
+  const storeId = store._id;
 
   // Find product and verify ownership
   const product = await Product.findById(id);
@@ -742,14 +744,9 @@ export const deleteProduct = asyncHandler(async (req, res) => {
  * @access Private (Store Manager)
  */
 export const getStoreProducts = asyncHandler(async (req, res) => {
-  const storeId = req.user.storeId;
-
-  if (!storeId) {
-    return res.status(400).json({
-      success: false,
-      message: "Store ID not found for this user",
-    });
-  }
+  const store = await getManagerStoreOrFail(req, res);
+  if (!store) return;
+  const storeId = store._id;
 
   const {
     page = 1,
@@ -805,7 +802,9 @@ export const getStoreProducts = asyncHandler(async (req, res) => {
  */
 export const getStoreProductById = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const storeId = req.user.storeId;
+  const store = await getManagerStoreOrFail(req, res);
+  if (!store) return;
+  const storeId = store._id;
 
   const product = await Product.findById(id);
 
@@ -836,7 +835,9 @@ export const getStoreProductById = asyncHandler(async (req, res) => {
  */
 export const toggleProductActive = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const storeId = req.user.storeId;
+  const store = await getManagerStoreOrFail(req, res);
+  if (!store) return;
+  const storeId = store._id;
 
   const product = await Product.findById(id);
 
@@ -872,7 +873,9 @@ export const toggleProductActive = asyncHandler(async (req, res) => {
 export const updateProductStock = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { stockQuantity } = req.body;
-  const storeId = req.user.storeId;
+  const store = await getManagerStoreOrFail(req, res);
+  if (!store) return;
+  const storeId = store._id;
 
   if (stockQuantity === undefined || stockQuantity < 0) {
     return res.status(400).json({

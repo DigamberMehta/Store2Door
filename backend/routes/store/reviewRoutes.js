@@ -2,6 +2,8 @@ import express from "express";
 import { authenticate, authorize } from "../../middleware/auth.js";
 import Review from "../../models/Review.js";
 import Store from "../../models/Store.js";
+import { getManagerStoreOrFail } from "../../utils/storeHelpers.js";
+import { getPaginationParams } from "../../utils/pagination.js";
 
 const router = express.Router();
 
@@ -12,17 +14,18 @@ router.use(authorize("store_manager"));
 // Get store reviews
 router.get("/", async (req, res) => {
   try {
-    const storeId = req.user.storeId;
+    const store = await getManagerStoreOrFail(req, res);
+    if (!store) return;
+    const storeId = store._id;
+
     const {
-      page = 1,
-      limit = 20,
       reviewType = "store",
       rating,
       sortBy = "createdAt",
       order = "desc",
     } = req.query;
 
-    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const { page, limit, skip } = getPaginationParams(req.query, 20);
     const query = {
       storeId,
       status: "approved",
@@ -72,7 +75,9 @@ router.get("/", async (req, res) => {
 // Get review statistics
 router.get("/stats", async (req, res) => {
   try {
-    const storeId = req.user.storeId;
+    const store = await getManagerStoreOrFail(req, res);
+    if (!store) return;
+    const storeId = store._id;
 
     const [storeStats, productStats, recentReviews] = await Promise.all([
       // Store review stats
@@ -168,7 +173,9 @@ router.post("/:id/respond", async (req, res) => {
   try {
     const { id } = req.params;
     const { responseText } = req.body;
-    const storeId = req.user.storeId;
+    const store = await getManagerStoreOrFail(req, res);
+    if (!store) return;
+    const storeId = store._id;
 
     if (!responseText || responseText.trim().length === 0) {
       return res.status(400).json({

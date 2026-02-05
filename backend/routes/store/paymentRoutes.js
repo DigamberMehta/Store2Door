@@ -3,6 +3,8 @@ import { authenticate, authorize } from "../../middleware/auth.js";
 import Payment from "../../models/Payment.js";
 import Order from "../../models/Order.js";
 import Store from "../../models/Store.js";
+import { getManagerStoreOrFail } from "../../utils/storeHelpers.js";
+import { getPaginationParams } from "../../utils/pagination.js";
 
 const router = express.Router();
 
@@ -16,8 +18,12 @@ router.use(authorize("store_manager"));
  */
 router.get("/", async (req, res) => {
   try {
-    const storeId = req.user.storeId;
-    const { page = 1, limit = 10, status, period = "all" } = req.query;
+    const store = await getManagerStoreOrFail(req, res);
+    if (!store) return;
+    const storeId = store._id;
+
+    const { status, period = "all" } = req.query;
+    const { page, limit } = getPaginationParams(req.query, 10);
 
     // Build date filter based on period
     let dateFilter = {};

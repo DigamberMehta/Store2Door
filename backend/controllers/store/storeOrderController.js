@@ -1,16 +1,22 @@
 import mongoose from "mongoose";
 import Order from "../../models/Order.js";
 import User from "../../models/User.js";
+import Store from "../../models/Store.js";
 import { emitToOrder, broadcastToDrivers } from "../../config/socket.js";
 import { sendOrderStatusEmail } from "../../config/mailer.js";
+import { getManagerStoreOrFail } from "../../utils/storeHelpers.js";
+import { toObjectId } from "../../utils/mongoHelpers.js";
+import { getPaginationParams } from "../../utils/pagination.js";
 
 // Get all orders for store manager
 export const getStoreOrders = async (req, res) => {
   try {
-    const storeId = req.user.storeId;
+    // Get store using utility
+    const store = await getManagerStoreOrFail(req, res);
+    if (!store) return; // Response already sent
+
+    const storeId = store._id;
     const {
-      page = 1,
-      limit = 20,
       status,
       paymentStatus,
       search,
@@ -20,15 +26,11 @@ export const getStoreOrders = async (req, res) => {
       sortOrder = "desc",
     } = req.query;
 
-    if (!storeId) {
-      return res.status(400).json({
-        success: false,
-        message: "Store ID not found for user",
-      });
-    }
+    // Get pagination params using utility
+    const { page, limit, skip } = getPaginationParams(req.query, 20);
 
     // Build filter
-    const filter = { storeId: new mongoose.Types.ObjectId(storeId) };
+    const filter = { storeId: toObjectId(storeId) };
 
     if (status) {
       filter.status = status;
@@ -53,9 +55,6 @@ export const getStoreOrders = async (req, res) => {
         filter.createdAt.$lte = end;
       }
     }
-
-    // Calculate pagination
-    const skip = (parseInt(page) - 1) * parseInt(limit);
 
     // Build sort
     const sort = {};
@@ -99,7 +98,11 @@ export const getStoreOrders = async (req, res) => {
 // Get single order details
 export const getOrderDetails = async (req, res) => {
   try {
-    const storeId = req.user.storeId;
+    // Get store using utility
+    const store = await getManagerStoreOrFail(req, res);
+    if (!store) return; // Response already sent
+
+    const storeId = store._id;
     const { orderId } = req.params;
 
     const order = await Order.findOne({
@@ -121,7 +124,7 @@ export const getOrderDetails = async (req, res) => {
     if (order.paymentId) {
       await order.populate(
         "paymentId",
-        "paymentNumber status method amount createdAt completedAt yocoPaymentId yocoCheckoutId",
+        "paymentNumber status method amount createdAt completedAt paystackPaymentId paystackReference",
       );
     }
 
@@ -154,7 +157,11 @@ export const getOrderDetails = async (req, res) => {
 // Update order status
 export const updateOrderStatus = async (req, res) => {
   try {
-    const storeId = req.user.storeId;
+    // Get store using utility
+    const store = await getManagerStoreOrFail(req, res);
+    if (!store) return; // Response already sent
+
+    const storeId = store._id;
     const { orderId } = req.params;
     const { status, notes } = req.body;
 
@@ -201,7 +208,7 @@ export const updateOrderStatus = async (req, res) => {
     // Handle cancellation
     if (status === "cancelled") {
       order.cancelledAt = new Date();
-      order.cancelledBy = req.user.id;
+      order.cancelledBy = req.user._id;
       order.cancellationReason = notes;
     }
 
@@ -212,10 +219,17 @@ export const updateOrderStatus = async (req, res) => {
       const user = await User.findById(order.customerId);
       if (user) {
         // Only send for important status changes
-        const importantStatuses = ["confirmed", "preparing", "ready_for_pickup", "cancelled"];
+        const importantStatuses = [
+          "confirmed",
+          "preparing",
+          "ready_for_pickup",
+          "cancelled",
+        ];
         if (importantStatuses.includes(status)) {
           await sendOrderStatusEmail(order, user.email, user.name, status);
-          console.log(`[Store] Status update email (${status}) sent for order ${order.orderNumber}`);
+          console.log(
+            `[Store] Status update email (${status}) sent for order ${order.orderNumber}`,
+          );
         }
       }
     } catch (emailError) {
@@ -266,10 +280,14 @@ export const updateOrderStatus = async (req, res) => {
 // Get order statistics
 export const getOrderStats = async (req, res) => {
   try {
-    const storeId = req.user.storeId;
+    // Get store using utility
+    const store = await getManagerStoreOrFail(req, res);
+    if (!store) return; // Response already sent
+
+    const storeId = store._id;
 
     const stats = await Order.aggregate([
-      { $match: { storeId: new mongoose.Types.ObjectId(storeId) } },
+      { $match: { storeId: toObjectId(storeId) } },
       {
         $group: {
           _id: "$status",
@@ -280,7 +298,7 @@ export const getOrderStats = async (req, res) => {
     ]);
 
     const paymentStats = await Order.aggregate([
-      { $match: { storeId: new mongoose.Types.ObjectId(storeId) } },
+      { $match: { storeId: toObjectId(storeId) } },
       {
         $group: {
           _id: "$paymentStatus",
