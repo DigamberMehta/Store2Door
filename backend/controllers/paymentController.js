@@ -193,7 +193,15 @@ export const verifyPaystackPayment = async (req, res) => {
 
       if (order) {
         order.paymentStatus = "paid";
-        // Keep status as "pending" - store must manually confirm
+        // Automatically update status to "placed" when payment is confirmed
+        if (order.status === "pending") {
+          order.status = "placed";
+          order.trackingHistory.push({
+            status: "placed",
+            updatedAt: new Date(),
+            notes: "Order placed - payment confirmed",
+          });
+        }
         await order.save();
 
         // Send payment confirmation email
@@ -262,18 +270,6 @@ export const verifyPaystackPayment = async (req, res) => {
     });
   }
 };
-
-// Yoco checkout implementation removed - use initializePaystackPayment instead
-// POST /api/payments/paystack/initialize
-
-// Yoco createPayment implementation removed - use Paystack instead
-// Use initializePaystackPayment and verifyPaystackPayment for Paystack payments
-
-// Yoco confirmPayment implementation removed - use verifyPaystackPayment instead
-// GET /api/payments/paystack/verify/:reference
-
-// Yoco webhook handler removed - implement Paystack webhook handler instead
-// POST /api/payments/paystack/webhook
 
 /**
  * Get payment details
