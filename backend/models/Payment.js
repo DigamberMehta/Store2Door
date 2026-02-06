@@ -15,9 +15,6 @@ const paymentAttemptSchema = new mongoose.Schema({
     type: String,
     trim: true,
   },
-  yocoResponse: {
-    type: mongoose.Schema.Types.Mixed,
-  },
 });
 
 // Webhook event sub-schema
@@ -68,10 +65,6 @@ const refundSchema = new mongoose.Schema({
   processedAt: {
     type: Date,
   },
-  yocoRefundId: {
-    type: String,
-    trim: true,
-  },
 });
 
 // Main payment schema
@@ -99,7 +92,7 @@ const paymentSchema = new mongoose.Schema(
     // Payment method
     method: {
       type: String,
-      enum: ["yoco_card", "yoco_eft", "yoco_instant_eft", "paystack_card", "paystack_bank", "paystack_ussd", "paystack_mobile_money", "paystack_eft"],
+      enum: ["paystack_card", "paystack_bank", "paystack_ussd", "paystack_mobile_money", "paystack_eft"],
       required: [true, "Payment method is required"],
     },
 
@@ -136,20 +129,6 @@ const paymentSchema = new mongoose.Schema(
       type: Number,
       default: 0,
       min: 0,
-    },
-
-    // Yoco payment fields
-    yocoCheckoutId: {
-      type: String,
-      trim: true,
-    },
-    yocoPaymentId: {
-      type: String,
-      trim: true,
-    },
-    yocoChargeId: {
-      type: String,
-      trim: true,
     },
 
     // Paystack payment fields
@@ -287,8 +266,6 @@ const paymentSchema = new mongoose.Schema(
 paymentSchema.index({ orderId: 1, status: 1 });
 paymentSchema.index({ userId: 1, createdAt: -1 });
 paymentSchema.index({ status: 1, createdAt: -1 });
-paymentSchema.index({ yocoPaymentId: 1 }, { sparse: true });
-paymentSchema.index({ yocoCheckoutId: 1 }, { sparse: true });
 paymentSchema.index({ paystackReference: 1 }, { sparse: true });
 paymentSchema.index({ paystackPaymentId: 1 }, { sparse: true });
 
@@ -320,13 +297,11 @@ paymentSchema.pre("save", function (next) {
 paymentSchema.methods.addAttempt = function (
   status,
   failureReason,
-  yocoResponse,
 ) {
   this.attempts.push({
     attemptedAt: new Date(),
     status,
     failureReason,
-    yocoResponse,
   });
   return this.save();
 };
@@ -351,12 +326,10 @@ paymentSchema.methods.markWebhookProcessed = function (webhookId) {
 };
 
 paymentSchema.methods.markAsSucceeded = function (
-  yocoPaymentId,
   transactionId,
   cardDetails,
 ) {
   this.status = "succeeded";
-  this.yocoPaymentId = yocoPaymentId;
   this.transactionId = transactionId;
   this.completedAt = new Date();
 
@@ -415,14 +388,6 @@ paymentSchema.statics.findByUser = function (userId, page = 1, limit = 10) {
     .skip(skip)
     .limit(limit)
     .populate("orderId", "orderNumber total");
-};
-
-paymentSchema.statics.findByYocoPaymentId = function (yocoPaymentId) {
-  return this.findOne({ yocoPaymentId });
-};
-
-paymentSchema.statics.findByYocoCheckoutId = function (yocoCheckoutId) {
-  return this.findOne({ yocoCheckoutId });
 };
 
 paymentSchema.statics.getSuccessfulPayments = function (startDate, endDate) {

@@ -19,7 +19,7 @@ const migrate = async () => {
     // we should change them to something valid or remove the stricter validation if we want to keep history.
     // But assuming we want to fully remove COD support:
     // We'll update the enum in the DB to 'manual_cash' or similar, but wait, 'manual_cash' isn't in the new enum either.
-    // The new enum only has Yoco options.
+    // The new enum only has Paystack options.
     // This implies old orders are now historically invalid if we try to save them.
     // For migration purposes, if we want to keep them valid, we should add 'other' or 'legacy_cod' to the enum,
     // or just leave them as is and know that we can't edit them without updating the payment method.
@@ -27,7 +27,7 @@ const migrate = async () => {
     // Let's check updateMany result.
 
     // Actually, if we just want to suppress validation errors for old data, we might need a distinct value.
-    // But since the user wants it gone, maybe we convert them to 'yoco_card' (technically incorrect)
+    // But since the user wants it gone, maybe we convert them to 'paystack_card' (technically incorrect)
     // or we just leave them alone.
     // The "correct" way to handle legacy data that falls out of enum is usually:
     // 1. Add 'legacy' to enum.
@@ -35,7 +35,7 @@ const migrate = async () => {
 
     // However, the prompt asked to "migrate the db then".
     // I will assume this means "update existing COD orders to something else" OR "delete them" (unlikely).
-    // I will update them to 'yoco_card' but add a note in internalNotes,
+    // I will update them to 'paystack_card' but add a note in internalNotes,
     // OR ideally, we'd add 'unknown' to enum.
 
     // Let's just log the count for now and verify no changes are needed if we don't save them.
