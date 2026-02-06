@@ -29,61 +29,61 @@ const OrderTimeline = ({ trackingHistory = [] }) => {
 
   if (!trackingHistory || trackingHistory.length === 0) {
     return (
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h2 className="text-lg font-semibold text-gray-900 flex items-center mb-4">
-          <Clock className="w-5 h-5 mr-2" />
+      <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <h2 className="text-base font-semibold text-gray-900 flex items-center mb-3">
+          <Clock className="w-4 h-4 mr-2" />
           Order Timeline
         </h2>
-        <p className="text-sm text-gray-500">No tracking history available</p>
+        <p className="text-xs text-gray-500">No tracking history available</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6">
-      <h2 className="text-lg font-semibold text-gray-900 flex items-center mb-4">
-        <Clock className="w-5 h-5 mr-2" />
+    <div className="bg-white rounded-lg border border-gray-200 p-4">
+      <h2 className="text-base font-semibold text-gray-900 flex items-center mb-3">
+        <Clock className="w-4 h-4 mr-2" />
         Order Timeline
       </h2>
       <div className="flow-root">
-        <ul className="-mb-8">
+        <ul className="-mb-6">
           {trackingHistory.map((event, idx) => {
             const isLast = idx === trackingHistory.length - 1;
             return (
               <li key={idx}>
-                <div className="relative pb-8">
+                <div className="relative pb-6">
                   {!isLast && (
                     <span
-                      className="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200"
+                      className="absolute top-3.5 left-3.5 -ml-px h-full w-0.5 bg-gray-200"
                       aria-hidden="true"
                     />
                   )}
-                  <div className="relative flex space-x-3">
+                  <div className="relative flex space-x-2">
                     <div>
                       <span
-                        className={`h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white ${getStatusColor(
+                        className={`h-7 w-7 rounded-full flex items-center justify-center ring-8 ring-white ${getStatusColor(
                           event.status,
                         )}`}
                       >
                         {idx === 0 ? (
-                          <CheckCircle className="h-5 w-5" />
+                          <CheckCircle className="h-4 w-4" />
                         ) : (
-                          <Circle className="h-3 w-3" fill="currentColor" />
+                          <Circle className="h-2.5 w-2.5" fill="currentColor" />
                         )}
                       </span>
                     </div>
-                    <div className="flex min-w-0 flex-1 justify-between space-x-4 pt-1.5">
+                    <div className="flex min-w-0 flex-1 justify-between space-x-2 pt-1">
                       <div>
-                        <p className="text-sm font-medium text-gray-900">
+                        <p className="text-xs font-medium text-gray-900">
                           {event.status.replace(/_/g, " ").toUpperCase()}
                         </p>
                         {event.notes && (
-                          <p className="mt-0.5 text-sm text-gray-600">
+                          <p className="mt-0.5 text-xs text-gray-600">
                             {event.notes}
                           </p>
                         )}
                       </div>
-                      <div className="whitespace-nowrap text-right text-sm text-gray-500">
+                      <div className="whitespace-nowrap text-right text-xs text-gray-500">
                         {formatDate(event.updatedAt)}
                       </div>
                     </div>

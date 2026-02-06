@@ -16,12 +16,12 @@ const OrderItems = ({ items = [] }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6">
-      <h2 className="text-lg font-semibold text-gray-900 flex items-center mb-4">
+    <div className="bg-white rounded-lg border border-gray-200 p-4">
+      <h2 className="text-base font-semibold text-gray-900 flex items-center mb-3">
         <Package className="w-5 h-5 mr-2" />
         Order Items ({items.length})
       </h2>
-      <div className="space-y-4">
+      <div className="space-y-3">
         {items.map((item, index) => (
           <div
             key={index}
@@ -30,9 +30,11 @@ const OrderItems = ({ items = [] }) => {
             <div className="flex-1">
               <div className="flex justify-between items-start">
                 <div>
-                  <h3 className="font-medium text-gray-900">{item.name}</h3>
+                  <h3 className="text-sm font-medium text-gray-900">
+                    {item.name}
+                  </h3>
                   {item.description && (
-                    <p className="text-sm text-gray-600 mt-1">
+                    <p className="text-xs text-gray-600 mt-0.5">
                       {item.description}
                     </p>
                   )}
@@ -42,7 +44,7 @@ const OrderItems = ({ items = [] }) => {
                 </p>
               </div>
 
-              <div className="mt-2 space-y-1 text-sm text-gray-600">
+              <div className="mt-2 space-y-0.5 text-xs text-gray-600">
                 <p>
                   Quantity: {item.quantity} × R {item.unitPrice.toFixed(2)}
                 </p>

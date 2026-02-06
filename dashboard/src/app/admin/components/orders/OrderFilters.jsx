@@ -58,9 +58,9 @@ const OrderFilters = ({ filters, onFilterChange, onExport, loading }) => {
     filters.dateTo;
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-4">
+    <div className="bg-white rounded-lg border border-gray-200 p-3 space-y-3">
       {/* Search and Actions Row */}
-      <div className="flex flex-col md:flex-row gap-4">
+      <div className="flex flex-col md:flex-row gap-3">
         {/* Search */}
         <div className="flex-1">
           <div className="relative">
@@ -79,7 +79,7 @@ const OrderFilters = ({ filters, onFilterChange, onExport, loading }) => {
         <button
           onClick={onExport}
           disabled={loading}
-          className="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="inline-flex items-center px-3 py-1.5 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
         >
           <Download className="w-4 h-4 mr-2" />
           Export
@@ -89,7 +89,7 @@ const OrderFilters = ({ filters, onFilterChange, onExport, loading }) => {
         {hasActiveFilters && (
           <button
             onClick={handleClearFilters}
-            className="inline-flex items-center px-4 py-2 text-gray-700 hover:text-gray-900"
+            className="inline-flex items-center px-3 py-1.5 text-gray-700 hover:text-gray-900 text-sm"
           >
             <X className="w-4 h-4 mr-2" />
             Clear Filters
@@ -98,16 +98,16 @@ const OrderFilters = ({ filters, onFilterChange, onExport, loading }) => {
       </div>
 
       {/* Filter Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
         {/* Status Filter */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-xs font-medium text-gray-700 mb-1">
             Order Status
           </label>
           <select
             value={filters.status || ""}
             onChange={(e) => handleChange("status", e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             {statusOptions.map((option) => (
               <option key={option.value} value={option.value}>
@@ -119,13 +119,13 @@ const OrderFilters = ({ filters, onFilterChange, onExport, loading }) => {
 
         {/* Payment Status Filter */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-xs font-medium text-gray-700 mb-1">
             Payment Status
           </label>
           <select
             value={filters.paymentStatus || ""}
             onChange={(e) => handleChange("paymentStatus", e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             {paymentStatusOptions.map((option) => (
               <option key={option.value} value={option.value}>
@@ -137,13 +137,13 @@ const OrderFilters = ({ filters, onFilterChange, onExport, loading }) => {
 
         {/* Payment Method Filter */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-xs font-medium text-gray-700 mb-1">
             Payment Method
           </label>
           <select
             value={filters.paymentMethod || ""}
             onChange={(e) => handleChange("paymentMethod", e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             {paymentMethodOptions.map((option) => (
               <option key={option.value} value={option.value}>

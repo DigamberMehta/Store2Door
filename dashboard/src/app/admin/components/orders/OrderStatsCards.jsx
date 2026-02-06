@@ -62,19 +62,19 @@ const OrderStatsCards = ({ stats, attention }) => {
           return (
             <div
               key={index}
-              className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow"
+              className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow"
             >
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-600 mb-1">
+                  <p className="text-xs font-medium text-gray-600 mb-0.5">
                     {stat.title}
                   </p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-xl font-bold text-gray-900">
                     {stat.value}
                   </p>
                 </div>
-                <div className={`${stat.bgColor} p-3 rounded-lg`}>
-                  <Icon className={`w-6 h-6 ${stat.textColor}`} />
+                <div className={`${stat.bgColor} p-2 rounded-lg`}>
+                  <Icon className={`w-5 h-5 ${stat.textColor}`} />
                 </div>
               </div>
             </div>
@@ -84,14 +84,14 @@ const OrderStatsCards = ({ stats, attention }) => {
 
       {/* Attention Alert */}
       {attention && attention.totalRequiringAttention > 0 && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
           <div className="flex items-start">
-            <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5 mr-3 flex-shrink-0" />
+            <AlertCircle className="w-4 h-4 text-yellow-600 mt-0.5 mr-2 flex-shrink-0" />
             <div className="flex-1">
-              <h3 className="text-sm font-semibold text-yellow-900 mb-1">
+              <h3 className="text-xs font-semibold text-yellow-900 mb-0.5">
                 {attention.totalRequiringAttention} Orders Requiring Attention
               </h3>
-              <div className="text-sm text-yellow-800 space-y-1">
+              <div className="text-xs text-yellow-800 space-y-0.5">
                 {attention.stuckPending?.length > 0 && (
                   <p>
                     • {attention.stuckPending.length} pending orders waiting for

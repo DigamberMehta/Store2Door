@@ -80,19 +80,19 @@ const OrdersListPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="min-h-screen bg-gray-50 p-4">
+      <div className="max-w-7xl mx-auto space-y-4">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="bg-blue-100 p-2 rounded-lg">
-              <Package className="w-6 h-6 text-blue-600" />
+          <div className="flex items-center space-x-2">
+            <div className="bg-blue-100 p-1.5 rounded-lg">
+              <Package className="w-5 h-5 text-blue-600" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
+              <h1 className="text-xl font-bold text-gray-900">
                 Order Management
               </h1>
-              <p className="text-sm text-gray-600">
+              <p className="text-xs text-gray-600">
                 Manage and track all platform orders
               </p>
             </div>

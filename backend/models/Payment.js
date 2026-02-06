@@ -92,7 +92,13 @@ const paymentSchema = new mongoose.Schema(
     // Payment method
     method: {
       type: String,
-      enum: ["paystack_card", "paystack_bank", "paystack_ussd", "paystack_mobile_money", "paystack_eft"],
+      enum: [
+        "paystack_card",
+        "paystack_bank",
+        "paystack_ussd",
+        "paystack_mobile_money",
+        "paystack_eft",
+      ],
       required: [true, "Payment method is required"],
     },
 
@@ -294,10 +300,7 @@ paymentSchema.pre("save", function (next) {
 });
 
 // Instance methods
-paymentSchema.methods.addAttempt = function (
-  status,
-  failureReason,
-) {
+paymentSchema.methods.addAttempt = function (status, failureReason) {
   this.attempts.push({
     attemptedAt: new Date(),
     status,
@@ -325,10 +328,7 @@ paymentSchema.methods.markWebhookProcessed = function (webhookId) {
   return Promise.resolve(this);
 };
 
-paymentSchema.methods.markAsSucceeded = function (
-  transactionId,
-  cardDetails,
-) {
+paymentSchema.methods.markAsSucceeded = function (transactionId, cardDetails) {
   this.status = "succeeded";
   this.transactionId = transactionId;
   this.completedAt = new Date();

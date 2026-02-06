@@ -8,17 +8,17 @@ const OrderActions = ({ order, onUpdateStatus, onAssignRider, onCancel }) => {
   const canCancel = !["delivered", "cancelled"].includes(order.status);
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6">
-      <h2 className="text-lg font-semibold text-gray-900 mb-4">
+    <div className="bg-white rounded-lg border border-gray-200 p-4">
+      <h2 className="text-base font-semibold text-gray-900 mb-3">
         Quick Actions
       </h2>
-      <div className="space-y-3">
+      <div className="space-y-2">
         {canUpdateStatus && (
           <button
             onClick={onUpdateStatus}
-            className="w-full flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="w-full flex items-center justify-center px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
-            <RefreshCw className="w-4 h-4 mr-2" />
+            <RefreshCw className="w-3.5 h-3.5 mr-2" />
             Update Status
           </button>
         )}
@@ -26,9 +26,9 @@ const OrderActions = ({ order, onUpdateStatus, onAssignRider, onCancel }) => {
         {canAssignRider && (
           <button
             onClick={onAssignRider}
-            className="w-full flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            className="w-full flex items-center justify-center px-3 py-1.5 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
           >
-            <UserPlus className="w-4 h-4 mr-2" />
+            <UserPlus className="w-3.5 h-3.5 mr-2" />
             Assign Rider
           </button>
         )}
@@ -36,15 +36,15 @@ const OrderActions = ({ order, onUpdateStatus, onAssignRider, onCancel }) => {
         {canCancel && (
           <button
             onClick={onCancel}
-            className="w-full flex items-center justify-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            className="w-full flex items-center justify-center px-3 py-1.5 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
           >
-            <X className="w-4 h-4 mr-2" />
+            <X className="w-3.5 h-3.5 mr-2" />
             Cancel Order
           </button>
         )}
 
         {!canUpdateStatus && !canAssignRider && !canCancel && (
-          <p className="text-sm text-gray-500 text-center py-4">
+          <p className="text-xs text-gray-500 text-center py-3">
             No actions available for this order
           </p>
         )}

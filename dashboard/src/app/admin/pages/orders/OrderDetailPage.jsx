@@ -128,9 +128,9 @@ const OrderDetailPage = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          <h1 className="text-base font-bold text-gray-900 mb-1">
             Order Not Found
-          </h2>
+          </h1>
           <button
             onClick={() => navigate("/admin/orders")}
             className="text-blue-600 hover:text-blue-700"
@@ -143,22 +143,22 @@ const OrderDetailPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="min-h-screen bg-gray-50 p-4">
+      <div className="max-w-7xl mx-auto space-y-4">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-3">
             <button
               onClick={() => navigate("/admin/orders")}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="w-4 h-4" />
             </button>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
+              <h1 className="text-xl font-bold text-gray-900">
                 Order #{order.orderNumber}
               </h1>
-              <p className="text-sm text-gray-600">
+              <p className="text-xs text-gray-600">
                 Placed on {new Date(order.createdAt).toLocaleString("en-ZA")}
               </p>
             </div>
@@ -167,46 +167,46 @@ const OrderDetailPage = () => {
         </div>
 
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Left Column - Order Details */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-4">
             {/* Customer Info */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900 flex items-center">
-                  <User className="w-5 h-5 mr-2" />
+            <div className="bg-white rounded-lg border border-gray-200 p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-base font-semibold text-gray-900 flex items-center">
+                  <User className="w-4 h-4 mr-2" />
                   Customer Information
                 </h2>
               </div>
               <div className="space-y-3">
                 <div className="flex items-start">
-                  <div className="flex-shrink-0 mr-3">
+                  <div className="shrink-0 mr-3">
                     {order.customerId?.profilePhoto ? (
                       <img
                         src={order.customerId.profilePhoto}
                         alt={order.customerId.name}
-                        className="w-12 h-12 rounded-full"
+                        className="w-10 h-10 rounded-full"
                       />
                     ) : (
-                      <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center">
-                        <User className="w-6 h-6 text-gray-600" />
+                      <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
+                        <User className="w-5 h-5 text-gray-600" />
                       </div>
                     )}
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900">
+                    <p className="font-medium text-gray-900 text-sm">
                       {order.customerId?.name || "N/A"}
                     </p>
-                    <div className="text-sm text-gray-600 space-y-1 mt-1">
+                    <div className="text-xs text-gray-600 space-y-0.5 mt-0.5">
                       {order.customerId?.email && (
-                        <div className="flex items-center">
-                          <Mail className="w-4 h-4 mr-2" />
+                        <div className="flex items-center text-xs">
+                          <Mail className="w-3.5 h-3.5 mr-1" />
                           {order.customerId.email}
                         </div>
                       )}
                       {order.customerId?.phone && (
-                        <div className="flex items-center">
-                          <Phone className="w-4 h-4 mr-2" />
+                        <div className="flex items-center text-xs">
+                          <Phone className="w-3.5 h-3.5 mr-1" />
                           {order.customerId.phone}
                         </div>
                       )}
@@ -217,42 +217,42 @@ const OrderDetailPage = () => {
             </div>
 
             {/* Store Info */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900 flex items-center">
-                  <Store className="w-5 h-5 mr-2" />
+            <div className="bg-white rounded-lg border border-gray-200 p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-base font-semibold text-gray-900 flex items-center">
+                  <Store className="w-4 h-4 mr-2" />
                   Store Information
                 </h2>
               </div>
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <div className="flex items-start">
-                  <div className="flex-shrink-0 mr-3">
+                  <div className="shrink-0 mr-2">
                     {order.storeId?.logo ? (
                       <img
                         src={order.storeId.logo}
                         alt={order.storeId.name}
-                        className="w-12 h-12 rounded-lg object-cover"
+                        className="w-10 h-10 rounded-lg object-cover"
                       />
                     ) : (
-                      <div className="w-12 h-12 rounded-lg bg-gray-200 flex items-center justify-center">
-                        <Store className="w-6 h-6 text-gray-600" />
+                      <div className="w-10 h-10 rounded-lg bg-gray-200 flex items-center justify-center">
+                        <Store className="w-5 h-5 text-gray-600" />
                       </div>
                     )}
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900">
+                    <p className="font-medium text-gray-900 text-sm">
                       {order.storeId?.name || "N/A"}
                     </p>
-                    <div className="text-sm text-gray-600 space-y-1 mt-1">
+                    <div className="text-xs text-gray-600 space-y-0.5 mt-0.5">
                       {order.storeId?.phone && (
-                        <div className="flex items-center">
-                          <Phone className="w-4 h-4 mr-2" />
+                        <div className="flex items-center text-xs">
+                          <Phone className="w-3.5 h-3.5 mr-1" />
                           {order.storeId.phone}
                         </div>
                       )}
                       {order.storeId?.address && (
-                        <div className="flex items-center">
-                          <MapPin className="w-4 h-4 mr-2" />
+                        <div className="flex items-center text-xs">
+                          <MapPin className="w-3.5 h-3.5 mr-1" />
                           {order.storeId.address.street},{" "}
                           {order.storeId.address.city}
                         </div>
@@ -264,8 +264,8 @@ const OrderDetailPage = () => {
             </div>
 
             {/* Delivery Address */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 flex items-center mb-4">
+            <div className="bg-white rounded-lg border border-gray-200 p-4">
+              <h2 className="text-base font-semibold text-gray-900 flex items-center mb-3">
                 <MapPin className="w-5 h-5 mr-2" />
                 Delivery Address
               </h2>
@@ -290,21 +290,21 @@ const OrderDetailPage = () => {
             <OrderPaymentInfo order={order} transactions={transactions} />
 
             {/* Notes */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900 flex items-center">
-                  <FileText className="w-5 h-5 mr-2" />
+            <div className="bg-white rounded-lg border border-gray-200 p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-base font-semibold text-gray-900 flex items-center">
+                  <FileText className="w-4 h-4 mr-2" />
                   Notes & Instructions
                 </h2>
                 <button
                   onClick={() => setShowEditNotes(true)}
-                  className="text-blue-600 hover:text-blue-700 text-sm flex items-center"
+                  className="text-blue-600 hover:text-blue-700 text-xs flex items-center"
                 >
-                  <Edit className="w-4 h-4 mr-1" />
+                  <Edit className="w-3.5 h-3.5 mr-1" />
                   Edit
                 </button>
               </div>
-              <div className="space-y-4">
+              <div className="space-y-2">
                 {order.specialInstructions && (
                   <div>
                     <p className="text-sm font-medium text-gray-700 mb-1">
@@ -333,7 +333,7 @@ const OrderDetailPage = () => {
           </div>
 
           {/* Right Column - Timeline & Actions */}
-          <div className="space-y-6">
+          <div className="space-y-4">
             {/* Actions */}
             <OrderActions
               order={order}
@@ -347,13 +347,13 @@ const OrderDetailPage = () => {
 
             {/* Rider Info */}
             {order.riderId && (
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <h2 className="text-lg font-semibold text-gray-900 flex items-center mb-4">
+              <div className="bg-white rounded-lg border border-gray-200 p-4">
+                <h2 className="text-base font-semibold text-gray-900 flex items-center mb-3">
                   <Truck className="w-5 h-5 mr-2" />
                   Delivery Rider
                 </h2>
                 <div className="flex items-start">
-                  <div className="flex-shrink-0 mr-3">
+                  <div className="shrink-0 mr-3">
                     {order.riderId?.profilePhoto ? (
                       <img
                         src={order.riderId.profilePhoto}
