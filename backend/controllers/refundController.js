@@ -39,13 +39,6 @@ export const submitRefund = asyncHandler(async (req, res, next) => {
     );
   }
 
-  // Check if order is eligible for refund
-  if (order.status === "cancelled") {
-    return next(
-      new AppError("Cannot request refund for cancelled orders", 400),
-    );
-  }
-
   // Check if refund already requested for this order
   const existingRefund = await Refund.orderHasRefund(orderId);
   if (existingRefund) {
@@ -78,6 +71,11 @@ export const submitRefund = asyncHandler(async (req, res, next) => {
       orderTotal: order.total,
       orderStatus: order.status,
       paymentStatus: order.paymentStatus,
+      paymentSplit: order.paymentSplit || {},
+      subtotal: order.subtotal,
+      deliveryFee: order.deliveryFee,
+      tip: order.tip,
+      discount: order.discount,
     },
   });
 
@@ -103,11 +101,21 @@ export const getMyRefunds = asyncHandler(async (req, res, next) => {
   const customerId = req.user._id;
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
+  const orderId = req.query.orderId; // Filter by orderId if provided
 
-  const refunds = await Refund.findByCustomer(customerId, page, limit);
+  let filter = { customerId };
+  if (orderId) {
+    filter.orderId = orderId;
+  }
+
+  const refunds = await Refund.find(filter)
+    .sort({ createdAt: -1 })
+    .skip((page - 1) * limit)
+    .limit(limit)
+    .populate("orderId", "orderNumber total status paymentStatus");
 
   // Get total count
-  const total = await Refund.countDocuments({ customerId });
+  const total = await Refund.countDocuments(filter);
 
   res.status(200).json({
     success: true,
@@ -264,14 +272,46 @@ export const adminGetRefundById = asyncHandler(async (req, res, next) => {
   const { id } = req.params;
 
   const refund = await Refund.findById(id)
-    .populate("customerId", "name email phone profilePhoto")
+    // Customer details
+    .populate("customerId", "name email phone profilePhoto role createdAt")
+
+    // Order details with nested payment and items
+    .populate({
+      path: "orderId",
+      select:
+        "orderNumber total status paymentStatus items paymentSplit subtotal deliveryFee tip discount deliveryAddress trackingHistory createdAt placedAt confirmedAt rejectedBy rejectedAt rejectionReason cancelledBy cancelledAt cancellationReason paymentMethod",
+      populate: [
+        {
+          path: "items.productId",
+          select: "name images price category",
+        },
+        {
+          path: "paymentId",
+          select:
+            "paymentNumber method status amount currency amountRefunded paystackReference paystackPaymentId transactionId cardDetails initiatedAt completedAt failedAt failureMessage attempts webhookEvents refunds receiptUrl",
+        },
+        {
+          path: "rejectedBy",
+          select: "name email role",
+        },
+        {
+          path: "cancelledBy",
+          select: "name email role",
+        },
+      ],
+    })
+
+    // Store details
     .populate(
-      "orderId",
-      "orderNumber total status paymentStatus items paymentSplit",
+      "storeId",
+      "name logo phone email address operatingHours isOpen averageRating reviewCount createdAt",
     )
-    .populate("storeId", "name logo phone address")
-    .populate("riderId", "name phone profilePhoto")
-    .populate("reviewedBy", "name email");
+
+    // Rider details (if assigned)
+    .populate("riderId", "name phone email profilePhoto vehicleInfo createdAt")
+
+    // Admin who reviewed
+    .populate("reviewedBy", "name email role");
 
   if (!refund) {
     return next(new AppError("Refund request not found", 404));
@@ -291,7 +331,7 @@ export const adminGetRefundById = asyncHandler(async (req, res, next) => {
 export const adminApproveRefund = asyncHandler(async (req, res, next) => {
   const adminId = req.user._id;
   const { id } = req.params;
-  const { approvedAmount, costDistribution, adminNote } = req.body;
+  const { costDistribution, adminNote } = req.body;
 
   // Validate cost distribution
   if (!costDistribution) {
@@ -300,19 +340,68 @@ export const adminApproveRefund = asyncHandler(async (req, res, next) => {
 
   const { fromStore, fromDriver, fromPlatform, rationale } = costDistribution;
 
-  // Validate amounts sum up to approved amount
-  const totalDistribution = fromStore + fromDriver + fromPlatform;
-  if (Math.abs(totalDistribution - approvedAmount) > 0.01) {
-    // Allow 1 cent tolerance for rounding
+  // Calculate approved amount from distribution
+  const approvedAmount = fromStore + fromDriver + fromPlatform;
+
+  // Validate approved amount
+  if (approvedAmount <= 0) {
     return next(
-      new AppError("Cost distribution must sum up to approved amount", 400),
+      new AppError("Total refund amount must be greater than 0", 400),
     );
   }
 
-  // Find refund
-  const refund = await Refund.findById(id);
+  // Find refund with order details
+  const refund = await Refund.findById(id).populate({
+    path: "orderId",
+    select: "paymentSplit deliveryFee tip total",
+  });
   if (!refund) {
     return next(new AppError("Refund request not found", 404));
+  }
+
+  // Validate approved amount doesn't exceed order total
+  if (refund.orderId && approvedAmount > refund.orderId.total) {
+    return next(
+      new AppError(
+        `Total refund amount (R ${approvedAmount.toFixed(2)}) cannot exceed order total (R ${refund.orderId.total.toFixed(2)})`,
+        400,
+      ),
+    );
+  }
+
+  // Validate approved amount doesn't exceed requested amount
+  if (approvedAmount > refund.requestedAmount) {
+    return next(
+      new AppError(
+        `Total refund amount (R ${approvedAmount.toFixed(2)}) cannot exceed requested amount (R ${refund.requestedAmount.toFixed(2)})`,
+        400,
+      ),
+    );
+  }
+
+  // Validate contribution limits based on earned amounts
+  if (refund.orderId && refund.orderId.paymentSplit) {
+    const maxFromStore = refund.orderId.paymentSplit.storeAmount || 0;
+    const maxFromDriver =
+      (refund.orderId.deliveryFee || 0) + (refund.orderId.tip || 0);
+
+    if (fromStore > maxFromStore) {
+      return next(
+        new AppError(
+          `Store contribution (R ${fromStore.toFixed(2)}) cannot exceed their earned amount (R ${maxFromStore.toFixed(2)})`,
+          400,
+        ),
+      );
+    }
+
+    if (fromDriver > maxFromDriver) {
+      return next(
+        new AppError(
+          `Driver contribution (R ${fromDriver.toFixed(2)}) cannot exceed delivery fee + tip (R ${maxFromDriver.toFixed(2)})`,
+          400,
+        ),
+      );
+    }
   }
 
   // Approve refund

@@ -102,6 +102,7 @@ const refundSchema = new mongoose.Schema(
         "delivery_mishap",
         "customer_cancelled",
         "store_cancelled",
+        "order_rejected",
         "other",
       ],
       required: [true, "Refund reason is required"],
@@ -181,6 +182,22 @@ const refundSchema = new mongoose.Schema(
       orderTotal: Number,
       orderStatus: String,
       paymentStatus: String,
+      // Payment split breakdown from order
+      paymentSplit: {
+        storeAmount: Number,
+        driverAmount: Number,
+        platformAmount: Number,
+        platformBreakdown: {
+          totalMarkup: Number,
+          discountAbsorbed: Number,
+          netEarnings: Number,
+        },
+      },
+      // Individual components for clarity
+      subtotal: Number,
+      deliveryFee: Number,
+      tip: Number,
+      discount: Number,
     },
 
     // Metadata
@@ -361,8 +378,16 @@ refundSchema.statics.getPendingRefunds = async function (page = 1, limit = 20) {
     .skip(skip)
     .limit(limit)
     .populate("customerId", "name email phone profilePhoto")
-    .populate("orderId", "orderNumber total status")
-    .populate("storeId", "name logo")
+    .populate({
+      path: "orderId",
+      select: "orderNumber total status paymentStatus paymentMethod createdAt",
+      populate: {
+        path: "paymentId",
+        select:
+          "paymentNumber method status amount paystackReference completedAt",
+      },
+    })
+    .populate("storeId", "name logo phone")
     .populate("reviewedBy", "name email");
 };
 
@@ -407,8 +432,16 @@ refundSchema.statics.getAllRefunds = async function (filters = {}) {
     .skip(skip)
     .limit(limit)
     .populate("customerId", "name email phone profilePhoto")
-    .populate("orderId", "orderNumber total status")
-    .populate("storeId", "name logo")
+    .populate({
+      path: "orderId",
+      select: "orderNumber total status paymentStatus paymentMethod createdAt",
+      populate: {
+        path: "paymentId",
+        select:
+          "paymentNumber method status amount paystackReference completedAt",
+      },
+    })
+    .populate("storeId", "name logo phone")
     .populate("reviewedBy", "name email");
 
   const total = await this.countDocuments(query);
