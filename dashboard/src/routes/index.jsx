@@ -47,6 +47,7 @@ import UserOrdersPage from "../app/admin/pages/users/UserOrdersPage";
 import TrackingPage from "../app/admin/pages/tracking/TrackingPage";
 import OrdersListPage from "../app/admin/pages/orders/OrdersListPage";
 import OrderDetailPage from "../app/admin/pages/orders/OrderDetailPage";
+import RefundsListPage from "../app/admin/pages/refunds/RefundsListPage";
 
 // Admin Pages (placeholders - will be created later)
 const AdminStores = () => (
@@ -254,6 +255,10 @@ export const router = createBrowserRouter([
       {
         path: "payments",
         element: <AdminPayments />,
+      },
+      {
+        path: "refunds",
+        element: <RefundsListPage />,
       },
       {
         path: "delivery-settings",
