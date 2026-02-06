@@ -138,7 +138,7 @@ const OrderDetailsPage = () => {
   };
 
   const formatDate = (date) => {
-    return new Date(date).toLocaleString("en-US", {
+    return new Date(date).toLocaleString("en-ZA", {
       month: "short",
       day: "numeric",
       year: "numeric",

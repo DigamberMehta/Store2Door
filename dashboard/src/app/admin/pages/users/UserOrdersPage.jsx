@@ -68,7 +68,7 @@ const UserOrdersPage = () => {
   };
 
   const formatDate = (date) => {
-    return new Date(date).toLocaleDateString("en-US", {
+    return new Date(date).toLocaleDateString("en-ZA", {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -78,9 +78,9 @@ const UserOrdersPage = () => {
   };
 
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat("en-US", {
+    return new Intl.NumberFormat("en-ZA", {
       style: "currency",
-      currency: "USD",
+      currency: "ZAR",
     }).format(amount || 0);
   };
 
