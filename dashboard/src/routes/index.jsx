@@ -45,6 +45,8 @@ import UsersPage from "../app/admin/pages/users/UsersPage";
 import UserDetailPage from "../app/admin/pages/users/detail/UserDetailPage";
 import UserOrdersPage from "../app/admin/pages/users/UserOrdersPage";
 import TrackingPage from "../app/admin/pages/tracking/TrackingPage";
+import OrdersListPage from "../app/admin/pages/orders/OrdersListPage";
+import OrderDetailPage from "../app/admin/pages/orders/OrderDetailPage";
 
 // Admin Pages (placeholders - will be created later)
 const AdminStores = () => (
@@ -55,11 +57,6 @@ const AdminStores = () => (
 const AdminProducts = () => (
   <div className="p-8">
     <h1 className="text-2xl font-bold">Products Management</h1>
-  </div>
-);
-const AdminOrders = () => (
-  <div className="p-8">
-    <h1 className="text-2xl font-bold">Orders Management</h1>
   </div>
 );
 const AdminCategories = () => (
@@ -232,7 +229,11 @@ export const router = createBrowserRouter([
       },
       {
         path: "orders",
-        element: <AdminOrders />,
+        element: <OrdersListPage />,
+      },
+      {
+        path: "orders/:id",
+        element: <OrderDetailPage />,
       },
       {
         path: "categories",
