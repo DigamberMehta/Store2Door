@@ -12,6 +12,7 @@ import { getErrorMessage } from "../../utils/errorHandler";
 import { StoreList } from "../homepage/store";
 import { suggestionsAPI } from "../../services/api";
 import cartAPI from "../../services/api/cart.api";
+import { apiClient } from "../../services/api/client";
 import { formatPrice } from "../../utils/formatPrice";
 import StoreConflictModal from "../../components/StoreConflictModal";
 
@@ -65,40 +66,35 @@ const SearchPage = () => {
           return;
         }
 
-        const response = await fetch(
-          "http://localhost:3000/api/customer-profile/addresses",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          },
-        );
+        try {
+          const response = await apiClient.get("/customer-profile/addresses");
 
-        if (response.ok) {
-          const data = await response.json();
-          const addresses = data.data?.addresses || data.addresses || [];
-          if (data.success && addresses.length > 0) {
-            // Use the default address or first address
-            const defaultAddress =
-              addresses.find((addr) => addr.isDefault) || addresses[0];
-            if (defaultAddress.latitude && defaultAddress.longitude) {
-              setUserLocation({
-                lat: defaultAddress.latitude,
-                lon: defaultAddress.longitude,
-              });
+          if (response.success) {
+            const addresses = response.data?.addresses || [];
+            if (addresses.length > 0) {
+              // Use the default address or first address
+              const defaultAddress =
+                addresses.find((addr) => addr.isDefault) || addresses[0];
+              if (defaultAddress.latitude && defaultAddress.longitude) {
+                setUserLocation({
+                  lat: defaultAddress.latitude,
+                  lon: defaultAddress.longitude,
+                });
 
-              setLocationError(null);
-              return;
+                setLocationError(null);
+                return;
+              } else {
+                setLocationError("Address found but missing coordinates");
+              }
             } else {
-              setLocationError("Address found but missing coordinates");
+              setLocationError(
+                "No delivery address found. Please add an address.",
+              );
             }
-          } else {
-            setLocationError(
-              "No delivery address found. Please add an address.",
-            );
           }
-        } else {
-          setLocationError("Failed to fetch address");
+        } catch (error) {
+          console.error("Error fetching addresses:", error);
+          setLocationError("Failed to fetch your addresses");
         }
       } catch (error) {
         console.error("Error fetching user address:", error);
@@ -567,7 +563,7 @@ const SearchPage = () => {
               <h3 className="text-xl font-semibold text-white/80 mb-2">
                 Search store2door
               </h3>
-              <p className="text-sm text-white/30 max-w-[240px] leading-relaxed mx-auto">
+              <p className="text-sm text-white/30 max-w-60 leading-relaxed mx-auto">
                 Discover local stores, fresh groceries, and the best deals near
                 you
               </p>

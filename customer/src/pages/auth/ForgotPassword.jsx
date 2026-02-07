@@ -19,13 +19,18 @@ const ForgotPassword = () => {
     setError("");
 
     try {
-      const response = await apiClient.post("/users/forgot-password", { email });
+      const response = await apiClient.post("/users/forgot-password", {
+        email,
+      });
       if (response.success) {
         setIsSuccess(true);
         toast.success("Reset link sent to your email!");
       }
     } catch (err) {
-      setError(err.response?.data?.message || "Something went wrong. Please try again.");
+      setError(
+        err.response?.data?.message ||
+          "Something went wrong. Please try again.",
+      );
       toast.error(err.response?.data?.message || "Failed to send reset link");
     } finally {
       setIsLoading(false);
@@ -44,7 +49,8 @@ const ForgotPassword = () => {
           <div className="space-y-2">
             <h2 className="text-2xl font-bold">Check your email</h2>
             <p className="text-white/60 text-sm">
-              We've sent a password reset link to <span className="text-white font-medium">{email}</span>
+              We've sent a password reset link to{" "}
+              <span className="text-white font-medium">{email}</span>
             </p>
           </div>
           <button
@@ -69,7 +75,9 @@ const ForgotPassword = () => {
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
-          <h1 className="text-sm font-semibold tracking-tight">Reset Password</h1>
+          <h1 className="text-sm font-semibold tracking-tight">
+            Reset Password
+          </h1>
           <div className="w-8"></div>
         </div>
       </div>
@@ -80,7 +88,8 @@ const ForgotPassword = () => {
           <div className="mb-8">
             <h2 className="text-2xl font-bold mb-2">Forgot Password?</h2>
             <p className="text-white/50 text-xs">
-              Enter your email address and we'll send you a link to reset your password.
+              Enter your email address and we'll send you a link to reset your
+              password.
             </p>
           </div>
 
