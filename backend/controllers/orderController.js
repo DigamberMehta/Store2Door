@@ -604,23 +604,39 @@ export const cancelOrder = async (req, res) => {
       });
     }
 
-    order.status = "cancelled";
-    order.cancellationReason = reason;
-    order.cancelledAt = new Date();
-    await order.save();
+    // Use the new cancelOrder method with tracking
+    await order.cancelOrder(userId, reason || "Cancelled by customer");
 
-    // TODO: Initiate refund if payment was made
+    // Create refund request for admin approval if payment was made
     if (order.paymentId && order.paymentStatus === "succeeded") {
-      // This should be handled by payment controller
-      // For now, just update payment status
-      await Payment.findByIdAndUpdate(order.paymentId, {
-        status: "refund_pending",
+      const Refund = (await import("../models/Refund.js")).default;
+
+      await Refund.create({
+        orderId: order._id,
+        customerId: order.customerId,
+        storeId: order.storeId,
+        riderId: order.riderId,
+        requestedAmount: order.total,
+        refundReason: "customer_cancelled",
+        customerNote: `Order cancelled by customer. Reason: ${reason || "Not specified"}`,
+        status: "pending_review",
+        orderSnapshot: {
+          orderNumber: order.orderNumber,
+          orderTotal: order.total,
+          orderStatus: order.status,
+          subtotal: order.subtotal,
+          deliveryFee: order.deliveryFee,
+          tip: order.tip,
+          discount: order.discount,
+          paymentSplit: order.paymentSplit,
+        },
       });
     }
 
     res.json({
       success: true,
-      message: "Order cancelled successfully",
+      message:
+        "Order cancelled successfully. Refund request created for admin review.",
       order,
     });
   } catch (error) {
@@ -628,6 +644,96 @@ export const cancelOrder = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to cancel order",
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * Reject an order (Store/Admin cannot fulfill)
+ * @route POST /api/orders/:orderId/reject
+ */
+export const rejectOrder = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const userId = req.user.id;
+    const { reason, notifyCustomer } = req.body;
+
+    // Check if user is store manager or admin
+    if (!["store", "admin"].includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        message: "Only store managers and admins can reject orders",
+      });
+    }
+
+    const order = await Order.findById(orderId);
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    // Check if order can be rejected
+    if (
+      !["pending", "placed", "confirmed", "preparing"].includes(order.status)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot reject order with status: ${order.status}`,
+      });
+    }
+
+    // Use the new rejectOrder method with tracking
+    await order.rejectOrder(
+      userId,
+      reason || "Store cannot fulfill this order",
+    );
+
+    // Create refund request for admin approval if payment was made
+    if (order.paymentId && order.paymentStatus === "succeeded") {
+      const Refund = (await import("../models/Refund.js")).default;
+
+      await Refund.create({
+        orderId: order._id,
+        customerId: order.customerId,
+        storeId: order.storeId,
+        riderId: order.riderId,
+        requestedAmount: order.total,
+        refundReason: "order_rejected",
+        customerNote: `Order rejected by store. Reason: ${reason || "Store cannot fulfill"}`,
+        status: "pending_review",
+        orderSnapshot: {
+          orderNumber: order.orderNumber,
+          orderTotal: order.total,
+          orderStatus: order.status,
+          subtotal: order.subtotal,
+          deliveryFee: order.deliveryFee,
+          tip: order.tip,
+          discount: order.discount,
+          paymentSplit: order.paymentSplit,
+        },
+      });
+    }
+
+    // TODO: Send notification to customer if notifyCustomer is true
+    if (notifyCustomer) {
+      // Implement notification logic here
+    }
+
+    res.json({
+      success: true,
+      message:
+        "Order rejected successfully. Refund request created for admin review.",
+      data: order,
+    });
+  } catch (error) {
+    console.error("Reject order error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to reject order",
       error: error.message,
     });
   }

@@ -429,6 +429,89 @@ export const cancelOrder = async (req, res) => {
 };
 
 /**
+ * Reject order (admin/store cannot fulfill)
+ */
+export const rejectOrder = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reason, notifyCustomer = true } = req.body;
+
+    if (!reason) {
+      return res.status(400).json({
+        success: false,
+        message: "Rejection reason is required",
+      });
+    }
+
+    const order = await Order.findById(id)
+      .populate("customerId", "name email phone")
+      .populate("paymentId");
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    if (["rejected", "cancelled", "delivered"].includes(order.status)) {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot reject order with status: ${order.status}`,
+      });
+    }
+
+    // Use the model's rejectOrder method for proper tracking
+    await order.rejectOrder(req.user._id, reason);
+
+    // Create refund request for admin approval if payment was made
+    if (order.paymentId) {
+      const payment = await Payment.findById(order.paymentId);
+      if (payment && payment.status === "succeeded") {
+        const Refund = (await import("../models/Refund.js")).default;
+
+        await Refund.create({
+          orderId: order._id,
+          customerId: order.customerId,
+          storeId: order.storeId,
+          riderId: order.riderId,
+          requestedAmount: order.total,
+          refundReason: "order_rejected",
+          customerNote: `Order rejected by admin. Reason: ${reason}`,
+          status: "pending_review",
+          orderSnapshot: {
+            orderNumber: order.orderNumber,
+            orderTotal: order.total,
+            orderStatus: order.status,
+            subtotal: order.subtotal,
+            deliveryFee: order.deliveryFee,
+            tip: order.tip,
+            discount: order.discount,
+            paymentSplit: order.paymentSplit,
+          },
+        });
+      }
+    }
+
+    // TODO: Notify customer if notifyCustomer is true
+
+    res.json({
+      success: true,
+      message:
+        "Order rejected successfully. Refund request created for admin review.",
+      data: order,
+    });
+  } catch (error) {
+    console.error("Error rejecting order:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to reject order",
+      error: error.message,
+    });
+  }
+};
+
+/**
  * Update order details (internal notes, special instructions)
  */
 export const updateOrderDetails = async (req, res) => {

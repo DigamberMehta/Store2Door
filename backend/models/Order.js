@@ -148,6 +148,7 @@ const trackingInfoSchema = new mongoose.Schema({
       "picked_up",
       "on_the_way",
       "delivered",
+      "rejected",
       "cancelled",
     ],
     default: "pending",
@@ -356,6 +357,7 @@ const orderSchema = new mongoose.Schema(
         "picked_up",
         "on_the_way",
         "delivered",
+        "rejected", // Admin/Store rejected the order
         "cancelled",
       ],
       default: "pending",
@@ -412,6 +414,20 @@ const orderSchema = new mongoose.Schema(
 
     // Ratings and feedback
     rating: ratingSchema,
+
+    // Rejection info (by admin or store manager)
+    rejectedAt: {
+      type: Date,
+    },
+    rejectedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+    rejectionReason: {
+      type: String,
+      trim: true,
+      maxlength: 500,
+    },
 
     // Cancellation info
     cancelledAt: {
@@ -562,6 +578,8 @@ orderSchema.methods.updateStatus = async function (newStatus, notes, location) {
         // Don't fail the order update if transaction fails
       }
     }
+  } else if (newStatus === "rejected") {
+    this.rejectedAt = new Date();
   } else if (newStatus === "cancelled") {
     this.cancelledAt = new Date();
   }
@@ -572,6 +590,22 @@ orderSchema.methods.updateStatus = async function (newStatus, notes, location) {
 orderSchema.methods.assignRider = function (riderId) {
   this.riderId = riderId;
   return this.updateStatus("picked_up", "Order picked up by delivery rider");
+};
+
+// Reject order (by admin or store manager)
+orderSchema.methods.rejectOrder = async function (userId, reason) {
+  this.rejectedBy = userId;
+  this.rejectionReason = reason;
+  this.rejectedAt = new Date();
+  return this.updateStatus("rejected", `Order rejected: ${reason}`);
+};
+
+// Cancel order (by customer, admin, or store)
+orderSchema.methods.cancelOrder = async function (userId, reason) {
+  this.cancelledBy = userId;
+  this.cancellationReason = reason;
+  this.cancelledAt = new Date();
+  return this.updateStatus("cancelled", `Order cancelled: ${reason}`);
 };
 
 orderSchema.methods.calculateDeliveryTime = function () {
@@ -665,7 +699,7 @@ orderSchema.statics.findByRider = function (riderId, page = 1, limit = 10) {
 
 orderSchema.statics.getActiveOrders = function () {
   return this.find({
-    status: { $nin: ["delivered", "cancelled"] },
+    status: { $nin: ["delivered", "rejected", "cancelled"] },
   }).populate("customerId storeId riderId");
 };
 

@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import Order from "../../models/Order.js";
 import User from "../../models/User.js";
 import Store from "../../models/Store.js";
+import Refund from "../../models/Refund.js";
 import { emitToOrder, broadcastToDrivers } from "../../config/socket.js";
 import { sendOrderStatusEmail } from "../../config/mailer.js";
 import { getManagerStoreOrFail } from "../../utils/storeHelpers.js";
@@ -320,6 +321,233 @@ export const getOrderStats = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to fetch order statistics",
+      error: error.message,
+    });
+  }
+};
+
+// Cancel order (store manager)
+export const cancelOrder = async (req, res) => {
+  try {
+    // Get store using utility
+    const store = await getManagerStoreOrFail(req, res);
+    if (!store) return; // Response already sent
+
+    const storeId = store._id;
+    const { orderId } = req.params;
+    const { reason } = req.body;
+
+    if (!reason || reason.trim() === "") {
+      return res.status(400).json({
+        success: false,
+        message: "Cancellation reason is required",
+      });
+    }
+
+    const order = await Order.findOne({ _id: orderId, storeId }).populate(
+      "paymentId",
+    );
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    // Check if order can be cancelled
+    if (order.status === "delivered") {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot cancel a delivered order",
+      });
+    }
+
+    if (order.status === "cancelled") {
+      return res.status(400).json({
+        success: false,
+        message: "Order is already cancelled",
+      });
+    }
+
+    // Use the Order model's helper method
+    await order.cancelOrder(req.user._id, reason);
+
+    // Create refund request if payment was completed
+    if (order.paymentStatus === "completed" && order.paymentId) {
+      try {
+        const refund = new Refund({
+          orderId: order._id,
+          paymentId: order.paymentId._id,
+          customerId: order.customerId,
+          amount: order.total,
+          refundReason: "order_cancelled",
+          status: "pending",
+          requestedBy: req.user._id,
+          requestedAt: new Date(),
+        });
+
+        await refund.save();
+        console.log(
+          `[Store Manager] Refund request created for cancelled order ${order.orderNumber}`,
+        );
+      } catch (refundError) {
+        console.error(
+          "[Store Manager] Error creating refund request:",
+          refundError,
+        );
+      }
+    }
+
+    // Send cancellation email to customer
+    try {
+      const user = await User.findById(order.customerId);
+      if (user) {
+        await sendOrderStatusEmail(order, user.email, user.name, "cancelled");
+        console.log(
+          `[Store Manager] Cancellation email sent for order ${order.orderNumber}`,
+        );
+      }
+    } catch (emailError) {
+      console.error(
+        "[Store Manager] Error sending cancellation email:",
+        emailError,
+      );
+    }
+
+    // Emit socket event for real-time update
+    emitToOrder(orderId, "order:cancelled", {
+      orderId,
+      status: "cancelled",
+      reason,
+      cancelledBy: "store",
+      timestamp: new Date().toISOString(),
+    });
+
+    res.json({
+      success: true,
+      message: "Order cancelled successfully. Refund request created.",
+      data: order,
+    });
+  } catch (error) {
+    console.error("Error cancelling order:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to cancel order",
+      error: error.message,
+    });
+  }
+};
+
+// Reject order (store manager)
+export const rejectOrder = async (req, res) => {
+  try {
+    // Get store using utility
+    const store = await getManagerStoreOrFail(req, res);
+    if (!store) return; // Response already sent
+
+    const storeId = store._id;
+    const { orderId } = req.params;
+    const { reason } = req.body;
+
+    if (!reason || reason.trim() === "") {
+      return res.status(400).json({
+        success: false,
+        message: "Rejection reason is required",
+      });
+    }
+
+    const order = await Order.findOne({ _id: orderId, storeId }).populate(
+      "paymentId",
+    );
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    // Check if order can be rejected (only early-stage orders)
+    const rejectableStatuses = ["pending", "placed", "confirmed", "preparing"];
+    if (!rejectableStatuses.includes(order.status)) {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot reject order in ${order.status} status`,
+      });
+    }
+
+    if (order.status === "rejected") {
+      return res.status(400).json({
+        success: false,
+        message: "Order is already rejected",
+      });
+    }
+
+    // Use the Order model's helper method
+    await order.rejectOrder(req.user._id, reason);
+
+    // Create refund request if payment was completed
+    if (order.paymentStatus === "completed" && order.paymentId) {
+      try {
+        const refund = new Refund({
+          orderId: order._id,
+          paymentId: order.paymentId._id,
+          customerId: order.customerId,
+          amount: order.total,
+          refundReason: "order_rejected",
+          status: "pending",
+          requestedBy: req.user._id,
+          requestedAt: new Date(),
+        });
+
+        await refund.save();
+        console.log(
+          `[Store Manager] Refund request created for rejected order ${order.orderNumber}`,
+        );
+      } catch (refundError) {
+        console.error(
+          "[Store Manager] Error creating refund request:",
+          refundError,
+        );
+      }
+    }
+
+    // Send rejection email to customer
+    try {
+      const user = await User.findById(order.customerId);
+      if (user) {
+        await sendOrderStatusEmail(order, user.email, user.name, "rejected");
+        console.log(
+          `[Store Manager] Rejection email sent for order ${order.orderNumber}`,
+        );
+      }
+    } catch (emailError) {
+      console.error(
+        "[Store Manager] Error sending rejection email:",
+        emailError,
+      );
+    }
+
+    // Emit socket event for real-time update
+    emitToOrder(orderId, "order:rejected", {
+      orderId,
+      status: "rejected",
+      reason,
+      rejectedBy: "store",
+      timestamp: new Date().toISOString(),
+    });
+
+    res.json({
+      success: true,
+      message: "Order rejected successfully. Refund request created.",
+      data: order,
+    });
+  } catch (error) {
+    console.error("Error rejecting order:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to reject order",
       error: error.message,
     });
   }

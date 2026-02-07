@@ -6,6 +6,7 @@ import {
   updateOrderStatus,
   assignRider,
   cancelOrder,
+  rejectOrder,
   updateOrderDetails,
   getOrderStats,
   bulkUpdateStatus,
@@ -39,6 +40,9 @@ router.patch("/:id/status", updateOrderStatus);
 
 // Assign rider to order
 router.patch("/:id/assign-rider", assignRider);
+
+// Reject order (store/admin cannot fulfill)
+router.post("/:id/reject", rejectOrder);
 
 // Cancel order
 router.post("/:id/cancel", cancelOrder);
