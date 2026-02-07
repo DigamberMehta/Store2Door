@@ -13,6 +13,7 @@ import adminAnalyticsRoutes from "./analyticsRoutes.js";
 import adminDeliverySettingsRoutes from "./deliverySettingsRoutes.js";
 import adminDashboardRoutes from "./dashboardRoutes.js";
 import adminRefundRoutes from "./refundRoutes.js";
+import adminWalletRoutes from "./walletRoutes.js";
 
 const router = express.Router();
 
@@ -34,6 +35,6 @@ router.use("/riders", adminRiderRoutes);
 router.use("/analytics", adminAnalyticsRoutes);
 router.use("/delivery-settings", adminDeliverySettingsRoutes);
 router.use("/refunds", adminRefundRoutes);
-router.use("/wallets", adminRefundRoutes);
+router.use("/wallets", adminWalletRoutes);
 
 export default router;

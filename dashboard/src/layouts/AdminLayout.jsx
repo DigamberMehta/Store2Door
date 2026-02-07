@@ -11,6 +11,7 @@ import {
   Bike,
   Star,
   CreditCard,
+  DollarSign,
   Truck,
   TrendingUp,
   MapPin,
@@ -117,6 +118,13 @@ const AdminLayout = () => {
             >
               <CreditCard className="w-5 h-5" />
               <span>Payments</span>
+            </Link>
+            <Link
+              to="/admin/refunds"
+              className={getLinkClass("/admin/refunds")}
+            >
+              <DollarSign className="w-5 h-5" />
+              <span>Refunds</span>
             </Link>
             <Link
               to="/admin/delivery-settings"

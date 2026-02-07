@@ -19,6 +19,9 @@ router.get("/:orderId", orderController.getOrder);
 // Accept order (Driver)
 router.post("/:orderId/accept", orderController.acceptOrder);
 
+// Reject order (Store/Admin)
+router.post("/:orderId/reject", orderController.rejectOrder);
+
 // Cancel order
 router.post("/:orderId/cancel", orderController.cancelOrder);
 
