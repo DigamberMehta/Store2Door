@@ -11,6 +11,7 @@ const OrderStatusBadge = ({ status, paymentStatus, size = "md" }) => {
     picked_up: "bg-teal-100 text-teal-800 border-teal-200",
     on_the_way: "bg-orange-100 text-orange-800 border-orange-200",
     delivered: "bg-green-100 text-green-800 border-green-200",
+    rejected: "bg-orange-100 text-orange-800 border-orange-200",
     cancelled: "bg-red-100 text-red-800 border-red-200",
   };
 

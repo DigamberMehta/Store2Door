@@ -25,6 +25,7 @@ import OrderPaymentInfo from "../../components/orders/detail/OrderPaymentInfo";
 import OrderActions from "../../components/orders/detail/OrderActions";
 import AssignRiderModal from "../../components/orders/detail/AssignRiderModal";
 import CancelOrderModal from "../../components/orders/detail/CancelOrderModal";
+import RejectOrderModal from "../../components/orders/detail/RejectOrderModal";
 import UpdateStatusModal from "../../components/orders/detail/UpdateStatusModal";
 import EditNotesModal from "../../components/orders/detail/EditNotesModal";
 
@@ -36,6 +37,7 @@ const OrderDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [showAssignRider, setShowAssignRider] = useState(false);
   const [showCancel, setShowCancel] = useState(false);
+  const [showReject, setShowReject] = useState(false);
   const [showUpdateStatus, setShowUpdateStatus] = useState(false);
   const [showEditNotes, setShowEditNotes] = useState(false);
 
@@ -98,6 +100,20 @@ const OrderDetailPage = () => {
     } catch (error) {
       console.error("Error cancelling order:", error);
       toast.error(error.response?.data?.message || "Failed to cancel order");
+    }
+  };
+
+  const handleReject = async (rejectData) => {
+    try {
+      const response = await ordersAPI.reject(id, rejectData);
+      if (response.success) {
+        toast.success("Order rejected successfully");
+        setShowReject(false);
+        fetchOrder();
+      }
+    } catch (error) {
+      console.error("Error rejecting order:", error);
+      toast.error(error.response?.data?.message || "Failed to reject order");
     }
   };
 
@@ -339,6 +355,7 @@ const OrderDetailPage = () => {
               order={order}
               onUpdateStatus={() => setShowUpdateStatus(true)}
               onAssignRider={() => setShowAssignRider(true)}
+              onReject={() => setShowReject(true)}
               onCancel={() => setShowCancel(true)}
             />
 
@@ -403,6 +420,14 @@ const OrderDetailPage = () => {
           order={order}
           onClose={() => setShowCancel(false)}
           onSubmit={handleCancel}
+        />
+      )}
+
+      {showReject && (
+        <RejectOrderModal
+          order={order}
+          onClose={() => setShowReject(false)}
+          onSubmit={handleReject}
         />
       )}
 

@@ -13,6 +13,7 @@ const OrderFilters = ({ filters, onFilterChange, onExport, loading }) => {
     { value: "picked_up", label: "Picked Up" },
     { value: "on_the_way", label: "On the Way" },
     { value: "delivered", label: "Delivered" },
+    { value: "rejected", label: "Rejected" },
     { value: "cancelled", label: "Cancelled" },
   ];
 

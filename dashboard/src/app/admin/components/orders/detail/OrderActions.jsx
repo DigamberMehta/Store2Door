@@ -1,11 +1,25 @@
 import React from "react";
-import { Edit, UserPlus, X, RefreshCw } from "lucide-react";
+import { Edit, UserPlus, X, RefreshCw, XOctagon } from "lucide-react";
 
-const OrderActions = ({ order, onUpdateStatus, onAssignRider, onCancel }) => {
-  const canUpdateStatus = !["delivered", "cancelled"].includes(order.status);
+const OrderActions = ({
+  order,
+  onUpdateStatus,
+  onAssignRider,
+  onCancel,
+  onReject,
+}) => {
+  const canUpdateStatus = !["delivered", "cancelled", "rejected"].includes(
+    order.status,
+  );
   const canAssignRider =
-    !order.riderId && !["cancelled", "delivered"].includes(order.status);
-  const canCancel = !["delivered", "cancelled"].includes(order.status);
+    !order.riderId &&
+    !["cancelled", "delivered", "rejected"].includes(order.status);
+  const canCancel = !["delivered", "cancelled", "rejected"].includes(
+    order.status,
+  );
+  const canReject =
+    ["pending", "placed", "confirmed", "preparing"].includes(order.status) &&
+    !["cancelled", "delivered", "rejected"].includes(order.status);
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-4">
@@ -33,6 +47,16 @@ const OrderActions = ({ order, onUpdateStatus, onAssignRider, onCancel }) => {
           </button>
         )}
 
+        {canReject && (
+          <button
+            onClick={onReject}
+            className="w-full flex items-center justify-center px-3 py-1.5 text-sm bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+          >
+            <XOctagon className="w-3.5 h-3.5 mr-2" />
+            Reject Order
+          </button>
+        )}
+
         {canCancel && (
           <button
             onClick={onCancel}
@@ -43,7 +67,7 @@ const OrderActions = ({ order, onUpdateStatus, onAssignRider, onCancel }) => {
           </button>
         )}
 
-        {!canUpdateStatus && !canAssignRider && !canCancel && (
+        {!canUpdateStatus && !canAssignRider && !canCancel && !canReject && (
           <p className="text-xs text-gray-500 text-center py-3">
             No actions available for this order
           </p>

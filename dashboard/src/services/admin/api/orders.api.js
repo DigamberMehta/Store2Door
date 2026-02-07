@@ -51,6 +51,17 @@ export const ordersAPI = {
   },
 
   /**
+   * Reject order (store cannot fulfill)
+   */
+  reject: async (orderId, data) => {
+    const response = await apiClient.post(
+      `/admin/orders/${orderId}/reject`,
+      data,
+    );
+    return response;
+  },
+
+  /**
    * Update order details (notes, instructions)
    */
   updateDetails: async (orderId, data) => {
