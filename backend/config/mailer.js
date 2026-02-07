@@ -36,9 +36,13 @@ const createTransporter = async () => {
 
   try {
     const accessToken = await oauth2Client.getAccessToken();
+    console.log("✅ OAuth token obtained for email");
 
+    // Use explicit Gmail SMTP configuration with extended timeout for Render
     const transporter = nodemailer.createTransport({
-      service: "gmail",
+      host: "smtp.gmail.com",
+      port: 465, // SSL port (more reliable than 587)
+      secure: true, // Use SSL encryption
       auth: {
         type: "OAuth2",
         user: process.env.GMAIL_USER,
@@ -47,11 +51,26 @@ const createTransporter = async () => {
         refreshToken: process.env.GMAIL_REFRESH_TOKEN,
         accessToken: accessToken.token,
       },
+      // Extended timeouts for Render's network
+      connectionTimeout: 15000, // 15 seconds for initial connection
+      socketTimeout: 15000, // 15 seconds for socket operations
+      greetingTimeout: 10000, // Greeting timeout
+      logger: process.env.NODE_ENV !== "production", // Enable logging in development
+      debug: process.env.NODE_ENV !== "production", // Debug mode in development
     });
+
+    // Verify connection
+    await transporter.verify();
+    console.log("✅ Email transporter verified and ready");
 
     return transporter;
   } catch (error) {
-    console.error("Error creating email transporter:", error);
+    console.error("❌ Error creating email transporter:", error.message);
+    console.error("Error details:", {
+      code: error.code,
+      command: error.command,
+      errno: error.errno,
+    });
     throw error;
   }
 };
@@ -91,12 +110,41 @@ const ensureTransporter = async () => {
   return initializationPromise;
 };
 
+// Helper function to send email with retry logic
+const sendEmailWithRetry = async (mailOptions, retries = 3, delay = 1000) => {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const emailTransporter = await ensureTransporter();
+      const info = await emailTransporter.sendMail(mailOptions);
+      console.log(
+        `✅ Email sent successfully (attempt ${attempt}):`,
+        info.messageId,
+      );
+      return { success: true, messageId: info.messageId };
+    } catch (error) {
+      console.error(
+        `❌ Email send failed (attempt ${attempt}/${retries}):`,
+        error.code,
+        error.message,
+      );
+
+      // If this was the last attempt, return error
+      if (attempt === retries) {
+        console.error("❌ Email delivery failed after all retry attempts");
+        return { success: false, error: error.message, attempts: retries };
+      }
+
+      // Wait before retrying with exponential backoff
+      const waitTime = delay * Math.pow(2, attempt - 1);
+      console.log(`⏳ Retrying in ${waitTime}ms...`);
+      await new Promise((resolve) => setTimeout(resolve, waitTime));
+    }
+  }
+};
+
 // Helper function to send email
 const sendEmail = async (options) => {
   try {
-    // Ensure transporter is initialized
-    const emailTransporter = await ensureTransporter();
-
     const mailOptions = {
       from:
         options.from ||
@@ -108,11 +156,10 @@ const sendEmail = async (options) => {
       attachments: options.attachments,
     };
 
-    const info = await emailTransporter.sendMail(mailOptions);
-    console.log("✅ Email sent successfully:", info.messageId);
-    return { success: true, messageId: info.messageId };
+    // Use retry logic for better reliability on Render
+    return await sendEmailWithRetry(mailOptions);
   } catch (error) {
-    console.error("❌ Error sending email:", error);
+    console.error("❌ Error in sendEmail:", error);
     return { success: false, error: error.message };
   }
 };
