@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Eye, EyeOff, Lock, CheckCircle, AlertCircle } from "lucide-react";
-import axios from "axios";
 import toast from "react-hot-toast";
+import { apiClient } from "../../services/api/client";
 
 const ResetPasswordPage = () => {
   const [searchParams] = useSearchParams();
@@ -31,13 +31,13 @@ const ResetPasswordPage = () => {
   const validateToken = async () => {
     try {
       setValidating(true);
-      const response = await axios.get(
-        `http://localhost:3000/api/users/validate-reset-token/${token}`
+      const response = await apiClient.get(
+        `/users/validate-reset-token/${token}`,
       );
 
-      if (response.data.success) {
+      if (response.success) {
         setTokenValid(true);
-        setUserInfo(response.data.data);
+        setUserInfo(response.data);
       } else {
         toast.error("Invalid or expired reset link");
         setTimeout(() => navigate("/"), 2000);
@@ -45,7 +45,7 @@ const ResetPasswordPage = () => {
     } catch (error) {
       console.error("Token validation error:", error);
       toast.error(
-        error.response?.data?.message || "Invalid or expired reset link"
+        error.response?.data?.message || "Invalid or expired reset link",
       );
       setTimeout(() => navigate("/"), 2000);
     } finally {
@@ -75,21 +75,18 @@ const ResetPasswordPage = () => {
     try {
       setLoading(true);
 
-      const response = await axios.post(
-        "http://localhost:3000/api/users/reset-password",
-        {
-          token,
-          newPassword: password,
-        }
-      );
+      const response = await apiClient.put("/users/reset-password", {
+        token,
+        newPassword: password,
+      });
 
-      if (response.data.success) {
+      if (response.success) {
         toast.success("Password reset successfully! Logging you in...");
-        
+
         // Store tokens
-        localStorage.setItem("accessToken", response.data.data.accessToken);
-        localStorage.setItem("refreshToken", response.data.data.refreshToken);
-        localStorage.setItem("user", JSON.stringify(response.data.data.user));
+        localStorage.setItem("accessToken", response.data.accessToken);
+        localStorage.setItem("refreshToken", response.data.refreshToken);
+        localStorage.setItem("user", JSON.stringify(response.data.user));
 
         // Redirect to home after 1 second
         setTimeout(() => {
@@ -99,9 +96,7 @@ const ResetPasswordPage = () => {
       }
     } catch (error) {
       console.error("Reset password error:", error);
-      toast.error(
-        error.response?.data?.message || "Failed to reset password"
-      );
+      toast.error(error.response?.data?.message || "Failed to reset password");
     } finally {
       setLoading(false);
     }
@@ -148,11 +143,10 @@ const ResetPasswordPage = () => {
           <div className="w-20 h-20 bg-[rgb(49,134,22)]/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-[rgb(49,134,22)]/20">
             <Lock className="w-10 h-10 text-[rgb(49,134,22)]" />
           </div>
-          <h2 className="text-3xl font-bold mb-2">
-            Set New Password
-          </h2>
+          <h2 className="text-3xl font-bold mb-2">Set New Password</h2>
           <p className="text-white/50 text-sm">
-            Hi {userInfo?.name}, please choose a strong password for your account.
+            Hi {userInfo?.name}, please choose a strong password for your
+            account.
           </p>
         </div>
 

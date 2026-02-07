@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { ChevronLeft, Mail, ArrowRight, CheckCircle2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import { apiClient } from "../../services/api/client";
+import toast from "react-hot-toast";
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
@@ -18,12 +19,14 @@ const ForgotPassword = () => {
     setError("");
 
     try {
-      const response = await axios.post("http://localhost:3000/api/users/forgot-password", { email });
-      if (response.data.success) {
+      const response = await apiClient.post("/users/forgot-password", { email });
+      if (response.success) {
         setIsSuccess(true);
+        toast.success("Reset link sent to your email!");
       }
     } catch (err) {
       setError(err.response?.data?.message || "Something went wrong. Please try again.");
+      toast.error(err.response?.data?.message || "Failed to send reset link");
     } finally {
       setIsLoading(false);
     }
