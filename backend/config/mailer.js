@@ -170,8 +170,10 @@ const sendOrderConfirmationEmail = async (
   customerEmail,
   customerName,
 ) => {
-  const subject = `Order Confirmation - #${order.orderNumber}`;
-  const total = order.total || order.totalAmount || 0;
+  console.log(`📧 Starting order confirmation email for order #${order.orderNumber} to ${customerEmail}`);
+  try {
+    const subject = `Order Confirmation - #${order.orderNumber}`;
+    const total = order.total || order.totalAmount || 0;
 
   // Format items table
   let itemsHtml = "";
@@ -273,11 +275,23 @@ const sendOrderConfirmationEmail = async (
     </div>
   `;
 
-  return await sendEmail({
-    to: customerEmail,
-    subject,
-    html,
-  });
+    const result = await sendEmail({
+      to: customerEmail,
+      subject,
+      html,
+    });
+
+    if (result.success) {
+      console.log(`✅ Order confirmation email sent for order #${order.orderNumber} (ID: ${result.messageId})`);
+    } else {
+      console.error(`❌ Order confirmation email failed for order #${order.orderNumber}: ${result.error}`);
+    }
+
+    return result;
+  } catch (error) {
+    console.error(`❌ Error in sendOrderConfirmationEmail for order #${order.orderNumber}:`, error.message);
+    return { success: false, error: error.message };
+  }
 };
 
 // Template for order status update email
@@ -287,10 +301,12 @@ const sendOrderStatusEmail = async (
   customerName,
   newStatus,
 ) => {
-  const subject = `Order Update - #${order.orderNumber}`;
-  const statusDisplay =
-    newStatus.replace(/_/g, " ").charAt(0).toUpperCase() +
-    newStatus.replace(/_/g, " ").slice(1);
+  console.log(`📧 Starting order status update email for order #${order.orderNumber} to ${customerEmail} (status: ${newStatus})`);
+  try {
+    const subject = `Order Update - #${order.orderNumber}`;
+    const statusDisplay =
+      newStatus.replace(/_/g, " ").charAt(0).toUpperCase() +
+      newStatus.replace(/_/g, " ").slice(1);
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
       <div style="background-color: rgb(49, 134, 22); padding: 20px; text-align: center;">
@@ -319,18 +335,32 @@ const sendOrderStatusEmail = async (
     </div>
   `;
 
-  return await sendEmail({
-    to: customerEmail,
-    subject,
-    html,
-  });
+    const result = await sendEmail({
+      to: customerEmail,
+      subject,
+      html,
+    });
+
+    if (result.success) {
+      console.log(`✅ Order status update email sent for order #${order.orderNumber} (ID: ${result.messageId})`);
+    } else {
+      console.error(`❌ Order status email failed for order #${order.orderNumber}: ${result.error}`);
+    }
+
+    return result;
+  } catch (error) {
+    console.error(`❌ Error in sendOrderStatusEmail for order #${order.orderNumber}:`, error.message);
+    return { success: false, error: error.message };
+  }
 };
 
 // Template for password reset email
 const sendPasswordResetEmail = async (email, resetToken, userName) => {
-  const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
-  const subject = "Password Reset Request - Store2Door";
-  const html = `
+  console.log(`📧 Starting password reset email for: ${email}`);
+  try {
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+    const subject = "Password Reset Request - Store2Door";
+    const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0;">
       <div style="background-color: rgb(49, 134, 22); padding: 20px; text-align: center;">
         <h1 style="color: white; margin: 0;">Store2Door</h1>
@@ -362,18 +392,39 @@ const sendPasswordResetEmail = async (email, resetToken, userName) => {
     </div>
   `;
 
-  return await sendEmail({
-    from: `"Store2Door Support" <support@store2doordelivery.co.za>`,
-    to: email,
-    subject,
-    html,
-  });
+    const result = await sendEmail({
+      from: `"Store2Door Support" <support@store2doordelivery.co.za>`,
+      to: email,
+      subject,
+      html,
+    });
+
+    if (result.success) {
+      console.log(
+        `✅ Password reset email sent successfully to ${email} (ID: ${result.messageId})`,
+      );
+    } else {
+      console.error(
+        `❌ Password reset email failed for ${email}: ${result.error}`,
+      );
+    }
+
+    return result;
+  } catch (error) {
+    console.error(
+      `❌ Error in sendPasswordResetEmail for ${email}:`,
+      error.message,
+    );
+    return { success: false, error: error.message };
+  }
 };
 
 // Template for welcome email
 const sendWelcomeEmail = async (email, userName) => {
-  const subject = "Welcome to Store2Door!";
-  const html = `
+  console.log(`📧 Starting welcome email for: ${email}`);
+  try {
+    const subject = "Welcome to Store2Door!";
+    const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <h2>Welcome to Store2Door!</h2>
       <p>Dear ${userName},</p>
@@ -385,11 +436,25 @@ const sendWelcomeEmail = async (email, userName) => {
     </div>
   `;
 
-  return await sendEmail({
-    to: email,
-    subject,
-    html,
-  });
+    const result = await sendEmail({
+      to: email,
+      subject,
+      html,
+    });
+
+    if (result.success) {
+      console.log(
+        `✅ Welcome email sent successfully to ${email} (ID: ${result.messageId})`,
+      );
+    } else {
+      console.error(`❌ Welcome email failed for ${email}: ${result.error}`);
+    }
+
+    return result;
+  } catch (error) {
+    console.error(`❌ Error in sendWelcomeEmail for ${email}:`, error.message);
+    return { success: false, error: error.message };
+  }
 };
 
 // Template for support ticket/contact us email
@@ -397,9 +462,12 @@ const sendSupportTicketEmail = async (ticketData) => {
   const { userName, userEmail, orderNumber, productName, issue, imageUrl } =
     ticketData;
 
-  const subject = `Support Ticket - ${orderNumber ? `Order #${orderNumber}` : "General Inquiry"} from ${userName}`;
+  console.log(`📧 Starting support ticket email from: ${userName} (${userEmail})`);
+  
+  try {
+    const subject = `Support Ticket - ${orderNumber ? `Order #${orderNumber}` : "General Inquiry"} from ${userName}`;
 
-  const html = `
+    const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
       <div style="background-color: rgb(49, 134, 22); padding: 20px; text-align: center;">
         <h1 style="color: white; margin: 0;">Store2Door Support</h1>
@@ -454,13 +522,27 @@ const sendSupportTicketEmail = async (ticketData) => {
     </div>
   `;
 
-  return await sendEmail({
-    from: `"Store2Door Support" <support@store2doordelivery.co.za>`,
-    to: "support@store2doordelivery.co.za",
-    replyTo: userEmail,
-    subject,
-    html,
-  });
+    const result = await sendEmail({
+      from: `"Store2Door Support" <support@store2doordelivery.co.za>`,
+      to: "support@store2doordelivery.co.za",
+      replyTo: userEmail,
+      subject,
+      html,
+    });
+
+    if (result.success) {
+      console.log(`✅ Support ticket email sent successfully for ${userName} (ID: ${result.messageId})`);
+    } else {
+      console.error(
+        `❌ Support ticket email failed for ${userName}: ${result.error}`,
+      );
+    }
+
+    return result;
+  } catch (error) {
+    console.error(`❌ Error in sendSupportTicketEmail for ${userName}:`, error.message);
+    return { success: false, error: error.message };
+  }
 };
 
 // Template for support ticket confirmation email to customer
