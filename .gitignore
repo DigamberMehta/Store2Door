@@ -44,4 +44,6 @@ Thumbs.db
 
 # Scripts folder
 /backend/scripts/
- 
+
+# Documentation
+PRD.md
