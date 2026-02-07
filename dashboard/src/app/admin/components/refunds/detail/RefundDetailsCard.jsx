@@ -9,12 +9,6 @@ const RefundDetailsCard = ({ refund }) => {
         Refund Request Details
       </h3>
       <div className="grid grid-cols-2 gap-4 text-sm">
-        <div>
-          <span className="text-gray-600">Requested Amount:</span>
-          <p className="text-xl font-bold text-gray-900 mt-1">
-            R {refund.requestedAmount.toFixed(2)}
-          </p>
-        </div>
         {refund.approvedAmount && (
           <div>
             <span className="text-gray-600">Approved Amount:</span>

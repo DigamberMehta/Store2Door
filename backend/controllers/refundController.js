@@ -42,8 +42,6 @@ export const submitRefund = asyncHandler(async (req, res, next) => {
   }
 
   // Admin decides the final refund amount - customer just raises a request
-  // Set requestedAmount to order total by default
-  const requestedAmount = order.total;
 
   // Create refund request
   const refund = await Refund.create({
@@ -51,7 +49,6 @@ export const submitRefund = asyncHandler(async (req, res, next) => {
     customerId,
     storeId: order.storeId,
     riderId: order.riderId,
-    requestedAmount,
     refundReason,
     customerNote,
     evidenceFiles: evidenceFiles || [],
@@ -353,16 +350,6 @@ export const adminApproveRefund = asyncHandler(async (req, res, next) => {
     return next(
       new AppError(
         `Total refund amount (R ${approvedAmount.toFixed(2)}) cannot exceed order total (R ${refund.orderId.total.toFixed(2)})`,
-        400,
-      ),
-    );
-  }
-
-  // Validate approved amount doesn't exceed requested amount
-  if (approvedAmount > refund.requestedAmount) {
-    return next(
-      new AppError(
-        `Total refund amount (R ${approvedAmount.toFixed(2)}) cannot exceed requested amount (R ${refund.requestedAmount.toFixed(2)})`,
         400,
       ),
     );

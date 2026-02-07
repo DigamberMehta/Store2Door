@@ -105,10 +105,7 @@ const RefundTable = ({
                 Reason
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Requested
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Approved
+                Approved Amount
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Status
@@ -172,14 +169,9 @@ const RefundTable = ({
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-semibold text-gray-900">
-                    R {refund.requestedAmount?.toFixed(2) || "0.00"}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-semibold text-gray-900">
                     {refund.approvedAmount
                       ? `R ${refund.approvedAmount.toFixed(2)}`
-                      : "-"}
+                      : "Pending"}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">

@@ -91,13 +91,6 @@ const RefundDetailModal = ({ refund, onClose, onApprove, onReject }) => {
       return;
     }
 
-    if (approvedAmount > refund.requestedAmount) {
-      alert(
-        `Total refund amount (R ${approvedAmount.toFixed(2)}) cannot exceed requested amount (R ${refund.requestedAmount.toFixed(2)})`,
-      );
-      return;
-    }
-
     if (!approvalData.rationale) {
       alert("Please provide a rationale for the cost distribution");
       return;

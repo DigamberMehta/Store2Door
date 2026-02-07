@@ -475,7 +475,6 @@ export const rejectOrder = async (req, res) => {
           customerId: order.customerId,
           storeId: order.storeId,
           riderId: order.riderId,
-          requestedAmount: order.total,
           refundReason: "order_rejected",
           customerNote: `Order rejected by admin. Reason: ${reason}`,
           status: "pending_review",

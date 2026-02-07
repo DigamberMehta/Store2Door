@@ -320,7 +320,6 @@ const AdminDecisionSection = ({
                     0
                   ).toFixed(2)}
                 </p>
-                <p>Max requested: R {refund.requestedAmount.toFixed(2)}</p>
               </div>
             </div>
           </div>

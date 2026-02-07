@@ -173,20 +173,9 @@ const RefundsPage = () => {
               </div>
 
               {/* Amount */}
-              <div className="bg-black/30 rounded-xl p-3 mb-3">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-xs text-white/50">Order Amount:</span>
-                  <span className="text-lg font-bold text-white">
-                    R{" "}
-                    {(
-                      refund.orderSnapshot?.orderTotal ||
-                      refund.requestedAmount ||
-                      0
-                    ).toFixed(2)}
-                  </span>
-                </div>
-                {refund.approvedAmount && (
-                  <div className="flex justify-between items-center border-t border-white/10 pt-2 mt-2">
+              {refund.approvedAmount && (
+                <div className="bg-black/30 rounded-xl p-3 mb-3">
+                  <div className="flex justify-between items-center">
                     <span className="text-xs text-green-400/70">
                       Refund Amount:
                     </span>
@@ -194,8 +183,8 @@ const RefundsPage = () => {
                       R {refund.approvedAmount.toFixed(2)}
                     </span>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
 
               {/* Reason */}
               <div className="mb-3">

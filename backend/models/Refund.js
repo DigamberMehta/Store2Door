@@ -85,11 +85,6 @@ const refundSchema = new mongoose.Schema(
     },
 
     // Customer request details
-    requestedAmount: {
-      type: Number,
-      required: [true, "Requested refund amount is required"],
-      min: [0, "Requested amount cannot be negative"],
-    },
     refundReason: {
       type: String,
       enum: [
@@ -472,7 +467,6 @@ refundSchema.statics.getStatistics = async function (startDate, endDate) {
       $group: {
         _id: "$status",
         count: { $sum: 1 },
-        totalRequested: { $sum: "$requestedAmount" },
         totalApproved: {
           $sum: {
             $cond: [{ $eq: ["$status", "completed"] }, "$approvedAmount", 0],
@@ -489,13 +483,11 @@ refundSchema.statics.getStatistics = async function (startDate, endDate) {
     approved: 0,
     rejected: 0,
     completed: 0,
-    totalRequestedAmount: 0,
     totalApprovedAmount: 0,
   };
 
   stats.forEach((stat) => {
     formatted.total += stat.count;
-    formatted.totalRequestedAmount += stat.totalRequested;
     formatted.totalApprovedAmount += stat.totalApproved;
 
     if (stat._id === "pending_review" || stat._id === "under_review") {
