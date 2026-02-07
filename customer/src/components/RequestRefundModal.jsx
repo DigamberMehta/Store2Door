@@ -37,7 +37,6 @@ const RequestRefundModal = ({ order, onClose, onSuccess }) => {
       setLoading(true);
       const response = await submitRefund({
         orderId: order._id,
-        requestedAmount: order.total,
         refundReason: formData.refundReason,
         customerNote: formData.customerNote,
         evidenceFiles: formData.evidenceFiles,

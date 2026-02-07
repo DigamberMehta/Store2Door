@@ -16,13 +16,7 @@ import AppError from "../utils/AppError.js";
  */
 export const submitRefund = asyncHandler(async (req, res, next) => {
   const customerId = req.user._id;
-  const {
-    orderId,
-    requestedAmount,
-    refundReason,
-    customerNote,
-    evidenceFiles,
-  } = req.body;
+  const { orderId, refundReason, customerNote, evidenceFiles } = req.body;
 
   // Validate order exists and belongs to customer
   const order = await Order.findById(orderId);
@@ -47,14 +41,9 @@ export const submitRefund = asyncHandler(async (req, res, next) => {
     );
   }
 
-  // Validate requested amount
-  if (requestedAmount > order.total) {
-    return next(new AppError("Refund amount cannot exceed order total", 400));
-  }
-
-  if (requestedAmount <= 0) {
-    return next(new AppError("Refund amount must be greater than zero", 400));
-  }
+  // Admin decides the final refund amount - customer just raises a request
+  // Set requestedAmount to order total by default
+  const requestedAmount = order.total;
 
   // Create refund request
   const refund = await Refund.create({
@@ -534,9 +523,9 @@ async function processRefundToWallet(refund) {
     // Get or create customer wallet
     const wallet = await CustomerWallet.getOrCreate(refund.customerId);
 
-    // Credit refund to wallet
+    // Credit refund to wallet (convert Rands to cents: wallet stores in cents)
     await wallet.creditRefund(
-      refund.approvedAmount,
+      refund.approvedAmount * 100,
       refund.orderId,
       refund._id,
       `Refund for order ${refund.orderSnapshot.orderNumber}`,

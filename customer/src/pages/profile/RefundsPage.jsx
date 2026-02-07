@@ -175,19 +175,22 @@ const RefundsPage = () => {
               {/* Amount */}
               <div className="bg-black/30 rounded-xl p-3 mb-3">
                 <div className="flex justify-between items-center mb-2">
-                  <span className="text-xs text-white/50">
-                    Requested Amount:
-                  </span>
+                  <span className="text-xs text-white/50">Order Amount:</span>
                   <span className="text-lg font-bold text-white">
-                    R {refund.requestedAmount.toFixed(2)}
+                    R{" "}
+                    {(
+                      refund.orderSnapshot?.orderTotal ||
+                      refund.requestedAmount ||
+                      0
+                    ).toFixed(2)}
                   </span>
                 </div>
                 {refund.approvedAmount && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-white/50">
-                      Approved Amount:
+                  <div className="flex justify-between items-center border-t border-white/10 pt-2 mt-2">
+                    <span className="text-xs text-green-400/70">
+                      Refund Amount:
                     </span>
-                    <span className="text-lg font-bold text-green-400">
+                    <span className="text-xl font-bold text-green-400">
                       R {refund.approvedAmount.toFixed(2)}
                     </span>
                   </div>
