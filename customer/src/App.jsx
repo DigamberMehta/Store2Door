@@ -25,6 +25,8 @@ import ProfileDetailsPage from "./pages/profile/ProfileDetailsPage";
 import AddressPage from "./pages/profile/AddressPage";
 import OrdersPage from "./pages/profile/OrdersPage";
 import OrderDetailPage from "./pages/profile/OrderDetailPage";
+import RefundsPage from "./pages/profile/RefundsPage";
+import WalletPage from "./pages/profile/WalletPage";
 import OrderTrackingPage from "./pages/orders/OrderTrackingPage";
 import OrderDeliveredPage from "./pages/orders/OrderDeliveredPage";
 import PaymentPage from "./pages/payment/PaymentPage";
@@ -161,6 +163,22 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <OrderDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile/refunds"
+          element={
+            <ProtectedRoute>
+              <RefundsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile/wallet"
+          element={
+            <ProtectedRoute>
+              <WalletPage />
             </ProtectedRoute>
           }
         />

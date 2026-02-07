@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { CheckCircle, Package, Home, Star } from "lucide-react";
+import { CheckCircle, Package, Home, Star, DollarSign } from "lucide-react";
 import { getOrderById } from "../../services/api/order.api";
 import { formatTimeOnly } from "../../utils/date";
+import RequestRefundModal from "../../components/RequestRefundModal";
+import { checkRefundExists } from "../../services/api/refund.api";
 
 const OrderDeliveredPage = () => {
   const { orderId } = useParams();
@@ -11,6 +13,8 @@ const OrderDeliveredPage = () => {
   const [order, setOrder] = useState(location.state?.order || null);
   const [showConfetti, setShowConfetti] = useState(true);
   const [loading, setLoading] = useState(!order);
+  const [showRefundModal, setShowRefundModal] = useState(false);
+  const [hasExistingRefund, setHasExistingRefund] = useState(false);
 
   useEffect(() => {
     // Fetch order if not passed via state
@@ -19,6 +23,10 @@ const OrderDeliveredPage = () => {
         try {
           const response = await getOrderById(orderId);
           setOrder(response.data || response);
+
+          // Check if refund already exists
+          const refundExists = await checkRefundExists(orderId);
+          setHasExistingRefund(refundExists);
         } catch (error) {
           console.error("Error fetching order:", error);
         } finally {
@@ -26,6 +34,17 @@ const OrderDeliveredPage = () => {
         }
       };
       fetchOrder();
+    } else {
+      // If order was passed via state, still check for refund
+      const checkRefund = async () => {
+        try {
+          const refundExists = await checkRefundExists(orderId);
+          setHasExistingRefund(refundExists);
+        } catch (error) {
+          console.error("Error checking refund:", error);
+        }
+      };
+      checkRefund();
     }
 
     // Hide confetti after animation
@@ -151,6 +170,20 @@ const OrderDeliveredPage = () => {
           </button>
         </div>
 
+        {/* Request Refund Button */}
+        <button
+          onClick={() => !hasExistingRefund && setShowRefundModal(true)}
+          disabled={hasExistingRefund}
+          className={`w-full mt-4 flex items-center justify-center gap-2 backdrop-blur-xl border px-6 py-3 rounded-xl font-medium transition-all animate-fadeIn animation-delay-500 ${
+            hasExistingRefund
+              ? "bg-white/5 border-white/10 text-white/30 cursor-not-allowed"
+              : "bg-orange-500/20 border-orange-500/30 text-orange-400 hover:bg-orange-500/30"
+          }`}
+        >
+          <DollarSign className="w-5 h-5" />
+          {hasExistingRefund ? "Refund Already Requested" : "Request Refund"}
+        </button>
+
         {/* Thank You Message */}
         <div className="text-center mt-8 animate-fadeIn animation-delay-600">
           <p className="text-white/60">
@@ -159,6 +192,17 @@ const OrderDeliveredPage = () => {
           </p>
         </div>
       </div>
+
+      {/* Refund Request Modal */}
+      {showRefundModal && order && (
+        <RequestRefundModal
+          order={order}
+          onClose={() => setShowRefundModal(false)}
+          onSuccess={() => {
+            // Optionally refresh order or navigate
+          }}
+        />
+      )}
 
       <style jsx>{`
         .confetti {
@@ -234,6 +278,12 @@ const OrderDeliveredPage = () => {
 
         .animation-delay-400 {
           animation-delay: 0.4s;
+          opacity: 0;
+          animation-fill-mode: forwards;
+        }
+
+        .animation-delay-500 {
+          animation-delay: 0.5s;
           opacity: 0;
           animation-fill-mode: forwards;
         }

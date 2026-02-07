@@ -18,12 +18,16 @@ import {
 import { getOrderById } from "../../services/api/order.api";
 import { showError, showSuccess } from "../../utils/toast";
 import { formatDateOnly, formatTimeOnly } from "../../utils/date";
+import RequestRefundModal from "../../components/RequestRefundModal";
+import { checkRefundExists } from "../../services/api/refund.api";
 
 const OrderDetailPage = () => {
   const navigate = useNavigate();
   const { orderId } = useParams();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showRefundModal, setShowRefundModal] = useState(false);
+  const [hasExistingRefund, setHasExistingRefund] = useState(false);
 
   useEffect(() => {
     fetchOrder();
@@ -34,6 +38,10 @@ const OrderDetailPage = () => {
     try {
       const response = await getOrderById(orderId);
       setOrder(response.data);
+
+      // Check if refund already exists for this order (any status allowed)
+      const refundExists = await checkRefundExists(orderId);
+      setHasExistingRefund(refundExists);
     } catch (error) {
       console.error("Error fetching order:", error);
       toast.error("Failed to load order details");
@@ -331,7 +339,33 @@ const OrderDetailPage = () => {
             Reorder
           </button>
         )}
+
+        {/* Request Refund Button - Available for All Statuses */}
+        <button
+          onClick={() => !hasExistingRefund && setShowRefundModal(true)}
+          disabled={hasExistingRefund}
+          className={`w-full px-4 py-3 border text-sm font-medium rounded-xl flex items-center justify-center gap-2 transition-all ${
+            hasExistingRefund
+              ? "bg-white/5 border-white/10 text-white/30 cursor-not-allowed"
+              : "bg-orange-600/20 border-orange-600/30 text-orange-400 active:bg-orange-600/30"
+          }`}
+        >
+          <DollarSign className="w-4 h-4" />
+          {hasExistingRefund ? "Refund Already Requested" : "Request Refund"}
+        </button>
       </div>
+
+      {/* Refund Modal */}
+      {showRefundModal && (
+        <RequestRefundModal
+          order={order}
+          onClose={() => setShowRefundModal(false)}
+          onSuccess={() => {
+            setShowRefundModal(false);
+            fetchOrder();
+          }}
+        />
+      )}
     </div>
   );
 };
