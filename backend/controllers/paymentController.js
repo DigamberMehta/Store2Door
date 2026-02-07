@@ -141,9 +141,12 @@ export const initializePaystackPayment = async (req, res) => {
  * GET /api/payments/paystack/verify/:reference
  */
 export const verifyPaystackPayment = async (req, res) => {
+  const startTime = Date.now();
   try {
     const { reference } = req.params;
     const { paymentId } = req.query;
+
+    console.log(`🔍 Verifying payment: ${reference}`);
 
     if (!reference) {
       return res.status(400).json({
@@ -153,8 +156,10 @@ export const verifyPaystackPayment = async (req, res) => {
     }
 
     // Verify transaction with Paystack
+    const verifyStart = Date.now();
     const verificationResponse =
       await paystackService.verifyTransaction(reference);
+    console.log(`✅ Paystack verification took ${Date.now() - verifyStart}ms`);
 
     if (!verificationResponse.success) {
       return res.status(400).json({
@@ -165,9 +170,11 @@ export const verifyPaystackPayment = async (req, res) => {
     }
 
     // Find payment record
+    const dbStart = Date.now();
     const payment = await Payment.findOne({
       $or: [{ _id: paymentId }, { paystackReference: reference }],
     });
+    console.log(`✅ Payment lookup took ${Date.now() - dbStart}ms`);
 
     if (!payment) {
       return res.status(404).json({
@@ -185,11 +192,16 @@ export const verifyPaystackPayment = async (req, res) => {
       payment.paystackResponse = transactionData;
       payment.paidAt = new Date(transactionData.paid_at);
       await payment.save();
+      console.log(`✅ Payment record updated`);
 
-      // Update order status
+      // Update order status (optimized query - only populate what's needed)
+      const orderStart = Date.now();
       const order = await Order.findById(payment.orderId)
-        .populate("customerId", "name email phone")
-        .populate("storeId", "name address contactInfo");
+        .select(
+          "orderNumber status paymentStatus trackingHistory customerId storeId",
+        )
+        .populate("customerId", "name email");
+      console.log(`✅ Order lookup took ${Date.now() - orderStart}ms`);
 
       if (order) {
         order.paymentStatus = "paid";
@@ -204,20 +216,38 @@ export const verifyPaystackPayment = async (req, res) => {
         }
         await order.save();
 
-        // Send payment confirmation email
-        try {
-          await sendOrderConfirmationEmail(
-            order,
-            order.customerId.email,
-            order.customerId.name,
-          );
-          console.log(
-            `Order confirmation email sent to ${order.customerId.email}`,
-          );
-        } catch (emailError) {
-          console.error("Failed to send confirmation email:", emailError);
-        }
+        // Send payment confirmation email asynchronously (non-blocking)
+        // Re-fetch full order data in background for email
+        const orderId = order._id;
+        const customerEmail = order.customerId?.email;
+        const customerName = order.customerId?.name;
+
+        Promise.resolve().then(async () => {
+          try {
+            // Fetch complete order data for email
+            const fullOrder = await Order.findById(orderId)
+              .populate("items.productId", "name")
+              .populate("storeId", "name");
+
+            if (fullOrder && customerEmail) {
+              await sendOrderConfirmationEmail(
+                fullOrder,
+                customerEmail,
+                customerName,
+              );
+              console.log(
+                `✅ Order confirmation email sent to ${customerEmail}`,
+              );
+            }
+          } catch (emailError) {
+            console.error("❌ Failed to send confirmation email:", emailError);
+          }
+        });
       }
+
+      console.log(
+        `✅ Payment verification completed in ${Date.now() - startTime}ms`,
+      );
 
       return res.json({
         success: true,
