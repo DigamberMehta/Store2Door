@@ -170,15 +170,17 @@ const sendOrderConfirmationEmail = async (
   customerEmail,
   customerName,
 ) => {
-  console.log(`📧 Starting order confirmation email for order #${order.orderNumber} to ${customerEmail}`);
+  console.log(
+    `📧 Starting order confirmation email for order #${order.orderNumber} to ${customerEmail}`,
+  );
   try {
     const subject = `Order Confirmation - #${order.orderNumber}`;
     const total = order.total || order.totalAmount || 0;
 
-  // Format items table
-  let itemsHtml = "";
-  if (order.items && order.items.length > 0) {
-    itemsHtml = `
+    // Format items table
+    let itemsHtml = "";
+    if (order.items && order.items.length > 0) {
+      itemsHtml = `
       <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
         <thead>
           <tr style="background-color: #f2f2f2;">
@@ -242,9 +244,9 @@ const sendOrderConfirmationEmail = async (
         </tfoot>
       </table>
     `;
-  }
+    }
 
-  const html = `
+    const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
       <div style="background-color: rgb(49, 134, 22); padding: 20px; text-align: center;">
         <h1 style="color: white; margin: 0;">Store2Door</h1>
@@ -282,14 +284,21 @@ const sendOrderConfirmationEmail = async (
     });
 
     if (result.success) {
-      console.log(`✅ Order confirmation email sent for order #${order.orderNumber} (ID: ${result.messageId})`);
+      console.log(
+        `✅ Order confirmation email sent for order #${order.orderNumber} (ID: ${result.messageId})`,
+      );
     } else {
-      console.error(`❌ Order confirmation email failed for order #${order.orderNumber}: ${result.error}`);
+      console.error(
+        `❌ Order confirmation email failed for order #${order.orderNumber}: ${result.error}`,
+      );
     }
 
     return result;
   } catch (error) {
-    console.error(`❌ Error in sendOrderConfirmationEmail for order #${order.orderNumber}:`, error.message);
+    console.error(
+      `❌ Error in sendOrderConfirmationEmail for order #${order.orderNumber}:`,
+      error.message,
+    );
     return { success: false, error: error.message };
   }
 };
@@ -301,13 +310,15 @@ const sendOrderStatusEmail = async (
   customerName,
   newStatus,
 ) => {
-  console.log(`📧 Starting order status update email for order #${order.orderNumber} to ${customerEmail} (status: ${newStatus})`);
+  console.log(
+    `📧 Starting order status update email for order #${order.orderNumber} to ${customerEmail} (status: ${newStatus})`,
+  );
   try {
     const subject = `Order Update - #${order.orderNumber}`;
     const statusDisplay =
       newStatus.replace(/_/g, " ").charAt(0).toUpperCase() +
       newStatus.replace(/_/g, " ").slice(1);
-  const html = `
+    const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
       <div style="background-color: rgb(49, 134, 22); padding: 20px; text-align: center;">
         <h1 style="color: white; margin: 0;">Store2Door</h1>
@@ -342,14 +353,21 @@ const sendOrderStatusEmail = async (
     });
 
     if (result.success) {
-      console.log(`✅ Order status update email sent for order #${order.orderNumber} (ID: ${result.messageId})`);
+      console.log(
+        `✅ Order status update email sent for order #${order.orderNumber} (ID: ${result.messageId})`,
+      );
     } else {
-      console.error(`❌ Order status email failed for order #${order.orderNumber}: ${result.error}`);
+      console.error(
+        `❌ Order status email failed for order #${order.orderNumber}: ${result.error}`,
+      );
     }
 
     return result;
   } catch (error) {
-    console.error(`❌ Error in sendOrderStatusEmail for order #${order.orderNumber}:`, error.message);
+    console.error(
+      `❌ Error in sendOrderStatusEmail for order #${order.orderNumber}:`,
+      error.message,
+    );
     return { success: false, error: error.message };
   }
 };
@@ -462,8 +480,10 @@ const sendSupportTicketEmail = async (ticketData) => {
   const { userName, userEmail, orderNumber, productName, issue, imageUrl } =
     ticketData;
 
-  console.log(`📧 Starting support ticket email from: ${userName} (${userEmail})`);
-  
+  console.log(
+    `📧 Starting support ticket email from: ${userName} (${userEmail})`,
+  );
+
   try {
     const subject = `Support Ticket - ${orderNumber ? `Order #${orderNumber}` : "General Inquiry"} from ${userName}`;
 
@@ -531,7 +551,9 @@ const sendSupportTicketEmail = async (ticketData) => {
     });
 
     if (result.success) {
-      console.log(`✅ Support ticket email sent successfully for ${userName} (ID: ${result.messageId})`);
+      console.log(
+        `✅ Support ticket email sent successfully for ${userName} (ID: ${result.messageId})`,
+      );
     } else {
       console.error(
         `❌ Support ticket email failed for ${userName}: ${result.error}`,
@@ -540,7 +562,10 @@ const sendSupportTicketEmail = async (ticketData) => {
 
     return result;
   } catch (error) {
-    console.error(`❌ Error in sendSupportTicketEmail for ${userName}:`, error.message);
+    console.error(
+      `❌ Error in sendSupportTicketEmail for ${userName}:`,
+      error.message,
+    );
     return { success: false, error: error.message };
   }
 };
