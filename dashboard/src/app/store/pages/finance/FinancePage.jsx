@@ -29,8 +29,10 @@ const FinancePage = () => {
   const [transactions, setTransactions] = useState([]);
   const [pagination, setPagination] = useState({});
   const [filters, setFilters] = useState({
-    period: "all", // week, month, year, all
+    period: "all", // week, month, year, all, custom
     status: "all", // all, succeeded, failed, refunded
+    startDate: "", // for custom date range
+    endDate: "", // for custom date range
     page: 1,
     limit: 10,
   });
@@ -42,6 +44,22 @@ const FinancePage = () => {
 
   const fetchFinanceData = useCallback(async () => {
     try {
+      // Validate custom date range
+      if (filters.period === "custom") {
+        if (!filters.startDate || !filters.endDate) {
+          console.log("Waiting for date range selection...");
+          setLoading(false);
+          setIsTableLoading(false);
+          return;
+        }
+        if (new Date(filters.startDate) > new Date(filters.endDate)) {
+          toast.error("Start date cannot be after end date");
+          setLoading(false);
+          setIsTableLoading(false);
+          return;
+        }
+      }
+
       // Only show main loading on first load (page 1)
       if (filters.page === 1) {
         setLoading(true);
@@ -298,7 +316,47 @@ const FinancePage = () => {
               <option value="month">This Month</option>
               <option value="year">This Year</option>
               <option value="all">All Time</option>
+              <option value="custom">Custom Range</option>
             </select>
+
+            {/* Date Range Inputs - Show only when Custom Range is selected */}
+            {filters.period === "custom" && (
+              <>
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-gray-400" />
+                  <label className="text-sm text-gray-600">From:</label>
+                  <input
+                    type="date"
+                    value={filters.startDate}
+                    max={new Date().toISOString().split("T")[0]}
+                    onChange={(e) =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        startDate: e.target.value,
+                        page: 1,
+                      }))
+                    }
+                    className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="text-sm text-gray-600">To:</label>
+                  <input
+                    type="date"
+                    value={filters.endDate}
+                    max={new Date().toISOString().split("T")[0]}
+                    onChange={(e) =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        endDate: e.target.value,
+                        page: 1,
+                      }))
+                    }
+                    className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  />
+                </div>
+              </>
+            )}
 
             <select
               value={filters.status}

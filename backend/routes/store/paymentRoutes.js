@@ -22,14 +22,26 @@ router.get("/", async (req, res) => {
     if (!store) return;
     const storeId = store._id;
 
-    const { status, period = "all" } = req.query;
+    const { status, period = "all", startDate, endDate } = req.query;
     const { page, limit } = getPaginationParams(req.query, 10);
 
-    // Build date filter based on period
+    // Build date filter based on period or custom date range
     let dateFilter = {};
     const now = new Date();
 
-    if (period === "week") {
+    if (period === "custom" && startDate && endDate) {
+      // Custom date range
+      const start = new Date(startDate);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      dateFilter = {
+        createdAt: {
+          $gte: start,
+          $lte: end,
+        },
+      };
+    } else if (period === "week") {
       const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
       dateFilter = { createdAt: { $gte: weekAgo } };
     } else if (period === "month") {
@@ -73,24 +85,57 @@ router.get("/", async (req, res) => {
       Payment.countDocuments(query),
     ]);
 
-    // Calculate statistics
+    // Calculate statistics (using storeAmount from paymentSplit, excluding refunded orders)
     const [statsResult] = await Payment.aggregate([
       { $match: { orderId: { $in: orderIds }, ...dateFilter } },
+      {
+        $lookup: {
+          from: "orders",
+          localField: "orderId",
+          foreignField: "_id",
+          as: "order",
+        },
+      },
+      { $unwind: "$order" },
       {
         $group: {
           _id: null,
           totalEarnings: {
             $sum: {
-              $cond: [{ $eq: ["$status", "succeeded"] }, "$amount", 0],
+              $cond: [
+                {
+                  $and: [
+                    { $eq: ["$status", "completed"] },
+                    { $ne: ["$order.status", "refunded"] },
+                  ],
+                },
+                "$order.paymentSplit.storeAmount",
+                0,
+              ],
             },
           },
           pendingEarnings: {
             $sum: {
-              $cond: [{ $eq: ["$status", "pending"] }, "$amount", 0],
+              $cond: [
+                { $eq: ["$status", "pending"] },
+                "$order.paymentSplit.storeAmount",
+                0,
+              ],
             },
           },
           successfulCount: {
-            $sum: { $cond: [{ $eq: ["$status", "succeeded"] }, 1, 0] },
+            $sum: {
+              $cond: [
+                {
+                  $and: [
+                    { $eq: ["$status", "completed"] },
+                    { $ne: ["$order.status", "refunded"] },
+                  ],
+                },
+                1,
+                0,
+              ],
+            },
           },
           failedCount: {
             $sum: { $cond: [{ $eq: ["$status", "failed"] }, 1, 0] },
@@ -102,6 +147,7 @@ router.get("/", async (req, res) => {
                   $or: [
                     { $eq: ["$status", "refunded"] },
                     { $eq: ["$status", "partially_refunded"] },
+                    { $eq: ["$order.status", "refunded"] },
                   ],
                 },
                 1,
@@ -112,7 +158,16 @@ router.get("/", async (req, res) => {
           totalCount: { $sum: 1 },
           averageOrderValue: {
             $avg: {
-              $cond: [{ $eq: ["$status", "succeeded"] }, "$amount", null],
+              $cond: [
+                {
+                  $and: [
+                    { $eq: ["$status", "completed"] },
+                    { $ne: ["$order.status", "refunded"] },
+                  ],
+                },
+                "$order.paymentSplit.storeAmount",
+                null,
+              ],
             },
           },
         },
