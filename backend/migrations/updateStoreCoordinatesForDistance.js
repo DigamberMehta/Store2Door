@@ -10,8 +10,8 @@ dotenv.config();
 const updatedStoreCoordinates = {
   // STORES WITHIN 5 KM (9 stores)
   "Fresh Market Express": {
-    latitude: 31.2587571435273,
-    longitude: 75.69652739254981,
+    latitude: 31.264594,
+    longitude: 75.699767,
     // Distance: ~1.2 km
   },
   "TechHub Electronics": {

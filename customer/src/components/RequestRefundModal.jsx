@@ -91,30 +91,30 @@ const RequestRefundModal = ({ order, onClose, onSuccess }) => {
     <div className="fixed inset-0 bg-black/80 flex items-end sm:items-center justify-center z-50 animate-fadeIn">
       <div className="bg-[#0a0a0a] w-full sm:max-w-lg sm:rounded-2xl rounded-t-3xl border border-white/10 max-h-[90vh] overflow-y-auto animate-slideUp">
         {/* Header */}
-        <div className="sticky top-0 bg-[#0a0a0a] border-b border-white/10 px-6 py-4 flex items-center justify-between">
+        <div className="sticky top-0 bg-[#0a0a0a] border-b border-white/10 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-bold text-white">Request Refund</h2>
-            <p className="text-sm text-white/50 mt-1">
+            <h2 className="text-lg sm:text-xl font-bold text-white">Request Refund</h2>
+            <p className="text-xs sm:text-sm text-white/50 mt-0.5 sm:mt-1">
               Order #{order?.orderNumber}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-white/5 rounded-full transition-colors"
+            className="p-2 hover:bg-white/5 rounded-full transition-colors flex-shrink-0"
           >
             <X className="w-5 h-5 text-white/70" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-5">
           {/* Info Alert */}
-          <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 flex gap-3">
-            <AlertCircle className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm text-blue-400 font-medium">
+          <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 sm:p-4 flex gap-2 sm:gap-3">
+            <AlertCircle className="w-4 sm:w-5 h-4 sm:h-5 text-blue-500 flex-shrink-0 mt-0.5" />
+            <div className="min-w-0">
+              <p className="text-xs sm:text-sm text-blue-400 font-medium">
                 Refund Process
               </p>
-              <p className="text-xs text-blue-300/70 mt-1">
+              <p className="text-xs text-blue-300/70 mt-0.5 sm:mt-1">
                 Your request will be reviewed by our team. The admin will
                 determine the final refund amount based on your issue. If
                 approved, the amount will be credited to your wallet within 24
@@ -124,10 +124,10 @@ const RequestRefundModal = ({ order, onClose, onSuccess }) => {
           </div>
 
           {/* Order Summary */}
-          <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-            <div className="flex justify-between items-center mb-3">
-              <span className="text-sm text-white/50">Order Total:</span>
-              <span className="text-lg font-bold text-white">
+          <div className="bg-white/5 border border-white/10 rounded-xl p-3 sm:p-4">
+            <div className="flex justify-between items-center mb-2 sm:mb-3">
+              <span className="text-xs sm:text-sm text-white/50">Order Total:</span>
+              <span className="text-base sm:text-lg font-bold text-white">
                 R {order?.total?.toFixed(2)}
               </span>
             </div>
@@ -139,25 +139,25 @@ const RequestRefundModal = ({ order, onClose, onSuccess }) => {
 
           {/* Refund Amount - Display Only */}
           <div>
-            <label className="block text-sm font-medium text-white/70 mb-2">
+            <label className="block text-xs sm:text-sm font-medium text-white/70 mb-1.5 sm:mb-2">
               Order Amount
             </label>
-            <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+            <div className="bg-white/5 border border-white/10 rounded-xl p-3 sm:p-4">
               <div className="flex items-center justify-between">
-                <span className="text-white/50 text-sm">Full Order Total:</span>
-                <span className="text-2xl font-bold text-green-400">
+                <span className="text-white/50 text-xs sm:text-sm">Full Order Total:</span>
+                <span className="text-xl sm:text-2xl font-bold text-green-400">
                   R {order?.total?.toFixed(2)}
                 </span>
               </div>
             </div>
-            <p className="text-xs text-white/30 mt-1">
+            <p className="text-xs text-white/30 mt-0.5 sm:mt-1">
               Admin will determine the final refund amount after review
             </p>
           </div>
 
           {/* Reason */}
           <div>
-            <label className="block text-sm font-medium text-white/70 mb-2">
+            <label className="block text-xs sm:text-sm font-medium text-white/70 mb-1.5 sm:mb-2">
               Reason for Refund *
             </label>
             <select
@@ -166,7 +166,7 @@ const RequestRefundModal = ({ order, onClose, onSuccess }) => {
                 setFormData({ ...formData, refundReason: e.target.value })
               }
               required
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-green-500/50"
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-green-500/50"
             >
               <option value="" className="bg-[#0a0a0a]">
                 Select a reason
@@ -185,7 +185,7 @@ const RequestRefundModal = ({ order, onClose, onSuccess }) => {
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-white/70 mb-2">
+            <label className="block text-xs sm:text-sm font-medium text-white/70 mb-1.5 sm:mb-2">
               Additional Details (Optional)
             </label>
             <textarea
@@ -193,18 +193,18 @@ const RequestRefundModal = ({ order, onClose, onSuccess }) => {
               onChange={(e) =>
                 setFormData({ ...formData, customerNote: e.target.value })
               }
-              rows={4}
+              rows={3}
               placeholder="Describe the issue in detail..."
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 focus:outline-none focus:border-green-500/50 resize-none"
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 focus:outline-none focus:border-green-500/50 resize-none"
             />
           </div>
 
           {/* File Upload */}
           <div>
-            <label className="block text-sm font-medium text-white/70 mb-2">
+            <label className="block text-xs sm:text-sm font-medium text-white/70 mb-1.5 sm:mb-2">
               Upload Evidence (Optional)
             </label>
-            <div className="border-2 border-dashed border-white/10 rounded-xl p-6 text-center hover:border-white/20 transition-colors">
+            <div className="border-2 border-dashed border-white/10 rounded-xl p-4 sm:p-6 text-center hover:border-white/20 transition-colors">
               <input
                 type="file"
                 id="evidence-upload"
@@ -217,23 +217,23 @@ const RequestRefundModal = ({ order, onClose, onSuccess }) => {
                 htmlFor="evidence-upload"
                 className="cursor-pointer flex flex-col items-center"
               >
-                <Upload className="w-8 h-8 text-white/30 mb-2" />
-                <p className="text-sm text-white/50">
+                <Upload className="w-6 sm:w-8 h-6 sm:h-8 text-white/30 mb-1 sm:mb-2" />
+                <p className="text-xs sm:text-sm text-white/50">
                   Upload photos of the issue
                 </p>
-                <p className="text-xs text-white/30 mt-1">
+                <p className="text-xs text-white/30 mt-0.5 sm:mt-1">
                   PNG, JPG up to 10MB each
                 </p>
               </label>
             </div>
             {formData.evidenceFiles.length > 0 && (
-              <div className="mt-3 flex flex-wrap gap-2">
+              <div className="mt-2 sm:mt-3 flex flex-wrap gap-2">
                 {formData.evidenceFiles.map((file, idx) => (
                   <div
                     key={idx}
-                    className="relative bg-white/5 border border-white/10 rounded-lg p-2 text-xs text-white/70"
+                    className="relative bg-white/5 border border-white/10 rounded-lg p-1.5 sm:p-2 text-xs text-white/70"
                   >
-                    {file.filename}
+                    <span className="truncate max-w-[100px] inline-block">{file.filename}</span>
                     <button
                       type="button"
                       onClick={() =>
@@ -244,7 +244,7 @@ const RequestRefundModal = ({ order, onClose, onSuccess }) => {
                           ),
                         })
                       }
-                      className="ml-2 text-red-400 hover:text-red-300"
+                      className="ml-1 text-red-400 hover:text-red-300"
                     >
                       ×
                     </button>
@@ -255,18 +255,18 @@ const RequestRefundModal = ({ order, onClose, onSuccess }) => {
           </div>
 
           {/* Actions */}
-          <div className="flex gap-3 pt-4">
+          <div className="flex gap-2 sm:gap-3 pt-2 sm:pt-4">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-3 bg-white/5 border border-white/10 text-white rounded-xl font-medium hover:bg-white/10 transition-colors"
+              className="flex-1 py-2 sm:py-3 text-sm sm:text-base bg-white/5 border border-white/10 text-white rounded-xl font-medium hover:bg-white/10 transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl font-semibold hover:from-green-600 hover:to-emerald-600 transition-all disabled:opacity-50"
+              className="flex-1 py-2 sm:py-3 text-sm sm:text-base bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl font-semibold hover:from-green-600 hover:to-emerald-600 transition-all disabled:opacity-50"
             >
               {loading ? "Submitting..." : "Submit Request"}
             </button>
