@@ -44,6 +44,34 @@ export const updateOrderStatus = async (orderId, status, notes = "") => {
   }
 };
 
+// Reject order (store cannot fulfill)
+export const rejectOrder = async (orderId, reason, notifyCustomer = true) => {
+  try {
+    const response = await apiClient.post(`/orders/${orderId}/reject`, {
+      reason,
+      notifyCustomer,
+    });
+    return response;
+  } catch (error) {
+    console.error("Error rejecting order:", error);
+    throw error;
+  }
+};
+
+// Cancel order
+export const cancelOrder = async (orderId, reason, notifyCustomer = true) => {
+  try {
+    const response = await apiClient.post(`/orders/${orderId}/cancel`, {
+      reason,
+      notifyCustomer,
+    });
+    return response;
+  } catch (error) {
+    console.error("Error cancelling order:", error);
+    throw error;
+  }
+};
+
 // Get order statistics
 export const getOrderStats = async () => {
   try {

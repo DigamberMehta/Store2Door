@@ -9,11 +9,15 @@ import {
   CreditCard,
   Clock,
   FileText,
+  XOctagon,
+  X,
 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import {
   getOrderDetails,
   updateOrderStatus,
+  rejectOrder,
+  cancelOrder,
 } from "../../../../services/store/api/ordersApi";
 
 const OrderDetailsPage = () => {
@@ -23,6 +27,10 @@ const OrderDetailsPage = () => {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [error, setError] = useState(null);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
+  const [cancelReason, setCancelReason] = useState("");
 
   useEffect(() => {
     fetchOrderDetails();
@@ -104,6 +112,58 @@ const OrderDetailsPage = () => {
     }
   };
 
+  const handleRejectOrder = async () => {
+    if (!rejectReason.trim()) {
+      toast.error("Please provide a reason for rejection");
+      return;
+    }
+
+    try {
+      setUpdating(true);
+      const response = await rejectOrder(id, rejectReason, true);
+      if (response.success) {
+        setOrder(response.data);
+        toast.success("Order rejected successfully");
+        setShowRejectModal(false);
+        setRejectReason("");
+        fetchOrderDetails();
+      } else {
+        toast.error(response.message || "Failed to reject order");
+      }
+    } catch (err) {
+      console.error("Error rejecting order:", err);
+      toast.error("Failed to reject order");
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleCancelOrder = async () => {
+    if (!cancelReason.trim()) {
+      toast.error("Please provide a reason for cancellation");
+      return;
+    }
+
+    try {
+      setUpdating(true);
+      const response = await cancelOrder(id, cancelReason, true);
+      if (response.success) {
+        setOrder(response.data);
+        toast.success("Order cancelled successfully");
+        setShowCancelModal(false);
+        setCancelReason("");
+        fetchOrderDetails();
+      } else {
+        toast.error(response.message || "Failed to cancel order");
+      }
+    } catch (err) {
+      console.error("Error cancelling order:", err);
+      toast.error("Failed to cancel order");
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   const getStatusColor = (status) => {
     const colors = {
       pending: "bg-yellow-100 text-yellow-800",
@@ -114,6 +174,7 @@ const OrderDetailsPage = () => {
       picked_up: "bg-indigo-100 text-indigo-800",
       on_the_way: "bg-cyan-100 text-cyan-800",
       delivered: "bg-emerald-100 text-emerald-800",
+      rejected: "bg-orange-100 text-orange-800",
       cancelled: "bg-red-100 text-red-800",
     };
     return colors[status] || "bg-gray-100 text-gray-800";
@@ -538,6 +599,7 @@ const OrderDetailsPage = () => {
               {/* Action Buttons */}
               {order.status !== "delivered" &&
                 order.status !== "cancelled" &&
+                order.status !== "rejected" &&
                 !["picked_up", "on_the_way"].includes(order.status) && (
                   <div className="space-y-1.5">
                     <p className="text-[10px] text-gray-600 mb-1.5">
@@ -586,19 +648,29 @@ const OrderDetailsPage = () => {
                       );
                     })}
 
-                    {["placed", "confirmed", "preparing"].includes(
+                    {["pending", "placed", "confirmed", "preparing"].includes(
                       order.status,
                     ) && (
                       <>
                         <div className="border-t border-gray-200 my-1.5"></div>
                         <button
-                          onClick={() => handleStatusUpdate("cancelled")}
+                          onClick={() => setShowRejectModal(true)}
+                          disabled={updating}
+                          className="w-full px-2.5 py-1.5 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed text-[11px] font-medium flex items-center justify-between mb-1.5"
+                        >
+                          <span>Reject Order</span>
+                          <span className="text-[9px] opacity-75">
+                            Cannot fulfill
+                          </span>
+                        </button>
+                        <button
+                          onClick={() => setShowCancelModal(true)}
                           disabled={updating}
                           className="w-full px-2.5 py-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-[11px] font-medium flex items-center justify-between"
                         >
                           <span>Cancel Order</span>
                           <span className="text-[9px] opacity-75">
-                            Refund customer
+                            Customer request
                           </span>
                         </button>
                       </>
@@ -627,10 +699,186 @@ const OrderDetailsPage = () => {
                   </p>
                 </div>
               )}
+
+              {order.status === "rejected" && (
+                <div className="bg-orange-50 border border-orange-200 rounded-lg p-2.5">
+                  <p className="text-[11px] text-orange-800 font-medium">
+                    🚫 Order rejected
+                  </p>
+                  <p className="text-[10px] text-orange-600 mt-0.5">
+                    {order.rejectionReason || "This order was rejected"}
+                  </p>
+                </div>
+              )}
+
+              {order.status === "cancelled" && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-2.5">
+                  <p className="text-[11px] text-red-800 font-medium">
+                    ❌ Order cancelled
+                  </p>
+                  <p className="text-[10px] text-red-600 mt-0.5">
+                    {order.cancellationReason || "This order was cancelled"}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </div>
+
+      {/* Reject Order Modal */}
+      {showRejectModal && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg font-bold text-gray-900">Reject Order</h2>
+              <button
+                onClick={() => setShowRejectModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-3">
+              <p className="text-xs text-orange-800">
+                <strong>Store cannot fulfill this order.</strong> Customer will
+                be notified and receive a full refund.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Reason for Rejection *
+                </label>
+                <select
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                >
+                  <option value="">Select a reason...</option>
+                  <option>Out of stock</option>
+                  <option>Store is too busy</option>
+                  <option>Cannot deliver to this location</option>
+                  <option>Store equipment malfunction</option>
+                  <option>Insufficient preparation time</option>
+                  <option>Other</option>
+                </select>
+              </div>
+
+              {rejectReason === "Other" && (
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Specify Reason *
+                  </label>
+                  <textarea
+                    value=""
+                    onChange={(e) => setRejectReason(e.target.value)}
+                    placeholder="Please provide the reason..."
+                    rows={3}
+                    className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                  />
+                </div>
+              )}
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowRejectModal(false)}
+                  className="flex-1 px-3 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleRejectOrder}
+                  disabled={updating || !rejectReason}
+                  className="flex-1 px-3 py-2 text-xs font-medium text-white bg-orange-600 rounded-lg hover:bg-orange-700 disabled:opacity-50"
+                >
+                  {updating ? "Rejecting..." : "Reject Order"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cancel Order Modal */}
+      {showCancelModal && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg font-bold text-gray-900">Cancel Order</h2>
+              <button
+                onClick={() => setShowCancelModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-3">
+              <p className="text-xs text-red-800">
+                <strong>Warning:</strong> This action cannot be undone. Customer
+                will be notified.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Reason for Cancellation *
+                </label>
+                <select
+                  value={cancelReason}
+                  onChange={(e) => setCancelReason(e.target.value)}
+                  className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
+                >
+                  <option value="">Select a reason...</option>
+                  <option>Customer requested cancellation</option>
+                  <option>Duplicate order</option>
+                  <option>Customer not reachable</option>
+                  <option>Payment issue</option>
+                  <option>Other</option>
+                </select>
+              </div>
+
+              {cancelReason === "Other" && (
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Specify Reason *
+                  </label>
+                  <textarea
+                    value=""
+                    onChange={(e) => setCancelReason(e.target.value)}
+                    placeholder="Please provide the reason..."
+                    rows={3}
+                    className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
+                  />
+                </div>
+              )}
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowCancelModal(false)}
+                  className="flex-1 px-3 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCancelOrder}
+                  disabled={updating || !cancelReason}
+                  className="flex-1 px-3 py-2 text-xs font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50"
+                >
+                  {updating ? "Cancelling..." : "Cancel Order"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <Toaster />
     </div>
   );
