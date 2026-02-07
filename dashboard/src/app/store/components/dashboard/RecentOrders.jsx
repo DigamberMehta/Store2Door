@@ -11,6 +11,8 @@ const RecentOrders = ({ orders }) => {
         return "bg-yellow-100 text-yellow-800";
       case "cancelled":
         return "bg-red-100 text-red-800";
+      case "refunded":
+        return "bg-purple-100 text-purple-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -25,6 +27,8 @@ const RecentOrders = ({ orders }) => {
       case "pending":
         return <Clock className="w-4 h-4" />;
       case "cancelled":
+        return <XCircle className="w-4 h-4" />;
+      case "refunded":
         return <XCircle className="w-4 h-4" />;
       default:
         return null;

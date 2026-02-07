@@ -59,8 +59,8 @@ const WalletPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
+      <div className="min-h-screen bg-black flex items-center justify-center px-4">
+        <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-3 border-white/10 border-t-green-500"></div>
       </div>
     );
   }
@@ -71,67 +71,74 @@ const WalletPage = () => {
   return (
     <div className="min-h-screen bg-black pb-24">
       {/* Header */}
-      <div className="sticky top-0 bg-black/95 backdrop-blur-xl border-b border-white/10 z-10">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center gap-4 py-3 sm:py-4">
+      <div className="sticky top-0 bg-black/98 backdrop-blur-lg border-b border-white/5 z-10">
+        <div className="px-3 sm:px-4">
+          <div className="flex items-center gap-3 py-2.5 sm:py-3">
             <button
               onClick={() => navigate("/profile")}
-              className="p-2 hover:bg-white/5 rounded-full transition-colors"
+              className="shrink-0 p-2.5 hover:bg-white/10 active:bg-white/20 rounded-full transition-colors"
+              aria-label="Go back"
             >
-              <ArrowLeft className="w-5 h-5 text-white" />
+              <ArrowLeft className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-white" />
             </button>
-            <div>
-              <h1 className="text-lg sm:text-xl font-bold text-white">My Wallet</h1>
-              <p className="text-xs text-white/50">Balance & Transactions</p>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-base sm:text-lg font-bold text-white leading-tight">
+                My Wallet
+              </h1>
+              <p className="text-xs text-white/40">Balance & Transactions</p>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
+      <div className="px-3 sm:px-4 py-3 sm:py-5 space-y-3 sm:space-y-4">
         {/* Balance Card */}
-        <div className="relative overflow-hidden bg-gradient-to-br from-green-600 to-green-800 rounded-3xl p-4 sm:p-6 shadow-2xl">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-12 translate-x-12"></div>
-          <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full translate-y-12 -translate-x-12"></div>
+        <div className="relative overflow-hidden bg-linear-to-br from-green-600 to-green-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-2xl">
+          <div className="absolute top-0 right-0 w-24 sm:w-32 h-24 sm:h-32 bg-white/10 rounded-full -translate-y-10 sm:-translate-y-12 translate-x-10 sm:translate-x-12"></div>
+          <div className="absolute bottom-0 left-0 w-20 sm:w-24 h-20 sm:h-24 bg-white/10 rounded-full translate-y-10 sm:translate-y-12 -translate-x-10 sm:-translate-x-12"></div>
 
           <div className="relative z-10">
-            <div className="flex items-center gap-2 mb-4 sm:mb-6">
-              <Wallet className="w-4 sm:w-5 h-4 sm:h-5 text-white/80" />
+            <div className="flex items-center gap-2 mb-3 sm:mb-5">
+              <Wallet className="w-4 h-4 sm:w-5 sm:h-5 text-white/80 shrink-0" />
               <span className="text-xs sm:text-sm text-white/80 font-medium">
                 Available Balance
               </span>
             </div>
 
-            <div className="mb-2 sm:mb-4">
-              <span className="text-3xl sm:text-5xl font-bold text-white">
+            <div className="mb-2 sm:mb-3">
+              <span className="text-3xl sm:text-5xl font-bold text-white break-word">
                 R {balanceInRands.toFixed(2)}
               </span>
             </div>
 
-            <p className="text-xs text-white/70">
+            <p className="text-xs sm:text-sm text-white/70 leading-relaxed">
               This balance can be used on your next order
             </p>
           </div>
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 gap-2 sm:gap-3">
-          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-3 sm:p-4">
-            <div className="flex items-center gap-2 mb-1 sm:mb-2">
-              <TrendingUp className="w-3 sm:w-4 h-3 sm:h-4 text-green-400" />
-              <span className="text-xs text-white/50">Total Credits</span>
+        <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
+          <div className="bg-white/5 hover:bg-white/8 active:bg-white/10 transition-colors backdrop-blur-xl border border-white/10 rounded-xl sm:rounded-2xl p-3 sm:p-4 touch-manipulation">
+            <div className="flex items-center gap-2 mb-2 sm:mb-3">
+              <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-green-400 shrink-0" />
+              <span className="text-xs text-white/50 font-medium truncate">
+                Total Credits
+              </span>
             </div>
-            <span className="text-lg sm:text-xl font-bold text-white">
+            <span className="text-lg sm:text-2xl font-bold text-white block">
               {transactions.filter((t) => t.type === "credit").length}
             </span>
           </div>
 
-          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-3 sm:p-4">
-            <div className="flex items-center gap-2 mb-1 sm:mb-2">
-              <TrendingDown className="w-3 sm:w-4 h-3 sm:h-4 text-red-400" />
-              <span className="text-xs text-white/50">Total Debits</span>
+          <div className="bg-white/5 hover:bg-white/8 active:bg-white/10 transition-colors backdrop-blur-xl border border-white/10 rounded-xl sm:rounded-2xl p-3 sm:p-4 touch-manipulation">
+            <div className="flex items-center gap-2 mb-2 sm:mb-3">
+              <TrendingDown className="w-4 h-4 sm:w-5 sm:h-5 text-red-400 shrink-0" />
+              <span className="text-xs text-white/50 font-medium truncate">
+                Total Debits
+              </span>
             </div>
-            <span className="text-lg sm:text-xl font-bold text-white">
+            <span className="text-lg sm:text-2xl font-bold text-white block">
               {transactions.filter((t) => t.type === "debit").length}
             </span>
           </div>
@@ -139,19 +146,21 @@ const WalletPage = () => {
 
         {/* Transactions */}
         <div>
-          <h2 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4">
+          <h2 className="text-sm sm:text-base font-bold text-white mb-3 px-1">
             Transaction History
           </h2>
 
           {transactions.length === 0 ? (
             <div className="text-center py-8 sm:py-12">
-              <div className="inline-flex items-center justify-center w-12 sm:w-16 h-12 sm:h-16 bg-white/5 rounded-full mb-2 sm:mb-3">
-                <Clock className="w-6 sm:w-8 h-6 sm:h-8 text-white/30" />
+              <div className="inline-flex items-center justify-center w-12 sm:w-14 h-12 sm:h-14 bg-white/5 rounded-full mb-2 sm:mb-3">
+                <Clock className="w-6 sm:w-7 h-6 sm:h-7 text-white/30" />
               </div>
-              <p className="text-xs sm:text-sm text-white/50">No transactions yet</p>
+              <p className="text-xs text-white/50 font-medium">
+                No transactions yet
+              </p>
             </div>
           ) : (
-            <div className="space-y-2 sm:space-y-3">
+            <div className="space-y-2 sm:space-y-2.5">
               {transactions.map((transaction) => {
                 const Icon = getTransactionIcon(transaction.type);
                 const colorClass = getTransactionColor(transaction.type);
@@ -160,51 +169,55 @@ const WalletPage = () => {
                 return (
                   <div
                     key={transaction._id}
-                    className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-3 sm:p-4"
+                    className="bg-white/5 hover:bg-white/8 active:bg-white/10 transition-colors backdrop-blur-xl border border-white/10 rounded-xl sm:rounded-2xl p-3 sm:p-4 touch-manipulation"
                   >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-start gap-2 sm:gap-3 flex-1">
+                    <div className="flex items-start justify-between gap-2 sm:gap-3">
+                      <div className="flex items-start gap-2.5 sm:gap-3 flex-1 min-w-0">
                         <div
-                          className={`p-1.5 sm:p-2 rounded-lg flex-shrink-0 ${
+                          className={`p-2 sm:p-2.5 rounded-lg shrink-0 ${
                             transaction.type === "credit"
                               ? "bg-green-500/20"
                               : "bg-red-500/20"
                           }`}
                         >
-                          <Icon className={`w-4 sm:w-5 h-4 sm:h-5 ${colorClass}`} />
+                          <Icon
+                            className={`w-4 h-4 sm:w-5 sm:h-5 ${colorClass}`}
+                          />
                         </div>
-                        <div className="min-w-0">
-                          <p className="text-xs sm:text-sm font-medium text-white mb-0.5 sm:mb-1">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs sm:text-sm font-bold text-white leading-tight mb-0.5">
                             {transaction.type === "credit"
                               ? "Wallet Credited"
                               : "Wallet Debited"}
                           </p>
-                          <p className="text-xs text-white/50 mb-0.5 sm:mb-1 truncate">
+                          <p className="text-xs text-white/50 mb-1 sm:mb-1.5 line-clamp-1">
                             {transaction.description}
                           </p>
-                          {transaction.refundId && (
-                            <div className="flex items-center gap-1 text-xs text-white/30">
-                              <DollarSign className="w-2.5 h-2.5 flex-shrink-0" />
-                              <span className="truncate">
-                                Refund #{transaction.refundId.slice(-6)}
-                              </span>
-                            </div>
-                          )}
-                          {transaction.orderId && (
-                            <div className="flex items-center gap-1 text-xs text-white/30">
-                              <Package className="w-2.5 h-2.5 flex-shrink-0" />
-                              <span className="truncate">
-                                Order #{transaction.orderId.slice(-6)}
-                              </span>
-                            </div>
-                          )}
-                          <p className="text-xs text-white/30 mt-0.5 sm:mt-1">
+                          <div className="space-y-0.5 sm:space-y-1">
+                            {transaction.refundId && (
+                              <div className="flex items-center gap-1.5 text-xs text-white/40">
+                                <DollarSign className="w-3 h-3 shrink-0" />
+                                <span className="truncate">
+                                  Refund #{transaction.refundId.slice(-6)}
+                                </span>
+                              </div>
+                            )}
+                            {transaction.orderId && (
+                              <div className="flex items-center gap-1.5 text-xs text-white/40">
+                                <Package className="w-3 h-3 shrink-0" />
+                                <span className="truncate">
+                                  Order #{transaction.orderId.slice(-6)}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                          <p className="text-xs text-white/30 mt-1 sm:mt-1.5 leading-tight">
                             {new Date(transaction.date).toLocaleString(
                               "en-ZA",
                               {
                                 day: "numeric",
                                 month: "short",
-                                year: "numeric",
+                                year: "2-digit",
                                 hour: "2-digit",
                                 minute: "2-digit",
                               },
@@ -212,14 +225,15 @@ const WalletPage = () => {
                           </p>
                         </div>
                       </div>
-                      <div className="text-right flex-shrink-0">
-                        <span className={`text-sm sm:text-base font-bold ${colorClass}`}>
+                      <div className="text-right shrink-0">
+                        <span
+                          className={`text-xs sm:text-sm font-bold break-word ${colorClass}`}
+                        >
                           {transaction.type === "credit" ? "+" : "-"}R{" "}
                           {amountInRands.toFixed(2)}
                         </span>
                         <p className="text-xs text-white/50 mt-0.5 sm:mt-1 whitespace-nowrap">
-                          Balance: R{" "}
-                          {(transaction.balanceAfter / 100).toFixed(2)}
+                          R {(transaction.balanceAfter / 100).toFixed(2)}
                         </p>
                       </div>
                     </div>

@@ -815,11 +815,11 @@ export const getDriverEarnings = asyncHandler(async (req, res) => {
   thisMonthStart.setDate(1);
   thisMonthStart.setHours(0, 0, 0, 0);
 
-  // Get today's earnings from transactions
+  // Get today's earnings from transactions (including refund deductions)
   const todayTransactions = await Transaction.find({
     userId: req.user.id,
     userType: "driver",
-    type: { $in: ["earning", "tip"] },
+    type: { $in: ["earning", "tip", "refund"] }, // Include refund deductions
     status: "completed",
     createdAt: { $gte: today },
   });
@@ -832,22 +832,22 @@ export const getDriverEarnings = asyncHandler(async (req, res) => {
     .filter((tx) => tx.type === "tip")
     .reduce((sum, tx) => sum + tx.amount, 0);
 
-  // Get this week's earnings
+  // Get this week's earnings (including refund deductions)
   const weekTransactions = await Transaction.find({
     userId: req.user.id,
     userType: "driver",
-    type: { $in: ["earning", "tip"] },
+    type: { $in: ["earning", "tip", "refund"] }, // Include refund deductions
     status: "completed",
     createdAt: { $gte: thisWeekStart },
   });
 
   const weekEarnings = weekTransactions.reduce((sum, tx) => sum + tx.amount, 0);
 
-  // Get this month's earnings
+  // Get this month's earnings (including refund deductions)
   const monthTransactions = await Transaction.find({
     userId: req.user.id,
     userType: "driver",
-    type: { $in: ["earning", "tip"] },
+    type: { $in: ["earning", "tip", "refund"] }, // Include refund deductions
     status: "completed",
     createdAt: { $gte: thisMonthStart },
   });

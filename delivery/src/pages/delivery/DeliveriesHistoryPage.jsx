@@ -73,6 +73,7 @@ const DeliveriesHistoryPage = () => {
       picked_up: "text-blue-400 bg-blue-500/10",
       on_the_way: "text-purple-400 bg-purple-500/10",
       assigned: "text-yellow-400 bg-yellow-500/10",
+      refunded: "text-purple-400 bg-purple-500/10",
     };
     return colors[status] || "text-zinc-400 bg-zinc-500/10";
   };
@@ -80,6 +81,7 @@ const DeliveriesHistoryPage = () => {
   const getStatusIcon = (status) => {
     if (status === "delivered") return <CheckCircle className="w-4 h-4" />;
     if (status === "cancelled") return <XCircle className="w-4 h-4" />;
+    if (status === "refunded") return <XCircle className="w-4 h-4" />;
     return <Package className="w-4 h-4" />;
   };
 

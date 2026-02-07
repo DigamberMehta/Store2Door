@@ -15,6 +15,7 @@ const OrderCard = ({ order }) => {
       on_the_way: "bg-cyan-100 text-cyan-800 border-cyan-300",
       delivered: "bg-emerald-100 text-emerald-800 border-emerald-300",
       cancelled: "bg-red-100 text-red-800 border-red-300",
+      refunded: "bg-purple-100 text-purple-800 border-purple-300",
     };
     return colors[status] || "bg-gray-100 text-gray-800 border-gray-300";
   };

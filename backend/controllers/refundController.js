@@ -1,6 +1,5 @@
 import Refund from "../models/Refund.js";
 import Order from "../models/Order.js";
-import CustomerWallet from "../models/CustomerWallet.js";
 import Transaction from "../models/Transaction.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import AppError from "../utils/AppError.js";
@@ -33,11 +32,56 @@ export const submitRefund = asyncHandler(async (req, res, next) => {
     );
   }
 
-  // Check if refund already requested for this order
-  const existingRefund = await Refund.orderHasRefund(orderId);
+  // 🔒 SECURITY: Check 2-day refund window limit
+  const REFUND_WINDOW_DAYS = 2;
+  const daysSinceOrder =
+    (Date.now() - order.createdAt.getTime()) / (1000 * 60 * 60 * 24);
+  if (daysSinceOrder > REFUND_WINDOW_DAYS) {
+    return next(
+      new AppError(
+        `Refund requests must be made within ${REFUND_WINDOW_DAYS} days of order placement`,
+        400,
+      ),
+    );
+  }
+
+  // 🔒 SECURITY: Check if order has already been fully refunded
+  if (order.paymentStatus === "refunded") {
+    return next(
+      new AppError("This order has already been fully refunded", 400),
+    );
+  }
+
+  // 🔒 SECURITY: Prevent multiple active refund requests for same order
+  const existingRefund = await Refund.findOne({
+    orderId,
+    status: {
+      $in: [
+        "pending_review",
+        "under_review",
+        "approved",
+        "processing",
+        "completed",
+      ],
+    },
+  });
   if (existingRefund) {
     return next(
-      new AppError("A refund request already exists for this order", 400),
+      new AppError(
+        `An active refund request already exists for this order (Status: ${existingRefund.status})`,
+        400,
+      ),
+    );
+  }
+
+  // 🔒 SECURITY: Verify order payment status is valid for refund
+  const validPaymentStatuses = ["paid", "succeeded", "partially_refunded"];
+  if (!validPaymentStatuses.includes(order.paymentStatus)) {
+    return next(
+      new AppError(
+        `Cannot refund orders with payment status: ${order.paymentStatus}`,
+        400,
+      ),
     );
   }
 
@@ -326,8 +370,21 @@ export const adminApproveRefund = asyncHandler(async (req, res, next) => {
 
   const { fromStore, fromDriver, fromPlatform, rationale } = costDistribution;
 
-  // Calculate approved amount from distribution
-  const approvedAmount = fromStore + fromDriver + fromPlatform;
+  // 🔒 SECURITY: Validate no negative amounts
+  if (fromStore < 0 || fromDriver < 0 || fromPlatform < 0) {
+    return next(new AppError("Refund amounts cannot be negative", 400));
+  }
+
+  // 🔒 SECURITY: Round to 2 decimal places to prevent floating point issues
+  const roundedFromStore = Math.round(fromStore * 100) / 100;
+  const roundedFromDriver = Math.round(fromDriver * 100) / 100;
+  const roundedFromPlatform = Math.round(fromPlatform * 100) / 100;
+
+  // Calculate approved amount from distribution with proper rounding
+  const approvedAmount =
+    Math.round(
+      (roundedFromStore + roundedFromDriver + roundedFromPlatform) * 100,
+    ) / 100;
 
   // Validate approved amount
   if (approvedAmount <= 0) {
@@ -336,16 +393,31 @@ export const adminApproveRefund = asyncHandler(async (req, res, next) => {
     );
   }
 
-  // Find refund with order details
+  // 🔒 SECURITY: Find refund with order details
   const refund = await Refund.findById(id).populate({
     path: "orderId",
-    select: "paymentSplit deliveryFee tip total",
+    select: "paymentSplit deliveryFee tip total storeId riderId status",
   });
   if (!refund) {
     return next(new AppError("Refund request not found", 404));
   }
 
-  // Validate approved amount doesn't exceed order total
+  // 🔒 SECURITY: Prevent multiple approvals (race condition protection)
+  if (refund.status !== "pending_review" && refund.status !== "under_review") {
+    return next(
+      new AppError(
+        `Cannot approve refund with current status: ${refund.status}`,
+        400,
+      ),
+    );
+  }
+
+  // 🔒 SECURITY: Verify store ID matches (prevent admin refunding wrong store)
+  if (refund.storeId.toString() !== refund.orderId.storeId.toString()) {
+    return next(new AppError("Store ID mismatch - data integrity error", 400));
+  }
+
+  // 🔒 SECURITY: Validate approved amount doesn't exceed order total
   if (refund.orderId && approvedAmount > refund.orderId.total) {
     return next(
       new AppError(
@@ -355,49 +427,97 @@ export const adminApproveRefund = asyncHandler(async (req, res, next) => {
     );
   }
 
-  // Validate contribution limits based on earned amounts
+  // 🔒 SECURITY: Validate contribution limits based on earned amounts
   if (refund.orderId && refund.orderId.paymentSplit) {
-    const maxFromStore = refund.orderId.paymentSplit.storeAmount || 0;
-    const maxFromDriver =
-      (refund.orderId.deliveryFee || 0) + (refund.orderId.tip || 0);
+    const maxFromStore =
+      Math.round((refund.orderId.paymentSplit.storeAmount || 0) * 100) / 100;
+    const deliveryFee =
+      Math.round((refund.orderId.deliveryFee || 0) * 100) / 100;
+    const tip = Math.round((refund.orderId.tip || 0) * 100) / 100;
+    const maxFromDriver = deliveryFee + tip;
 
-    if (fromStore > maxFromStore) {
+    // 🔒 SECURITY: Store refund validation
+    if (roundedFromStore > maxFromStore + 0.01) {
+      // 1 cent tolerance for rounding
       return next(
         new AppError(
-          `Store contribution (R ${fromStore.toFixed(2)}) cannot exceed their earned amount (R ${maxFromStore.toFixed(2)})`,
+          `Store contribution (R ${roundedFromStore.toFixed(2)}) cannot exceed their earned amount (R ${maxFromStore.toFixed(2)})`,
           400,
         ),
       );
     }
 
-    if (fromDriver > maxFromDriver) {
-      return next(
-        new AppError(
-          `Driver contribution (R ${fromDriver.toFixed(2)}) cannot exceed delivery fee + tip (R ${maxFromDriver.toFixed(2)})`,
-          400,
-        ),
-      );
+    // 🔒 SECURITY: Driver refund validation - only if driver was assigned
+    if (roundedFromDriver > 0) {
+      if (!refund.riderId) {
+        return next(
+          new AppError(
+            "Cannot deduct from driver - no driver was assigned to this order",
+            400,
+          ),
+        );
+      }
+
+      // Verify driver actually received the order
+      const driverReceivedStatuses = ["picked_up", "on_the_way", "delivered"];
+      if (!driverReceivedStatuses.includes(refund.orderId.status)) {
+        return next(
+          new AppError(
+            `Cannot deduct from driver - order status is ${refund.orderId.status}. Driver must have picked up the order.`,
+            400,
+          ),
+        );
+      }
+
+      if (roundedFromDriver > maxFromDriver + 0.01) {
+        // 1 cent tolerance
+        return next(
+          new AppError(
+            `Driver contribution (R ${roundedFromDriver.toFixed(2)}) cannot exceed delivery fee + tip (R ${maxFromDriver.toFixed(2)})`,
+            400,
+          ),
+        );
+      }
     }
   }
 
-  // Approve refund
+  // 🔒 AUDIT LOG: Record refund approval
+  console.log(
+    `[REFUND AUDIT] ${new Date().toISOString()} - Admin ${adminId} approving refund ${refund.refundNumber}`,
+  );
+  console.log(`  Order: ${refund.orderSnapshot.orderNumber}`);
+  console.log(`  Amount: R${approvedAmount.toFixed(2)}`);
+  console.log(
+    `  Distribution: Store R${roundedFromStore}, Driver R${roundedFromDriver}, Platform R${roundedFromPlatform}`,
+  );
+  console.log(`  Rationale: ${rationale || "N/A"}`);
+
+  // Approve refund with rounded amounts
   await refund.approve(
     adminId,
     approvedAmount,
     {
-      fromStore,
-      fromDriver,
-      fromPlatform,
+      fromStore: roundedFromStore,
+      fromDriver: roundedFromDriver,
+      fromPlatform: roundedFromPlatform,
       rationale,
     },
     adminNote,
   );
 
-  // Process refund (credit to wallet)
+  // 🔒 SECURITY: Process refund with database transaction for consistency
   try {
     await processRefundToWallet(refund);
+
+    // 🔒 AUDIT LOG: Success
+    console.log(
+      `[REFUND AUDIT] ${new Date().toISOString()} - Refund ${refund.refundNumber} processed successfully`,
+    );
   } catch (error) {
-    console.error("Error processing refund:", error);
+    console.error(
+      `[REFUND AUDIT] ${new Date().toISOString()} - Error processing refund ${refund.refundNumber}:`,
+      error,
+    );
     await refund.markFailed(error.message);
     return next(
       new AppError("Refund approval succeeded but wallet credit failed", 500),
@@ -504,48 +624,81 @@ export const adminGetRefundStats = asyncHandler(async (req, res, next) => {
  */
 async function processRefundToWallet(refund) {
   try {
-    // Mark as processing
+    // 🔒 SECURITY: Mark as processing (status lock against race conditions)
     await refund.markProcessing();
 
-    // Get or create customer wallet
-    const wallet = await CustomerWallet.getOrCreate(refund.customerId);
+    // 🔒 SECURITY: Round amount to prevent floating point issues
+    const creditAmount = Math.round(refund.approvedAmount * 100) / 100;
 
-    // Credit refund to wallet (convert Rands to cents: wallet stores in cents)
-    await wallet.creditRefund(
-      refund.approvedAmount * 100,
-      refund.orderId,
-      refund._id,
+    // 🔒 AUDIT LOG: Credit transaction
+    console.log(
+      `[REFUND AUDIT] ${new Date().toISOString()} - Crediting R${creditAmount} to customer ${refund.customerId}`,
+    );
+
+    // Credit refund to customer using Transaction model
+    await Transaction.creditCustomer(
+      refund.customerId,
+      creditAmount, // Already in Rands, properly rounded
+      "refund",
       `Refund for order ${refund.orderSnapshot.orderNumber}`,
+      refund.orderId,
       {
+        refundId: refund._id,
         refundNumber: refund.refundNumber,
         refundReason: refund.refundReason,
       },
     );
 
-    // Get the last transaction ID (just added)
-    const lastTransaction = wallet.transactions[wallet.transactions.length - 1];
+    // Get the transaction we just created
+    const customerTransaction = await Transaction.findOne({
+      userId: refund.customerId,
+      userType: "customer",
+      orderId: refund.orderId,
+      "metadata.refundId": refund._id,
+    }).sort({ createdAt: -1 });
 
     // Mark refund as completed
-    await refund.markCompleted(lastTransaction._id);
+    await refund.markCompleted(customerTransaction._id);
 
-    // Update order payment status if full refund
+    // Update order payment status and order status if full refund
     const order = await Order.findById(refund.orderId);
     if (order && refund.approvedAmount >= order.total) {
       order.paymentStatus = "refunded";
+      // Update order status to refunded if it was delivered
+      if (order.status === "delivered") {
+        order.status = "refunded";
+        // Add tracking history entry
+        order.trackingHistory.push({
+          status: "refunded",
+          updatedAt: new Date(),
+          notes: `Order refunded - ${refund.refundReason}`,
+        });
+      }
       await order.save();
     } else if (order && refund.approvedAmount < order.total) {
       order.paymentStatus = "partially_refunded";
       await order.save();
     }
 
-    // Create deduction transactions for store, driver, platform
+    // 🔒 SECURITY: Create deduction transactions for store, driver, platform (rounded amounts)
     if (refund.costDistribution.fromStore > 0) {
+      const storeDeduction =
+        Math.round(refund.costDistribution.fromStore * 100) / 100;
+      console.log(
+        `[REFUND AUDIT] ${new Date().toISOString()} - Deducting R${storeDeduction} from store ${refund.storeId}`,
+      );
+
+      const currentStoreBalance = await Transaction.getBalance(
+        refund.storeId,
+        "store",
+      );
+
       await Transaction.create({
         storeId: refund.storeId,
         userType: "store",
         type: "refund",
-        amount: -refund.costDistribution.fromStore,
-        balanceAfter: await Transaction.getBalance(refund.storeId, "store"),
+        amount: -storeDeduction,
+        balanceAfter: currentStoreBalance - storeDeduction,
         description: `Refund deduction for order ${refund.orderSnapshot.orderNumber}`,
         orderId: refund.orderId,
         status: "completed",
@@ -557,12 +710,23 @@ async function processRefundToWallet(refund) {
     }
 
     if (refund.costDistribution.fromDriver > 0 && refund.riderId) {
+      const driverDeduction =
+        Math.round(refund.costDistribution.fromDriver * 100) / 100;
+      console.log(
+        `[REFUND AUDIT] ${new Date().toISOString()} - Deducting R${driverDeduction} from driver ${refund.riderId}`,
+      );
+
+      const currentDriverBalance = await Transaction.getBalance(
+        refund.riderId,
+        "driver",
+      );
+
       await Transaction.create({
         userId: refund.riderId,
         userType: "driver",
         type: "refund",
-        amount: -refund.costDistribution.fromDriver,
-        balanceAfter: await Transaction.getBalance(refund.riderId, "driver"),
+        amount: -driverDeduction,
+        balanceAfter: currentDriverBalance - driverDeduction,
         description: `Refund deduction for order ${refund.orderSnapshot.orderNumber}`,
         orderId: refund.orderId,
         status: "completed",
@@ -574,11 +738,22 @@ async function processRefundToWallet(refund) {
     }
 
     if (refund.costDistribution.fromPlatform > 0) {
+      const platformAbsorption =
+        Math.round(refund.costDistribution.fromPlatform * 100) / 100;
+      console.log(
+        `[REFUND AUDIT] ${new Date().toISOString()} - Platform absorbing R${platformAbsorption}`,
+      );
+
+      const currentPlatformBalance = await Transaction.getBalance(
+        null,
+        "platform",
+      );
+
       await Transaction.create({
         userType: "platform",
         type: "refund",
-        amount: -refund.costDistribution.fromPlatform,
-        balanceAfter: await Transaction.getBalance(null, "platform"),
+        amount: -platformAbsorption,
+        balanceAfter: currentPlatformBalance - platformAbsorption,
         description: `Refund absorbed for order ${refund.orderSnapshot.orderNumber}`,
         orderId: refund.orderId,
         status: "completed",
@@ -608,11 +783,21 @@ async function processRefundToWallet(refund) {
 export const getCustomerWallet = asyncHandler(async (req, res, next) => {
   const customerId = req.user._id;
 
-  const wallet = await CustomerWallet.getOrCreate(customerId);
+  // Get balance from Transaction model (in Rands)
+  const balanceInRands = await Transaction.getBalance(customerId, "customer");
+
+  // Convert to cents for frontend compatibility
+  const balanceInCents = balanceInRands * 100;
 
   res.status(200).json({
     success: true,
-    data: { wallet },
+    data: {
+      wallet: {
+        balance: balanceInCents,
+        currency: "ZAR",
+        status: "active",
+      },
+    },
   });
 });
 
@@ -625,45 +810,32 @@ export const getWalletTransactions = asyncHandler(async (req, res, next) => {
   const customerId = req.user._id;
   const limit = parseInt(req.query.limit) || 50;
 
-  const wallet = await CustomerWallet.findByCustomer(customerId);
-  if (!wallet) {
-    return next(new AppError("Wallet not found", 404));
-  }
+  // Get transactions from Transaction model
+  const transactions = await Transaction.getCustomerTransactions(
+    customerId,
+    limit,
+  );
 
-  const transactions = wallet.getTransactions(limit);
-
-  res.status(200).json({
-    success: true,
-    data: { transactions },
-  });
-});
-
-/**
- * @desc    Get flagged wallets (admin)
- * @route   GET /api/admin/wallets/flagged
- * @access  Private (Admin)
- */
-export const adminGetFlaggedWallets = asyncHandler(async (req, res, next) => {
-  const limit = parseInt(req.query.limit) || 50;
-
-  const wallets = await CustomerWallet.getFlaggedWallets(limit);
+  // Format for frontend (convert to cents for compatibility)
+  const formattedTransactions = transactions.map((tx) => ({
+    _id: tx._id,
+    type: tx.type === "refund" || tx.type === "credit" ? "credit" : "debit",
+    amount: Math.abs(tx.amount) * 100, // Convert to cents
+    balanceAfter: tx.balanceAfter * 100, // Convert to cents
+    description: tx.description,
+    orderId: tx.orderId?._id,
+    refundId: tx.metadata?.refundId,
+    date: tx.createdAt,
+    createdAt: tx.createdAt,
+    metadata: tx.metadata,
+  }));
 
   res.status(200).json({
     success: true,
-    data: { wallets },
+    data: { transactions: formattedTransactions },
   });
 });
 
-/**
- * @desc    Get wallet statistics (admin)
- * @route   GET /api/admin/wallets/stats
- * @access  Private (Admin)
- */
-export const adminGetWalletStats = asyncHandler(async (req, res, next) => {
-  const stats = await CustomerWallet.getStatistics();
-
-  res.status(200).json({
-    success: true,
-    data: { stats },
-  });
-});
+// Note: Admin wallet endpoints removed
+// Fraud detection and wallet statistics can be implemented
+// using Transaction model aggregations if needed

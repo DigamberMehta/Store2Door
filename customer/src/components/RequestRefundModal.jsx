@@ -93,7 +93,9 @@ const RequestRefundModal = ({ order, onClose, onSuccess }) => {
         {/* Header */}
         <div className="sticky top-0 bg-[#0a0a0a] border-b border-white/10 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
           <div>
-            <h2 className="text-lg sm:text-xl font-bold text-white">Request Refund</h2>
+            <h2 className="text-lg sm:text-xl font-bold text-white">
+              Request Refund
+            </h2>
             <p className="text-xs sm:text-sm text-white/50 mt-0.5 sm:mt-1">
               Order #{order?.orderNumber}
             </p>
@@ -106,7 +108,10 @@ const RequestRefundModal = ({ order, onClose, onSuccess }) => {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-5">
+        <form
+          onSubmit={handleSubmit}
+          className="p-4 sm:p-6 space-y-4 sm:space-y-5"
+        >
           {/* Info Alert */}
           <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 sm:p-4 flex gap-2 sm:gap-3">
             <AlertCircle className="w-4 sm:w-5 h-4 sm:h-5 text-blue-500 flex-shrink-0 mt-0.5" />
@@ -126,7 +131,9 @@ const RequestRefundModal = ({ order, onClose, onSuccess }) => {
           {/* Order Summary */}
           <div className="bg-white/5 border border-white/10 rounded-xl p-3 sm:p-4">
             <div className="flex justify-between items-center mb-2 sm:mb-3">
-              <span className="text-xs sm:text-sm text-white/50">Order Total:</span>
+              <span className="text-xs sm:text-sm text-white/50">
+                Order Total:
+              </span>
               <span className="text-base sm:text-lg font-bold text-white">
                 R {order?.total?.toFixed(2)}
               </span>
@@ -144,7 +151,9 @@ const RequestRefundModal = ({ order, onClose, onSuccess }) => {
             </label>
             <div className="bg-white/5 border border-white/10 rounded-xl p-3 sm:p-4">
               <div className="flex items-center justify-between">
-                <span className="text-white/50 text-xs sm:text-sm">Full Order Total:</span>
+                <span className="text-white/50 text-xs sm:text-sm">
+                  Full Order Total:
+                </span>
                 <span className="text-xl sm:text-2xl font-bold text-green-400">
                   R {order?.total?.toFixed(2)}
                 </span>
@@ -233,7 +242,9 @@ const RequestRefundModal = ({ order, onClose, onSuccess }) => {
                     key={idx}
                     className="relative bg-white/5 border border-white/10 rounded-lg p-1.5 sm:p-2 text-xs text-white/70"
                   >
-                    <span className="truncate max-w-[100px] inline-block">{file.filename}</span>
+                    <span className="truncate max-w-[100px] inline-block">
+                      {file.filename}
+                    </span>
                     <button
                       type="button"
                       onClick={() =>

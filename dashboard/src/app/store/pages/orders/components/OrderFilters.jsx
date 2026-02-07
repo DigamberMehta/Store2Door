@@ -39,6 +39,7 @@ const OrderFilters = ({ filters, setFilters, onSearch }) => {
             <option value="delivered">Delivered</option>
             <option value="rejected">Rejected</option>
             <option value="cancelled">Cancelled</option>
+            <option value="refunded">Refunded</option>
           </select>
         </div>
 

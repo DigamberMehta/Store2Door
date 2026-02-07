@@ -9,7 +9,7 @@ const transactionSchema = new mongoose.Schema(
     },
     userType: {
       type: String,
-      enum: ["driver", "store", "platform"],
+      enum: ["driver", "store", "platform", "customer"],
       required: true,
       index: true,
     },
@@ -31,6 +31,8 @@ const transactionSchema = new mongoose.Schema(
         "order_revenue",
         "commission",
         "platform_fee",
+        "credit",
+        "debit",
       ],
       required: true,
     },
@@ -239,6 +241,77 @@ transactionSchema.statics.getEarningsSummary = async function (
   ]);
 
   return earnings[0] || { totalAmount: 0, count: 0 };
+};
+
+// Static method to credit customer wallet (refund, promotional credit, etc.)
+transactionSchema.statics.creditCustomer = async function (
+  customerId,
+  amount,
+  type,
+  description,
+  orderId = null,
+  metadata = {},
+) {
+  const currentBalance = await this.getBalance(customerId, "customer");
+  const newBalance = currentBalance + amount;
+
+  return await this.create({
+    userId: customerId,
+    userType: "customer",
+    type,
+    amount,
+    balanceAfter: newBalance,
+    description,
+    orderId,
+    status: "completed",
+    metadata,
+  });
+};
+
+// Static method to debit customer wallet (use wallet balance for order)
+transactionSchema.statics.debitCustomer = async function (
+  customerId,
+  amount,
+  description,
+  orderId = null,
+  metadata = {},
+) {
+  const currentBalance = await this.getBalance(customerId, "customer");
+
+  if (currentBalance < amount) {
+    throw new Error("Insufficient wallet balance");
+  }
+
+  const newBalance = currentBalance - amount;
+
+  return await this.create({
+    userId: customerId,
+    userType: "customer",
+    type: "debit",
+    amount: -amount, // Negative for deductions
+    balanceAfter: newBalance,
+    description,
+    orderId,
+    status: "completed",
+    metadata,
+  });
+};
+
+// Static method to get customer transactions
+transactionSchema.statics.getCustomerTransactions = async function (
+  customerId,
+  limit = 50,
+  skip = 0,
+) {
+  return await this.find({
+    userId: customerId,
+    userType: "customer",
+    status: { $in: ["completed", "pending"] },
+  })
+    .populate("orderId", "orderNumber items total")
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit);
 };
 
 const Transaction = mongoose.model("Transaction", transactionSchema);

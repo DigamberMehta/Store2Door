@@ -741,11 +741,11 @@ export const getStoreEarnings = asyncHandler(async (req, res) => {
   thisMonthStart.setDate(1);
   thisMonthStart.setHours(0, 0, 0, 0);
 
-  // Get today's earnings
+  // Get today's earnings (including refund deductions)
   const todayTransactions = await Transaction.find({
     storeId,
     userType: "store",
-    type: "order_revenue",
+    type: { $in: ["order_revenue", "refund"] }, // Include refund deductions
     status: "completed",
     createdAt: { $gte: today },
   });
@@ -755,22 +755,22 @@ export const getStoreEarnings = asyncHandler(async (req, res) => {
     0,
   );
 
-  // Get this week's earnings
+  // Get this week's earnings (including refund deductions)
   const weekTransactions = await Transaction.find({
     storeId,
     userType: "store",
-    type: "order_revenue",
+    type: { $in: ["order_revenue", "refund"] }, // Include refund deductions
     status: "completed",
     createdAt: { $gte: thisWeekStart },
   });
 
   const weekEarnings = weekTransactions.reduce((sum, tx) => sum + tx.amount, 0);
 
-  // Get this month's earnings
+  // Get this month's earnings (including refund deductions)
   const monthTransactions = await Transaction.find({
     storeId,
     userType: "store",
-    type: "order_revenue",
+    type: { $in: ["order_revenue", "refund"] }, // Include refund deductions
     status: "completed",
     createdAt: { $gte: thisMonthStart },
   });

@@ -141,9 +141,36 @@ export const getOrderDetails = async (req, res) => {
       await order.save();
     }
 
+    // Check if there's a refund for this order and get refund deduction info
+    let refundInfo = null;
+    if (
+      order.paymentStatus === "refunded" ||
+      order.paymentStatus === "partially_refunded"
+    ) {
+      const refund = await Refund.findOne({
+        orderId: order._id,
+        status: { $in: ["approved", "processing", "completed"] },
+      }).select(
+        "refundNumber approvedAmount costDistribution status completedAt",
+      );
+
+      if (refund && refund.costDistribution) {
+        refundInfo = {
+          refundNumber: refund.refundNumber,
+          totalRefundAmount: refund.approvedAmount,
+          storeDeduction: refund.costDistribution.fromStore || 0,
+          driverDeduction: refund.costDistribution.fromDriver || 0,
+          platformAbsorbed: refund.costDistribution.fromPlatform || 0,
+          status: refund.status,
+          completedAt: refund.completedAt,
+        };
+      }
+    }
+
     res.json({
       success: true,
       data: order,
+      refundInfo,
     });
   } catch (error) {
     console.error("Error fetching order details:", error);
@@ -214,6 +241,13 @@ export const updateOrderStatus = async (req, res) => {
     }
 
     await order.save();
+
+    // Populate order before returning
+    await order.populate([
+      { path: "customerId", select: "name email phone" },
+      { path: "riderId", select: "name email phone" },
+      { path: "items.productId", select: "name images" },
+    ]);
 
     // Emit socket event for real-time update
     console.log(
@@ -393,6 +427,13 @@ export const cancelOrder = async (req, res) => {
       );
     }
 
+    // Populate order before returning
+    await order.populate([
+      { path: "customerId", select: "name email phone" },
+      { path: "riderId", select: "name email phone" },
+      { path: "items.productId", select: "name images" },
+    ]);
+
     // Emit socket event for real-time update
     emitToOrder(orderId, "order:cancelled", {
       orderId,
@@ -506,6 +547,13 @@ export const rejectOrder = async (req, res) => {
         emailError,
       );
     }
+
+    // Populate order before returning
+    await order.populate([
+      { path: "customerId", select: "name email phone" },
+      { path: "riderId", select: "name email phone" },
+      { path: "items.productId", select: "name images" },
+    ]);
 
     // Emit socket event for real-time update
     emitToOrder(orderId, "order:rejected", {

@@ -24,6 +24,7 @@ const OrderDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [order, setOrder] = useState(null);
+  const [refundInfo, setRefundInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [error, setError] = useState(null);
@@ -43,6 +44,7 @@ const OrderDetailsPage = () => {
       const response = await getOrderDetails(id);
       if (response.success) {
         setOrder(response.data);
+        setRefundInfo(response.refundInfo || null);
       } else {
         setError(response.message || "Failed to load order details");
         toast.error(response.message || "Failed to load order details");
@@ -95,6 +97,7 @@ const OrderDetailsPage = () => {
       const response = await updateOrderStatus(id, newStatus);
       if (response.success) {
         setOrder(response.data);
+        setRefundInfo(response.refundInfo || null);
         toast.dismiss(); // Dismiss confirmation toast before showing success
         toast.success(
           `Order status updated to ${newStatus.replace("_", " ").toUpperCase()}`,
@@ -123,6 +126,7 @@ const OrderDetailsPage = () => {
       const response = await rejectOrder(id, rejectReason, true);
       if (response.success) {
         setOrder(response.data);
+        setRefundInfo(response.refundInfo || null);
         toast.success("Order rejected successfully");
         setShowRejectModal(false);
         setRejectReason("");
@@ -149,6 +153,7 @@ const OrderDetailsPage = () => {
       const response = await cancelOrder(id, cancelReason, true);
       if (response.success) {
         setOrder(response.data);
+        setRefundInfo(response.refundInfo || null);
         toast.success("Order cancelled successfully");
         setShowCancelModal(false);
         setCancelReason("");
@@ -433,6 +438,24 @@ const OrderDetailsPage = () => {
                         * Discount of R{order.discount.toFixed(2)} absorbed by
                         platform
                       </p>
+                    )}
+                    {refundInfo && refundInfo.storeDeduction > 0 && (
+                      <div className="mt-3 pt-3 border-t border-red-200 bg-red-50 -mx-4 -mb-3 px-4 py-2.5">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <span className="text-xs font-semibold text-red-800">
+                              Refund Deduction
+                            </span>
+                            <p className="text-[10px] text-red-600 mt-0.5">
+                              Amount deducted from your earnings for refund #
+                              {refundInfo.refundNumber}
+                            </p>
+                          </div>
+                          <span className="text-base font-bold text-red-700">
+                            -R{refundInfo.storeDeduction.toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
                     )}
                   </div>
                 )}

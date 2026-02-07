@@ -9,7 +9,9 @@ router.use(authenticate);
 router.use(authorize("admin"));
 
 // Wallet management routes (mounted at /admin/wallets)
-router.get("/flagged", refundController.adminGetFlaggedWallets);
-router.get("/stats", refundController.adminGetWalletStats);
+// Note: Flagged wallets and stats endpoints removed with CustomerWallet model
+// Can be reimplemented using Transaction model aggregations if needed
+// router.get("/flagged", refundController.adminGetFlaggedWallets);
+// router.get("/stats", refundController.adminGetWalletStats);
 
 export default router;

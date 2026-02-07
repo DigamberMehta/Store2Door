@@ -17,6 +17,7 @@ const OrderTable = ({ orders, pagination, onPageChange, loading }) => {
       on_the_way: "bg-orange-100 text-orange-800",
       delivered: "bg-green-100 text-green-800",
       cancelled: "bg-red-100 text-red-800",
+      refunded: "bg-purple-100 text-purple-800",
     };
 
     return (

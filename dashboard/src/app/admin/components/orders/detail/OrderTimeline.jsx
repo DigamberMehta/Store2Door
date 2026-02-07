@@ -23,6 +23,7 @@ const OrderTimeline = ({ trackingHistory = [] }) => {
       on_the_way: "text-orange-600 bg-orange-100",
       delivered: "text-green-600 bg-green-100",
       cancelled: "text-red-600 bg-red-100",
+      refunded: "text-purple-600 bg-purple-100",
     };
     return colors[status] || "text-gray-600 bg-gray-100";
   };

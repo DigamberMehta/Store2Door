@@ -8,18 +8,24 @@ const OrderActions = ({
   onCancel,
   onReject,
 }) => {
-  const canUpdateStatus = !["delivered", "cancelled", "rejected"].includes(
-    order.status,
-  );
+  const canUpdateStatus = ![
+    "delivered",
+    "cancelled",
+    "rejected",
+    "refunded",
+  ].includes(order.status);
   const canAssignRider =
     !order.riderId &&
-    !["cancelled", "delivered", "rejected"].includes(order.status);
-  const canCancel = !["delivered", "cancelled", "rejected"].includes(
-    order.status,
-  );
+    !["cancelled", "delivered", "rejected", "refunded"].includes(order.status);
+  const canCancel = ![
+    "delivered",
+    "cancelled",
+    "rejected",
+    "refunded",
+  ].includes(order.status);
   const canReject =
     ["pending", "placed", "confirmed", "preparing"].includes(order.status) &&
-    !["cancelled", "delivered", "rejected"].includes(order.status);
+    !["cancelled", "delivered", "rejected", "refunded"].includes(order.status);
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-4">

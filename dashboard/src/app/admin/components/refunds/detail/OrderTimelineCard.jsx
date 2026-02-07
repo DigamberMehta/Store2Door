@@ -90,7 +90,9 @@ const OrderTimelineCard = ({ order }) => {
                     {track.status.replace(/_/g, " ")}
                   </span>
                   <span className="text-gray-500 ml-2">
-                    {new Date(track.timestamp).toLocaleString("en-ZA")}
+                    {track.updatedAt
+                      ? new Date(track.updatedAt).toLocaleString("en-ZA")
+                      : "Invalid Date"}
                   </span>
                   {track.details && (
                     <p className="text-gray-600 mt-0.5">{track.details}</p>

@@ -15,6 +15,7 @@ const OrderFilters = ({ filters, onFilterChange, onExport, loading }) => {
     { value: "delivered", label: "Delivered" },
     { value: "rejected", label: "Rejected" },
     { value: "cancelled", label: "Cancelled" },
+    { value: "refunded", label: "Refunded" },
   ];
 
   const paymentStatusOptions = [

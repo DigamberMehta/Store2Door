@@ -58,6 +58,7 @@ const OrdersPage = () => {
       on_the_way: "text-amber-500 bg-amber-500/10",
       delivered: "text-green-500 bg-green-500/10",
       cancelled: "text-red-500 bg-red-500/10",
+      refunded: "text-purple-500 bg-purple-500/10",
     };
     return colors[status] || "text-gray-500 bg-gray-500/10";
   };
@@ -73,6 +74,7 @@ const OrdersPage = () => {
       on_the_way: Truck,
       delivered: CheckCircle,
       cancelled: XCircle,
+      refunded: AlertCircle,
     };
     const Icon = icons[status] || AlertCircle;
     return <Icon className="w-4 h-4" />;
@@ -88,8 +90,9 @@ const OrdersPage = () => {
   const filteredOrders = orders.filter((order) => {
     if (filter === "all") return true;
     if (filter === "active")
-      return !["delivered", "cancelled"].includes(order.status);
-    if (filter === "completed") return order.status === "delivered";
+      return !["delivered", "cancelled", "refunded"].includes(order.status);
+    if (filter === "completed")
+      return ["delivered", "refunded"].includes(order.status);
     return order.status === filter;
   });
 
@@ -230,19 +233,21 @@ const OrdersPage = () => {
               </div>
 
               {/* Quick Actions for Active Orders */}
-              {order.status !== "delivered" && order.status !== "cancelled" && (
-                <div className="mt-3 pt-3 border-t border-white/5">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate(`/orders/${order._id}/track`);
-                    }}
-                    className="w-full px-4 py-2 bg-[rgb(49,134,22)] text-white text-xs font-medium rounded-lg active:bg-[rgb(49,134,22)]/80 transition-all"
-                  >
-                    Track Order
-                  </button>
-                </div>
-              )}
+              {order.status !== "delivered" &&
+                order.status !== "cancelled" &&
+                order.status !== "refunded" && (
+                  <div className="mt-3 pt-3 border-t border-white/5">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/orders/${order._id}/track`);
+                      }}
+                      className="w-full px-4 py-2 bg-[rgb(49,134,22)] text-white text-xs font-medium rounded-lg active:bg-[rgb(49,134,22)]/80 transition-all"
+                    >
+                      Track Order
+                    </button>
+                  </div>
+                )}
             </div>
           ))
         )}

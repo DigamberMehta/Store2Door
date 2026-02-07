@@ -17,6 +17,7 @@ const UpdateStatusModal = ({ order, onClose, onSubmit }) => {
     { value: "picked_up", label: "Picked Up" },
     { value: "on_the_way", label: "On the Way" },
     { value: "delivered", label: "Delivered" },
+    { value: "refunded", label: "Refunded" },
   ];
 
   const handleSubmit = async (e) => {

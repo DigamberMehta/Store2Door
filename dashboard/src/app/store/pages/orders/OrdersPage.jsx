@@ -50,12 +50,18 @@ const OrdersPage = () => {
         socketService.onNewOrder((data) => {
           console.log("[OrdersPage] New order received:", data);
 
-          // Only add if order is for this store
-          if (
-            data.storeId === storeId ||
-            data.order?.storeId?._id === storeId
-          ) {
-            setOrders((prevOrders) => [data.order, ...prevOrders]);
+          // Only add if order is for this store (compare as strings)
+          const orderStoreId =
+            data.order?.storeId?._id || data.order?.storeId || data.storeId;
+          if (orderStoreId?.toString() === storeId?.toString()) {
+            setOrders((prevOrders) => {
+              // Check if order already exists to avoid duplicates
+              const exists = prevOrders.some((o) => o._id === data.order._id);
+              if (exists) {
+                return prevOrders;
+              }
+              return [data.order, ...prevOrders];
+            });
             fetchStats(); // Refresh stats
 
             // Show notification
@@ -81,7 +87,8 @@ const OrdersPage = () => {
                 ? {
                     ...order,
                     status: data.status,
-                    trackingInfo: data.trackingData,
+                    trackingHistory: data.trackingData || order.trackingHistory,
+                    updatedAt: new Date(),
                   }
                 : order,
             ),
@@ -426,6 +433,7 @@ const OrdersPage = () => {
                             on_the_way: "bg-teal-100 text-teal-800",
                             delivered: "bg-green-100 text-green-800",
                             cancelled: "bg-red-100 text-red-800",
+                            refunded: "bg-purple-100 text-purple-800",
                           };
 
                           return (

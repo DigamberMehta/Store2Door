@@ -150,6 +150,7 @@ const trackingInfoSchema = new mongoose.Schema({
       "delivered",
       "rejected",
       "cancelled",
+      "refunded",
     ],
     default: "pending",
     index: true,
@@ -359,6 +360,7 @@ const orderSchema = new mongoose.Schema(
         "delivered",
         "rejected", // Admin/Store rejected the order
         "cancelled",
+        "refunded",
       ],
       default: "pending",
     },
