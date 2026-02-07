@@ -14,19 +14,29 @@ export const getStoreDashboardStats = async (req, res) => {
     if (!store) return;
     const storeId = store._id;
 
-    // Get today's date range
+    // Get today's date range (UTC)
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    const todayUTC = new Date(
+      Date.UTC(
+        today.getUTCFullYear(),
+        today.getUTCMonth(),
+        today.getUTCDate(),
+        0,
+        0,
+        0,
+        0,
+      ),
+    );
+    const tomorrowUTC = new Date(todayUTC);
+    tomorrowUTC.setUTCDate(tomorrowUTC.getUTCDate() + 1);
 
-    // Get yesterday's date range for comparison
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
+    // Get yesterday's date range (UTC)
+    const yesterdayUTC = new Date(todayUTC);
+    yesterdayUTC.setUTCDate(yesterdayUTC.getUTCDate() - 1);
 
-    // Get last 7 days for sales chart
-    const last7Days = new Date(today);
-    last7Days.setDate(last7Days.getDate() - 7);
+    // Get last 7 days for sales chart (UTC)
+    const last7DaysUTC = new Date(todayUTC);
+    last7DaysUTC.setUTCDate(last7DaysUTC.getUTCDate() - 7);
 
     // Parallel data fetching for performance
     const [
@@ -39,40 +49,118 @@ export const getStoreDashboardStats = async (req, res) => {
       totalProducts,
       storeTransactions,
     ] = await Promise.all([
-      // Today's orders (only succeeded payments)
+      // Today's orders (exclude fully refunded; include paid & partially refunded with net amounts)
       Order.aggregate([
         {
           $match: {
             storeId: toObjectId(storeId),
-            createdAt: { $gte: today, $lt: tomorrow },
-            paymentStatus: "succeeded",
+            createdAt: { $gte: todayUTC, $lt: tomorrowUTC },
+            paymentStatus: { $in: ["succeeded", "paid", "partially_refunded"] },
+          },
+        },
+        // Lookup refund details for partially refunded orders
+        {
+          $lookup: {
+            from: "refunds",
+            let: { orderId: "$_id" },
+            pipeline: [
+              {
+                $match: {
+                  $expr: { $eq: ["$orderId", "$$orderId"] },
+                  status: "completed", // Only count completed refunds
+                },
+              },
+              {
+                $project: {
+                  storeRefundAmount: "$costDistribution.fromStore",
+                },
+              },
+              { $limit: 1 },
+            ],
+            as: "refundData",
+          },
+        },
+        // Calculate net store amount (subtract refund if any)
+        {
+          $project: {
+            storeAmount: {
+              $subtract: [
+                "$paymentSplit.storeAmount",
+                {
+                  $ifNull: [
+                    { $arrayElemAt: ["$refundData.storeRefundAmount", 0] },
+                    0,
+                  ],
+                },
+              ],
+            },
+            itemCount: { $size: "$items" },
           },
         },
         {
           $group: {
             _id: null,
-            totalSales: { $sum: "$paymentSplit.storeAmount" }, // Use store's portion only
+            totalSales: { $sum: "$storeAmount" }, // Net sales after refunds
             totalOrders: { $sum: 1 },
-            totalItems: { $sum: { $size: "$items" } },
+            totalItems: { $sum: "$itemCount" },
           },
         },
       ]),
 
-      // Yesterday's orders for comparison (only succeeded payments)
+      // Yesterday's orders for comparison (exclude fully refunded; net amounts)
       Order.aggregate([
         {
           $match: {
             storeId: toObjectId(storeId),
-            createdAt: { $gte: yesterday, $lt: today },
-            paymentStatus: "succeeded",
+            createdAt: { $gte: yesterdayUTC, $lt: todayUTC },
+            paymentStatus: { $in: ["succeeded", "paid", "partially_refunded"] },
+          },
+        },
+        // Lookup refund details for partially refunded orders
+        {
+          $lookup: {
+            from: "refunds",
+            let: { orderId: "$_id" },
+            pipeline: [
+              {
+                $match: {
+                  $expr: { $eq: ["$orderId", "$$orderId"] },
+                  status: "completed",
+                },
+              },
+              {
+                $project: {
+                  storeRefundAmount: "$costDistribution.fromStore",
+                },
+              },
+              { $limit: 1 },
+            ],
+            as: "refundData",
+          },
+        },
+        // Calculate net store amount
+        {
+          $project: {
+            storeAmount: {
+              $subtract: [
+                "$paymentSplit.storeAmount",
+                {
+                  $ifNull: [
+                    { $arrayElemAt: ["$refundData.storeRefundAmount", 0] },
+                    0,
+                  ],
+                },
+              ],
+            },
+            itemCount: { $size: "$items" },
           },
         },
         {
           $group: {
             _id: null,
-            totalSales: { $sum: "$paymentSplit.storeAmount" }, // Use store's portion only
+            totalSales: { $sum: "$storeAmount" },
             totalOrders: { $sum: 1 },
-            totalItems: { $sum: { $size: "$items" } },
+            totalItems: { $sum: "$itemCount" },
           },
         },
       ]),
@@ -86,12 +174,12 @@ export const getStoreDashboardStats = async (req, res) => {
           "orderNumber customerId total items status createdAt paymentSplit",
         ),
 
-      // Top selling products (only succeeded payments)
+      // Top selling products (only successful payments: succeeded, paid, partially_refunded)
       Order.aggregate([
         {
           $match: {
             storeId: toObjectId(storeId),
-            paymentStatus: "succeeded",
+            paymentStatus: { $in: ["succeeded", "paid", "partially_refunded"] },
           },
         },
         { $unwind: "$items" },
@@ -134,21 +222,64 @@ export const getStoreDashboardStats = async (req, res) => {
         },
       ]),
 
-      // Last 7 days sales for chart (only succeeded payments)
+      // Last 7 days sales for chart (exclude fully refunded; net amounts with refunds)
       Order.aggregate([
         {
           $match: {
             storeId: toObjectId(storeId),
-            createdAt: { $gte: last7Days },
-            paymentStatus: "succeeded",
+            createdAt: { $gte: last7DaysUTC },
+            paymentStatus: { $in: ["succeeded", "paid", "partially_refunded"] },
+          },
+        },
+        // Lookup refund details
+        {
+          $lookup: {
+            from: "refunds",
+            let: { orderId: "$_id" },
+            pipeline: [
+              {
+                $match: {
+                  $expr: { $eq: ["$orderId", "$$orderId"] },
+                  status: "completed",
+                },
+              },
+              {
+                $project: {
+                  storeRefundAmount: "$costDistribution.fromStore",
+                },
+              },
+              { $limit: 1 },
+            ],
+            as: "refundData",
+          },
+        },
+        // Calculate net store amount
+        {
+          $project: {
+            dateStr: {
+              $dateToString: {
+                format: "%Y-%m-%d",
+                date: "$createdAt",
+                timezone: "UTC",
+              },
+            },
+            storeAmount: {
+              $subtract: [
+                "$paymentSplit.storeAmount",
+                {
+                  $ifNull: [
+                    { $arrayElemAt: ["$refundData.storeRefundAmount", 0] },
+                    0,
+                  ],
+                },
+              ],
+            },
           },
         },
         {
           $group: {
-            _id: {
-              $dateToString: { format: "%Y-%m-%d", date: "$createdAt" },
-            },
-            totalSales: { $sum: "$paymentSplit.storeAmount" }, // Use store's portion only
+            _id: "$dateStr",
+            totalSales: { $sum: "$storeAmount" }, // Net sales after refunds
             totalOrders: { $sum: 1 },
           },
         },
@@ -183,6 +314,27 @@ export const getStoreDashboardStats = async (req, res) => {
         },
       ]),
     ]);
+
+    console.log("[Dashboard] Fetched data:");
+    console.log("  Today Orders:", todayOrders);
+    console.log("  Yesterday Orders:", yesterdayOrders);
+    console.log("  Last 7 Days Sales count:", last7DaysSales.length);
+    console.log("  Last 7 Days Sales:", last7DaysSales);
+
+    // Also get all recent orders for this store (for debugging)
+    const allRecentOrders = await Order.find({ storeId })
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .select("createdAt paymentStatus paymentSplit orderNumber");
+    console.log(
+      "[Dashboard] All recent orders (last 20):",
+      allRecentOrders.map((o) => ({
+        orderNumber: o.orderNumber,
+        createdAt: o.createdAt.toISOString(),
+        paymentStatus: o.paymentStatus,
+        storeAmount: o.paymentSplit?.storeAmount,
+      })),
+    );
 
     // Calculate stats with change percentages
     const todayStats = todayOrders[0] || {
@@ -248,13 +400,18 @@ export const getStoreDashboardStats = async (req, res) => {
     const salesChartData = [];
     const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
+    console.log("[Dashboard] Last 7 days sales data from DB:", last7DaysSales);
+
     for (let i = 6; i >= 0; i--) {
-      const date = new Date();
-      date.setUTCHours(0, 0, 0, 0);
+      const date = new Date(todayUTC);
       date.setUTCDate(date.getUTCDate() - i);
       const dateStr = date.toISOString().split("T")[0];
 
       const dayData = last7DaysSales.find((d) => d._id === dateStr);
+
+      console.log(
+        `[Dashboard] Date: ${dateStr}, Found: ${!!dayData}, Sales: ${dayData?.totalSales || 0}`,
+      );
 
       salesChartData.push({
         label: daysOfWeek[date.getUTCDay()],
@@ -262,6 +419,8 @@ export const getStoreDashboardStats = async (req, res) => {
         orders: dayData?.totalOrders || 0,
       });
     }
+
+    console.log("[Dashboard] Final salesChartData:", salesChartData);
 
     // Format earnings overview
     const earnings = {
